@@ -174,6 +174,88 @@ offset.
 
 ---
 
+## Key Results
+
+Current slide-level results are from the smaller pilot setting unless noted:
+`P = 5` participants, `R = 20` trials per condition.
+
+### Pilot Model Comparison
+
+The original pilot model sweep compared SD vs SEM measurement-error settings
+and several basis configurations. The strongest pilot fit was:
+
+```text
+k=(20,20), full=FALSE, se(eeg_sem)
+onset bias  = +0.010 s
+offset bias = -0.012 s
+peak recovery = 89%
+mean-window recovery = 106.1%
+spatial F1 = 0.962
+wall clock = 67 h
+```
+
+The earlier SD-based fits had much larger onset/offset bias and lower spatial
+F1, which is why the current main model uses `se(eeg_sem)`.
+
+### Pilot Method Comparison
+
+For the `P = 5` pilot Monte Carlo comparison with 30 simulations, BGAM_2D had
+the best offset recovery and the best full spatio-temporal F1:
+
+```text
+BGAM_2D onset:  bias -0.011 s, MAE 0.011 s, RMSE 0.012 s, SD 0.005 s
+BGAM_2D offset: bias +0.012 s, MAE 0.012 s, RMSE 0.014 s, SD 0.006 s
+BGAM_2D F1_ST:  0.799 +/- 0.007
+```
+
+Raw pointwise p-values had competitive onset MAE, but produced many false
+positives across the full time x channel mask:
+
+```text
+Raw p:   FP rate 0.102, FN rate 0.530, F1_ST 0.462, mean FP cells 268.9
+Cluster: FP rate 0.003, FN rate 0.648, F1_ST 0.514, mean FP cells 8.0
+TFCE:    FP rate 0.007, FN rate 0.608, F1_ST 0.539, mean FP cells 18.4
+BGAM_2D: FP rate 0.042, FN rate 0.179, F1_ST 0.799, mean FP cells 111.3
+```
+
+Interpretation: BGAM_2D recovers most true signal cells with substantially
+fewer false negatives than cluster/TFCE, but it also smooths beyond the strict
+ground-truth mask, creating moderate false-positive spillover.
+
+### Cluster Status Snapshot
+
+Checked on `gw01` at `2026-06-15 19:09 CEST`. These jobs were still running:
+
+```text
+bgam_mc_n20_hard_sem
+  30 array tasks, P=20 hard-threshold SEM, k=(20,20), full=FALSE
+  runtime: about 2 days 1 hour; time limit: 10 days
+  current output: no sim_*.csv files written yet in montecarlo_n20_hard_sem
+
+bgam_mc_n20_hard_sem_k1212
+  3 array tasks, P=20 hard-threshold SEM, k=(12,12), full=FALSE
+  runtime: about 1 day 5 hours to 2 days 1 hour; time limit: 10 days
+  current output: no sim_*.csv files written yet in montecarlo_n20_hard_sem_k1212_test
+
+bgam_mc_p5_hard_sem
+  1 task, P=5 hard-threshold SEM, k=(20,20), full=FALSE
+  runtime: about 1 day 5 hours; time limit: 2 days
+
+bgam_mc_p10_hard_sem
+  1 task, P=10 hard-threshold SEM, k=(20,20), full=FALSE
+  runtime: about 1 day 5 hours; time limit: 2 days
+
+bgam_n20_r20_reff14
+  single P=20, R=20 effective-R sensitivity fit with R_eff=14
+  runtime: about 5 days 15 hours; time limit: 10 days
+```
+
+The SSH logs for the currently running Monte Carlo jobs show `alpha = 0.050`.
+The pilot FP/FN slide above reports the completed pilot diagnosis at
+`alpha = 0.10`.
+
+---
+
 ## Key Outputs
 
 After all Monte Carlo jobs finish, run `code/04_aggregate_results.R`.

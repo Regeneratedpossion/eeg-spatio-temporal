@@ -171,20 +171,30 @@ offset.
 
 ---
 
-## Key Result
+## Key Outputs
 
-Current local 30-simulation summary, generated from the hard-threshold SEM
-pipeline:
+After all Monte Carlo jobs finish, run `code/04_aggregate_results.R`.
 
-| Method | Onset MAE (s) | Offset MAE (s) | F1_ST |
-|---|---:|---:|---:|
-| BGAM_2D | 0.011 | 0.012 | 0.799 +/- 0.007 |
-| raw_p | 0.010 | 0.013 | 0.462 +/- 0.014 |
-| cluster | 0.016 | 0.019 | 0.514 +/- 0.020 |
+The main table is written to:
 
-Interpretation: raw pointwise tests can be competitive for temporal boundary
-MAE in this controlled simulation, but BGAM gives much better spatio-temporal
-localisation on the full channel x time grid.
+```text
+results/comparisons/<MC_AGG_PREFIX>_paper_table.csv
+```
+
+It contains one row per method with:
+
+- onset and offset bias;
+- MAE;
+- RMSE;
+- SD;
+- spatio-temporal F1;
+- FP/FN diagnostics.
+
+Per-simulation outputs are kept in:
+
+```text
+results/comparisons/<MC_COMPARE_SUBDIR>/sim_*.csv
+```
 
 ---
 

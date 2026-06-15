@@ -13,6 +13,8 @@ models, figures, logs, and CmdStan cache files are not uploaded to GitHub.
 
 ```text
 bgam_eeg_project/
+├── PROJECT_GUIDE.md                    # compact guide to the current pipeline
+│
 ├── code/
 │   ├── 00_generate_data.R              # one simulated EEG dataset
 │   ├── 00_generate_montecarlo.R        # 30 Monte Carlo datasets, P=20, R=20

@@ -179,11 +179,3 @@ sbatch slurm/run_diagnostics.sh
 - Nalborczyk, L. & Bürkner, P.-C. (2025). *Precise temporal localisation
   of M/EEG effects with Bayesian generalised additive multilevel models*.
   bioRxiv. doi:10.1101/2025.08.29.672336
-- Wood, S. N. (2017). *Generalized Additive Models* (2nd ed.).
-- Pedersen, E. J. et al. (2019). *Hierarchical generalized additive
-  models in ecology*. PeerJ 7:e6876.
-- Sahu, S. K. (2022). *Bayesian Modelling of Spatio-Temporal Data with R*.
-- Maris, E. & Oostenveld, R. (2007). *Nonparametric statistical testing
-  of EEG- and MEG-data*. J Neurosci Methods 164(1):177-190.
-- Smith, S. & Nichols, T. E. (2009). *Threshold-free cluster enhancement*.
-  NeuroImage 44(1):83-98.

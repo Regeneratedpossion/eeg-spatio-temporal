@@ -33,9 +33,6 @@ bgam_eeg_project/
 │   └── brms_meeg/code/                 # noise generator and ERP template
 │
 ├── slurm/                              # cluster submission scripts
-├── docs/                               # short technical notes/reports
-├── notes/                              # working notes
-├── slides/                             # presentation source
 └── refs.bib
 ```
 

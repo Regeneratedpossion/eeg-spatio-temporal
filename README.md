@@ -179,6 +179,20 @@ offset.
 Current slide-level results are from the smaller pilot setting unless noted:
 `P = 5` participants, `R = 20` trials per condition.
 
+### Pilot Appendix Figures
+
+The appendix pilot figures are from the earlier SD-based fit:
+
+```text
+P = 5, R = 20
+k = (20,20), full = FALSE
+measurement error = se(eeg_sd)
+```
+
+These figures show the simulated EEG data and the fitted BGAM curves against
+raw participant means. They are retained as pilot diagnostics; the current main
+pipeline uses `se(eeg_sem)`.
+
 ### Pilot Model Comparison
 
 The original pilot model sweep compared SD vs SEM measurement-error settings

@@ -54,7 +54,11 @@ the true signal window `160-342 ms`.
    Generate slide figures for simulated data, model fit, posterior probability,
    and topomaps.
 
-9. `code/10_prior_predictive_check.R`
+9. `slides/thesis_progress_slides.tex`
+   Compact slide deck for the current thesis-progress story. Extra details are
+   kept in the appendix instead of the main sequence.
+
+10. `code/10_prior_predictive_check.R`
    Prior predictive check using the current SEM BGAM formula.
 
 ## Current Data Story

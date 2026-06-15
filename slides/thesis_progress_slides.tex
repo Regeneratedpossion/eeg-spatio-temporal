@@ -1,0 +1,283 @@
+\documentclass{beamer}
+
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{makecell}
+
+\title{Spatio-temporal EEG effect recovery}
+\subtitle{Hard-threshold simulation and SEM BGAM}
+\author{Jiahui Fan}
+\date{\today}
+
+\graphicspath{
+    {../results/figures/n20_hard_sem_slides/}
+    {../results/figures/}
+    {../pred_vs_raw_compare/}
+}
+
+\newcommand{\missingfigure}[1]{%
+    \fbox{\parbox{0.82\linewidth}{\centering
+    Figure not found. Run \texttt{#1} first.}}}
+
+\begin{document}
+
+\frame{\titlepage}
+
+% ----------------------------------------------------------------
+\begin{frame}{Question}
+\small
+Can a spatio-temporal BGAM recover a known EEG effect over the full
+channel $\times$ time grid?
+
+\medskip
+Current simulation:
+\begin{itemize}
+\item $P = 20$ participants;
+\item $R = 20$ trials per participant and condition;
+\item $61$ electrodes;
+\item true signal window: $160$--$342$ ms;
+\item seed electrode: CZ;
+\item condition 1 = noise, condition 2 = noise + signal.
+\end{itemize}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Signal model}
+\small
+For electrode $c$ and time $t$:
+\[
+y_{c,t}^{(1)} = \epsilon_{c,t}^{(1)}
+\]
+\[
+y_{c,t}^{(2)}
+= A \, g(t) \, w(c) + \epsilon_{c,t}^{(2)}
+\]
+
+\medskip
+\begin{itemize}
+\item $A = 1.5\,\mu\mathrm{V}$;
+\item $g(t)$ is the ERP template with true window $160$--$342$ ms;
+\item $w(c)$ is the CZ-centred spatial weight;
+\item noise combines temporal EEG-like noise and spatially correlated sensor
+noise.
+\end{itemize}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Spatial ground truth: active electrodes}
+\small
+The current simulation uses a hard-threshold spatial Gaussian.
+
+\[
+d(c, \mathrm{CZ})
+= \left\|p_c - p_{\mathrm{CZ}}\right\|_2
+\]
+
+\[
+w(c) =
+\begin{cases}
+\exp\!\left(-\dfrac{d(c,\mathrm{CZ})^2}
+{2\sigma_{\mathrm{space}}^2}\right),
+& d(c,\mathrm{CZ}) \leq \sigma_{\mathrm{space}},\\[0.7em]
+0,
+& d(c,\mathrm{CZ}) > \sigma_{\mathrm{space}}.
+\end{cases}
+\]
+
+\[
+\text{electrode } c \text{ is active iff }
+d(c,\mathrm{CZ}) \leq \sigma_{\mathrm{space}}.
+\]
+
+\medskip
+This is the definition used in \texttt{code/00\_generate\_data.R} and in
+the ground-truth active-electrode list used for F1, FP, and FN metrics.
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}[fragile]{BGAM model}
+\scriptsize
+\begin{verbatim}
+bgam_fit <- brm(
+    formula = eeg_mean | se(eeg_sem) ~
+        condition +
+        (1 + condition | participant) +
+        t2(xproj, yproj, time,
+           by = condition,
+           bs = c("tp", "tp"),
+           k = c(k_xy, k_t),
+           d = c(2, 1),
+           full = full),
+    data = sim_data_model,
+    family = gaussian(),
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    warmup = 1000,
+    threads = threading(threads = 4),
+    backend = "cmdstanr",
+    control = list(adapt_delta = 0.99, max_treedepth = 13)
+)
+\end{verbatim}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Single-simulation workflow}
+\small
+\begin{enumerate}
+\item Load one generated dataset and its ground truth.
+\item Fit the SEM BGAM.
+\item Predict both conditions on the full channel $\times$ time grid.
+\item Compute posterior probability and odds for the condition difference.
+\item Compare methods using connected time-channel detection masks.
+\item Save one CSV row per method.
+\end{enumerate}
+
+\medskip
+Implemented in \texttt{code/09\_run\_montecarlo\_sem.R}.
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Simulated EEG data ($P=20$, $R=20$)}
+\begin{center}
+\IfFileExists{../results/figures/n20_hard_sem_slides/sim_data_overview_n20_hard_sem.pdf}
+{\includegraphics[width=\linewidth]
+{../results/figures/n20_hard_sem_slides/sim_data_overview_n20_hard_sem.pdf}}
+{\missingfigure{code/05\_slide\_simulated\_eeg\_n20.R}}
+\end{center}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{How the model fits the data ($P=20$, $k=(20,20)$)}
+\begin{center}
+\IfFileExists{../results/figures/n20_hard_sem_slides/pred_vs_raw_bgam_fit_v5_k20_sem.pdf}
+{\includegraphics[height=0.85\textheight,keepaspectratio]
+{../results/figures/n20_hard_sem_slides/pred_vs_raw_bgam_fit_v5_k20_sem.pdf}}
+{\missingfigure{code/06\_slide\_bgam\_fit\_n20.R}}
+\end{center}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Posterior probability per electrode}
+\begin{center}
+\IfFileExists{../results/figures/n20_hard_sem_slides/posterior_p_sig_facets_n20_hard_sem.pdf}
+{\includegraphics[width=0.92\linewidth]
+{../results/figures/n20_hard_sem_slides/posterior_p_sig_facets_n20_hard_sem.pdf}}
+{\missingfigure{code/07\_slide\_posterior\_probability\_n20.R}}
+\end{center}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Topomaps over the signal window}
+\begin{center}
+\IfFileExists{../results/figures/n20_hard_sem_slides/topomap_n20_hard_sem_three_times.pdf}
+{\includegraphics[height=0.86\textheight,keepaspectratio]
+{../results/figures/n20_hard_sem_slides/topomap_n20_hard_sem_three_times.pdf}}
+{\missingfigure{code/08\_slide\_topomap\_n20.R}}
+\end{center}
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Method comparison}
+\small
+Each method returns a time $\times$ channel detection mask.
+
+\medskip
+\begin{enumerate}
+\item Raw pointwise $t$-test.
+\item Benjamini--Hochberg FDR.
+\item Holm correction.
+\item MNE spatio-temporal cluster permutation.
+\item MNE TFCE.
+\item BGAM posterior odds on the full channel $\times$ time grid.
+\end{enumerate}
+
+\medskip
+For each method, small isolated blobs are removed and the largest connected
+blob gives onset and offset.
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Final aggregation}
+\small
+After all Monte Carlo runs finish:
+
+\[
+\texttt{code/04\_aggregate\_results.R}
+\]
+
+\medskip
+The final table contains:
+\begin{itemize}
+\item onset and offset bias;
+\item MAE, RMSE, and SD;
+\item spatio-temporal F1;
+\item TP, FP, and FN diagnostics.
+\end{itemize}
+
+\medskip
+Main output:
+\[
+\texttt{results/comparisons/<MC\_AGG\_PREFIX>\_paper\_table.csv}
+\]
+\end{frame}
+
+% ================================================================
+\appendix
+
+\begin{frame}{Appendix: FP/FN definitions}
+\small
+Each cell is one time-by-channel location $(t,c)$.
+
+\[
+M_{t,c} =
+\begin{cases}
+1, & t \in [0.160, 0.342]\text{ s and } c \text{ is active},\\
+0, & \text{otherwise}.
+\end{cases}
+\]
+
+\[
+D_{t,c} =
+\begin{cases}
+1, & \text{method detects cell }(t,c),\\
+0, & \text{otherwise}.
+\end{cases}
+\]
+
+\[
+TP=\sum D_{t,c}M_{t,c},\quad
+FP=\sum D_{t,c}(1-M_{t,c}),\quad
+FN=\sum (1-D_{t,c})M_{t,c}.
+\]
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Appendix: prior predictive check}
+\small
+\texttt{code/10\_prior\_predictive\_check.R} runs the current SEM BGAM formula
+with \texttt{sample\_prior = "only"}.
+
+\medskip
+A weak normal prior is added only because prior predictive sampling requires
+a proper fixed-effect prior.
+\end{frame}
+
+% ----------------------------------------------------------------
+\begin{frame}{Appendix: files not part of the main story}
+\small
+The main story is the hard-threshold + SEM Monte Carlo pipeline.
+
+\medskip
+Details moved out of the main slide sequence:
+\begin{itemize}
+\item old pilot-only diagnostics;
+\item old SD-based model comparisons;
+\item LOO notes;
+\item threshold-sweep experiments;
+\item exploratory smoothing-bias notes.
+\end{itemize}
+\end{frame}
+
+\end{document}

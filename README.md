@@ -34,6 +34,9 @@ bgam_eeg_project/
 │   ├── adjacency/                      # 61-channel adjacency matrix
 │   └── brms_meeg/code/                 # noise generator and ERP template
 │
+├── slides/
+│   └── thesis_progress_slides.tex      # compact current thesis-progress slides
+│
 ├── slurm/                              # cluster submission scripts
 └── refs.bib
 ```

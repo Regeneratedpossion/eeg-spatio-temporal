@@ -221,6 +221,14 @@ requires a proper fixed-effect prior.
 
 ## Dependencies
 
+Cluster environment used for the main Monte Carlo runs:
+
+- TU Dortmund LIDO cluster;
+- Slurm array jobs;
+- `module load R/4.4.2-gcc141-base`;
+- CmdStan backend through `cmdstanr`;
+- 16 CPU threads and 128 GB memory in the current Slurm scripts.
+
 R packages:
 
 - `brms`

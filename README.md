@@ -240,6 +240,15 @@ These figures show simulated EEG data and fitted BGAM curves against raw
 participant means. They are kept for pilot diagnostics; the current main model
 uses `se(eeg_sem)`.
 
+### Alpha Threshold Note
+
+The completed `P = 5` pilot FP/FN diagnosis used `alpha = 0.10`. With only five
+participants, the permutation p-value resolution is coarse, so `0.05` is too
+strict for a useful pilot comparison.
+
+The current `P = 20` cluster runs use `alpha = 0.05`, which is appropriate once
+the participant count is larger.
+
 ### Cluster Status Snapshot
 
 Checked on `gw01` at `2026-06-15 19:09 CEST`. These jobs were still running:

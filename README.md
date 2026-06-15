@@ -176,27 +176,15 @@ offset.
 
 ## Key Results
 
-Current slide-level results are from the smaller pilot setting unless noted:
-`P = 5` participants, `R = 20` trials per condition.
-
-### Pilot Appendix Figures
-
-The appendix pilot figures are from the earlier SD-based fit:
-
-```text
-P = 5, R = 20
-k = (20,20), full = FALSE
-measurement error = se(eeg_sd)
-```
-
-These figures show the simulated EEG data and the fitted BGAM curves against
-raw participant means. They are retained as pilot diagnostics; the current main
-pipeline uses `se(eeg_sem)`.
+The completed slide-level results currently come from the smaller pilot
+setting: `P = 5` participants and `R = 20` trials per condition. The full
+`P = 20` hard-threshold SEM Monte Carlo runs are still running on the cluster.
 
 ### Pilot Model Comparison
 
-The original pilot model sweep compared SD vs SEM measurement-error settings
-and several basis configurations. The strongest pilot fit was:
+The first pilot analysis compared measurement-error choices (`se(eeg_sd)` vs
+`se(eeg_sem)`) and several basis-function settings. The best pilot fit was the
+SEM model:
 
 ```text
 k=(20,20), full=FALSE, se(eeg_sem)
@@ -208,13 +196,15 @@ spatial F1 = 0.962
 wall clock = 67 h
 ```
 
-The earlier SD-based fits had much larger onset/offset bias and lower spatial
-F1, which is why the current main model uses `se(eeg_sem)`.
+The SD-based fits were useful diagnostics, but they had larger onset/offset
+bias and lower spatial F1. This is why the current main pipeline uses
+`se(eeg_sem)`.
 
 ### Pilot Method Comparison
 
-For the `P = 5` pilot Monte Carlo comparison with 30 simulations, BGAM_2D had
-the best offset recovery and the best full spatio-temporal F1:
+Using the selected BGAM specification, the pilot Monte Carlo comparison ran 30
+independent `P = 5` simulations. BGAM_2D had the best offset recovery and the
+best full spatio-temporal F1:
 
 ```text
 BGAM_2D onset:  bias -0.011 s, MAE 0.011 s, RMSE 0.012 s, SD 0.005 s
@@ -235,6 +225,20 @@ BGAM_2D: FP rate 0.042, FN rate 0.179, F1_ST 0.799, mean FP cells 111.3
 Interpretation: BGAM_2D recovers most true signal cells with substantially
 fewer false negatives than cluster/TFCE, but it also smooths beyond the strict
 ground-truth mask, creating moderate false-positive spillover.
+
+### Pilot Appendix Figures
+
+The appendix pilot figures show the earlier SD-based diagnostic fit:
+
+```text
+P = 5, R = 20
+k = (20,20), full = FALSE
+measurement error = se(eeg_sd)
+```
+
+These figures show simulated EEG data and fitted BGAM curves against raw
+participant means. They are kept for pilot diagnostics; the current main model
+uses `se(eeg_sem)`.
 
 ### Cluster Status Snapshot
 

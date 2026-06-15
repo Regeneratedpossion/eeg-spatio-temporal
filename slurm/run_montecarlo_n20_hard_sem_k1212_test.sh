@@ -20,8 +20,6 @@ module load R/4.4.2-gcc141-base
 export PROJECT_ROOT=/work/smjifan1/bgam_eeg_project
 export BRMS_MEEG=$PROJECT_ROOT/external_brms_meeg/code
 
-# Keep P=20 Monte Carlo outputs separate from the existing P=5 pilot MC.
-export MC_ALPHA=0.05
 export K_XY=12
 export K_T=12
 export MC_DATA_SUBDIR=montecarlo_n20_hard

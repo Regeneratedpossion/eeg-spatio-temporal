@@ -1,176 +1,245 @@
 # BGAM Spatio-Temporal EEG Inference
 
-A Bayesian generalised additive model (BGAM) approach for joint
-spatio-temporal inference on simulated EEG data. Extends the temporal
-BGAM framework of Nalborczyk & Bürkner (2025) to 3D
-(electrode_x, electrode_y, time) using brms tensor product smooths.
+Bayesian generalised additive modelling for detecting simulated EEG effects
+over electrode space and time. The current main pipeline uses a hard-threshold
+spatial signal, trial-mean SEM measurement error, and a 2D spatio-temporal BGAM.
+
+The repository is intentionally lightweight. Generated `.rds` data, fitted
+models, figures, logs, and CmdStan cache files are not uploaded to GitHub.
 
 ---
 
-## Project layout
+## Repository Layout
 
-```
+```text
 bgam_eeg_project/
-├── README.md                              # this file
+├── code/
+│   ├── 00_generate_data.R              # one simulated EEG dataset
+│   ├── 00_generate_montecarlo.R        # 30 Monte Carlo datasets, P=20, R=20
+│   ├── 01_fit_bgam.R                   # SEM BGAM model
+│   ├── 02_diagnostics.R                # single-fit diagnostics
+│   ├── 03_compare_methods.R            # single-simulation method comparison
+│   ├── 04_aggregate_results.R          # final Monte Carlo aggregation
+│   ├── 05_slide_simulated_eeg_n20.R    # slide figure: simulated data
+│   ├── 06_slide_bgam_fit_n20.R         # slide figure: fitted curves
+│   ├── 07_slide_posterior_probability_n20.R
+│   ├── 08_slide_topomap_n20.R
+│   ├── 09_run_montecarlo_sem.R         # one Slurm array task
+│   ├── 10_prior_predictive_check.R
+│   └── utils.R                         # paths, thresholds, shared helpers
 │
-├── data/                                  # immutable inputs
-│   ├── sim_data_pilot.rds                 # simulated EEG (n=5 ppt)
-│   └── ground_truth_pilot.rds             # injected signal params
+├── resources/
+│   ├── adjacency/                      # 61-channel adjacency matrix
+│   └── brms_meeg/code/                 # noise generator and ERP template
 │
-├── code/                                  # analysis pipeline
-│   ├── 00_generate_data.R                 # simulate data
-│   ├── 01_fit_bgam.R                      # fit BGAM
-│   ├── 02_diagnostics.R                   # convergence + recovery diagnostics
-│   ├── 03_compare_methods.R               # compare recovery methods
-│   ├── 04_aggregate_results.R             # aggregate Monte Carlo results
-│   ├── 05_slide_simulated_eeg_n20.R       # slide: simulated EEG data
-│   ├── 06_slide_bgam_fit_n20.R            # slide: model fit
-│   ├── 07_slide_posterior_probability_n20.R # slide: posterior probability
-│   ├── 08_slide_topomap_n20.R             # slide: topomaps
-│   └── utils.R                            # shared helpers
-│
-├── slurm/                                 # HPC submission scripts
-│   ├── run_fit.sh
-│   └── run_diagnostics.sh
-│
-├── results/
-│   ├── fits/
-│   │   └── bgam_fit_v4_k12.rds            # 4 chains x 3000 iter (~8h)
-│   ├── diagnostics/                       # CSV outputs
-│   └── figures/                           # PDF / PNG
-│       └── topoplot_3rows_emp_vs_model.*  # main result figure
-│
-├── notes/
-│   ├── progress_report.md                 # report for advisor
-│   ├── method_choice_rationale.md         # why these decisions
-│   └── todo.md
-│
-├── logs/                                  # script run logs
-│   └── diagnostics_2026_05_04.log
-│
-└── archive/                               # original messy folder
-    └── models_original_2026_05_04/
+├── slurm/                              # cluster submission scripts
+├── docs/                               # short technical notes/reports
+├── notes/                              # working notes
+├── slides/                             # presentation source
+└── refs.bib
+```
+
+Generated folders are local only:
+
+```text
+data/                 # generated simulations and ground truth
+results/fits/         # fitted brms models
+results/montecarlo/   # BGAM posterior summaries
+results/comparisons/  # per-simulation and aggregated method results
+results/figures/      # slide and diagnostic figures
+cmdstan_cache/        # compiled Stan files
 ```
 
 ---
 
-## Pipeline
+## Main Pipeline
 
-Run scripts from the project root after cloning:
+Run commands from the project root. `PROJECT_ROOT` is optional because scripts
+fall back to the current working directory.
 
 ```bash
-cd bgam_eeg_project
-Rscript code/00_generate_data.R
+# 1. Generate 30 hard-threshold Monte Carlo datasets, P=20 and R=20.
+MC_DATA_SUBDIR=montecarlo_n20_hard Rscript code/00_generate_montecarlo.R
+
+# 2. Run one simulation locally, or submit the Slurm array version.
+MC_DATA_SUBDIR=montecarlo_n20_hard \
+MC_COMPARE_SUBDIR=montecarlo_n20_hard_sem \
+MC_SUMMARY_SUBDIR=montecarlo_n20_hard_sem \
+Rscript code/09_run_montecarlo_sem.R 1
+
+# 3. Aggregate all finished simulations.
+MC_DATA_SUBDIR=montecarlo_n20_hard \
+MC_COMPARE_SUBDIR=montecarlo_n20_hard_sem \
+MC_SUMMARY_SUBDIR=montecarlo_n20_hard_sem \
+MC_AGG_PREFIX=montecarlo_n20_hard_sem \
+Rscript code/04_aggregate_results.R
 ```
 
-`PROJECT_ROOT` is optional. It is useful on Slurm or when running scripts from
-outside the project directory.
+On the cluster, use:
 
-| Step | Script | Input | Output | Time |
-|------|--------|-------|--------|------|
-| 0 | `00_generate_data.R` | (none) | `sim_data_pilot.rds`, `ground_truth_pilot.rds` | 1 min |
-| 1 | `01_fit_bgam.R` | data | `bgam_fit_v4_k12.rds` | ~8 h on LIDO |
-| 2 | `02_diagnostics.R` | fit + data + GT | diagnostics/*.csv | 5 min |
-| 3 | `03_compare_methods.R` | fit + data + GT | comparisons/*.csv | per simulation |
-| 4 | `04_aggregate_results.R` | comparisons + summaries | paper_table.csv | after Monte Carlo |
-| 5 | `05-08_slide_*.R` | hard-threshold n20 data + SEM fit | slide figures | as needed |
+```bash
+sbatch slurm/gen_montecarlo_n20_hard.sh
+sbatch slurm/run_montecarlo_n20_hard_sem.sh
+```
 
----
+For a smaller basis-function test, use:
 
-## Key results (pilot, n=5)
-
-*Source: `results/diagnostics/*.csv`, generated by `code/02_diagnostics.R`
-on 2026-05-04. Full log: `logs/diagnostics_2026_05_04.log`.*
-
-### Target 1 — Convergence — **PASS** ✓
-- divergent transitions: **0**
-- max treedepth hits: **0**
-- max R-hat: **1.0026**
-- min Bulk_ESS: **2 435**
-- mean Bulk_ESS: **11 541**
-- min Tail_ESS: **4 113**
-
-### Target 2 — Onset / offset recovery — **FAIL** (within ±20 ms)
-*at seed electrode CZ, posterior odds threshold = 10*
-- Ground truth window: **160 – 342 ms**
-- Estimated onset: **90 ms** (bias **−70 ms**)
-- Estimated offset: **410 ms** (bias **+68 ms**)
-- The 70 ms boundary blur is intrinsic to the GAM smoothness penalty
-  and persists across odds thresholds (sensitivity table in
-  `results/diagnostics/target2_temporal_full.csv`).
-
-### Target 3 — Spatial bump localisation — **PASS** ✓
-*at peak time 250 ms*
-- Top channel: **CZ** = seed electrode ✓
-- Top 10 (in order): **CZ → FCZ → C2 → CPZ → C1 → FC2 → FC1 → CP2 → CP1 → FZ**
-- Mean diff at CZ: **+0.552 μV** (95 % CrI [0.455, 0.648])
-- All top-9 are CZ's immediate neighbours.
-
-### Marginal effect — sanity check ✓
-- Empirical cond2 − cond1: **+0.0551 μV**
-- Model marginal estimate: **+0.0563 μV** (95 % CrI [0.0316, 0.0868])
-
-### Amplitude recovery (caveat)
-- Empirical peak at CZ: **+1.70 μV**
-- Model peak: **+0.56 μV** (~33 % of true)
-- Source: GAM smoothing penalty + measurement-error scaling +
-  partial pooling across n=5 participants
+```bash
+K_XY=12 K_T=12 Rscript code/09_run_montecarlo_sem.R 1
+```
 
 ---
 
-## Model specification (v4_k12)
+## Simulation
+
+`code/00_generate_data.R` creates two-condition EEG data with:
+
+- participants: `P = 20` in the Monte Carlo generator;
+- trials per participant: `R = 20`;
+- sampling rate: 500 Hz, downsampled to 100 Hz;
+- true signal window: 160-342 ms;
+- seed electrode: `CZ`;
+- spatial signal: Gaussian around `CZ`, hard-thresholded at one spatial SD;
+- noise: temporal EEG-like noise plus spatially correlated sensor noise.
+
+Ground truth stores the true onset, offset, seed electrode, active electrodes,
+signal amplitude, and simulation settings used for evaluation.
+
+---
+
+## Model Specification
+
+The current BGAM in `code/01_fit_bgam.R` is:
 
 ```r
-brm(
+bgam_fit <- brm(
     formula = eeg_mean | se(eeg_sem) ~
         condition +
         (1 + condition | participant) +
-        s(time, bs = "tp", k = 20, by = condition) +
         t2(xproj, yproj, time,
            by = condition,
            bs = c("tp", "tp"),
-           k  = c(10, 12),
-           d  = c(2, 1)),
-    data    = sim_data_model,
-    family  = gaussian(),
-    prior   = c(
-        prior(normal(0, 1),       class = b),
-        prior(student_t(3, 0, 1), class = sds),
-        prior(student_t(3, 0, 1), class = sd)
-    ),
-    chains  = 4, cores = 4, iter = 3000, warmup = 1000,
+           k = c(k_xy, k_t),
+           d = c(2, 1),
+           full = full),
+    data = sim_data_model,
+    family = gaussian(),
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    warmup = 1000,
+    seed = seed,
     threads = threading(threads = 4),
     backend = "cmdstanr",
     control = list(adapt_delta = 0.99, max_treedepth = 13)
 )
 ```
 
----
+Important current choices:
 
-## Hardware / environment
-
-- TU Dortmund LIDO HPC, partition `long` or `ultralong`
-- R 4.4.2 (`module load R/4.4.2-gcc141-base`)
-- brms 2.23.0, cmdstanr backend
-- Stan 2.32.2, cmdstan 2.38.0
-- 16 cores per node, 32 GB memory
-- Wall time: ~8 h for 4 chains x 3000 iter
+- The response is the trial-aggregated mean `eeg_mean`.
+- Measurement error uses `se(eeg_sem)`, not `se(eeg_sd)`.
+- There is no separate `s(time)` term in the current main model.
+- The spatio-temporal smooth is a tensor product over `(xproj, yproj, time)`.
+- Default basis size is `k = c(20, 20)`.
+- `K_XY` and `K_T` can change the basis size without editing the script.
 
 ---
 
-## Reproducibility
+## Method Comparison
+
+`code/03_compare_methods.R` compares six methods for each single simulation:
+
+1. raw pointwise t-test;
+2. Benjamini-Hochberg FDR;
+3. Holm correction;
+4. MNE spatio-temporal cluster permutation;
+5. MNE TFCE;
+6. BGAM posterior odds on the full channel x time grid.
+
+Each method produces a time x channel detection mask. Small isolated blobs are
+removed, then the largest connected component gives the estimated onset and
+offset.
+
+`code/04_aggregate_results.R` then summarises across simulations:
+
+- onset/offset bias;
+- MAE;
+- RMSE;
+- SD;
+- spatio-temporal F1;
+- TP/FP/FN diagnostics.
+
+---
+
+## Key Result
+
+Current local 30-simulation summary, generated from the hard-threshold SEM
+pipeline:
+
+| Method | Onset MAE (s) | Offset MAE (s) | F1_ST |
+|---|---:|---:|---:|
+| BGAM_2D | 0.011 | 0.012 | 0.799 +/- 0.007 |
+| raw_p | 0.010 | 0.013 | 0.462 +/- 0.014 |
+| cluster | 0.016 | 0.019 | 0.514 +/- 0.020 |
+
+Interpretation: raw pointwise tests can be competitive for temporal boundary
+MAE in this controlled simulation, but BGAM gives much better spatio-temporal
+localisation on the full channel x time grid.
+
+---
+
+## Slide Figures
+
+The slide scripts use the same hard-threshold + SEM defaults via
+`slide_inputs()` in `utils.R`.
 
 ```bash
-# 1. Upload data and code
-scp -r ~/Desktop/bgam_eeg_project smjifan1@gw01.lido.tu-dortmund.de:/work/smjifan1/
-
-# 2. On LIDO
-cd bgam_eeg_project
-sbatch slurm/run_fit.sh
-
-# 3. After it finishes (~8h)
-sbatch slurm/run_diagnostics.sh
+Rscript code/05_slide_simulated_eeg_n20.R
+Rscript code/06_slide_bgam_fit_n20.R
+Rscript code/07_slide_posterior_probability_n20.R
+Rscript code/08_slide_topomap_n20.R
 ```
+
+They create:
+
+- simulated EEG curves;
+- BGAM fitted curves and condition differences;
+- posterior probability per electrode;
+- ground truth / empirical / BGAM / residual topomaps.
+
+---
+
+## Prior Predictive Check
+
+```bash
+Rscript code/10_prior_predictive_check.R
+```
+
+This runs `sample_prior = "only"` for the current hard-threshold + SEM BGAM
+formula. A weak normal prior is supplied only because prior predictive sampling
+requires a proper fixed-effect prior.
+
+---
+
+## Dependencies
+
+R packages:
+
+- `brms`
+- `cmdstanr`
+- `dplyr`
+- `tidyr`
+- `tidybayes`
+- `posterior`
+- `ggplot2`
+- `patchwork`
+- `reticulate`
+- `igraph`
+
+Python package:
+
+- `mne` for cluster permutation and TFCE methods.
 
 ---
 

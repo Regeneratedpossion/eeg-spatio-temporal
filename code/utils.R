@@ -73,15 +73,17 @@ slide_inputs <- function() {
 }
 
 mc_paths <- function() {
-    data_subdir <- Sys.getenv("MC_DATA_SUBDIR", unset = "montecarlo")
+    data_subdir <- Sys.getenv("MC_DATA_SUBDIR", unset = "montecarlo_n20_hard")
 
     list(
         prefix = Sys.getenv("MC_AGG_PREFIX", unset = data_subdir),
         data_dir = data_path(data_subdir),
         compare_dir = file.path(project_root(), "results/comparisons",
-                                Sys.getenv("MC_COMPARE_SUBDIR", unset = "montecarlo")),
+                                Sys.getenv("MC_COMPARE_SUBDIR",
+                                           unset = "montecarlo_n20_hard_sem")),
         summary_dir = file.path(project_root(), "results",
-                                Sys.getenv("MC_SUMMARY_SUBDIR", unset = "montecarlo")),
+                                Sys.getenv("MC_SUMMARY_SUBDIR",
+                                           unset = "montecarlo_n20_hard_sem")),
         out_dir = file.path(project_root(), "results/comparisons")
     )
 }

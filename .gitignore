@@ -1,0 +1,35 @@
+.DS_Store
+.Rhistory
+.Rapp.history
+.RData
+.Rproj.user/
+.claude/
+/check_env.R
+
+# Generated data, fits, figures, logs, and caches
+data/
+results/
+figures/
+logs/
+cmdstan_cache/
+pred_vs_raw_compare/
+
+# Large reference material
+references/
+external_brms_meeg/
+slides/*.pdf
+*.pdf
+*.png
+*.rds
+*.RData
+*.zip
+*.aux
+*.log
+*.out
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+archive/
+!resources/**/*.rds

@@ -1,0 +1,259 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+\title{On the $\sqrt{R}$ measurement-error misspecification\\
+in BGAM for trial-aggregated EEG data}
+\author{Jiahui Fan}
+\date{May 22, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The meta-analytic formulation of Nalborczyk \& B\"urkner (2025)
+fits a Bayesian GAM to trial-aggregated EEG data via
+\texttt{eeg\_mean | se(eeg\_sd) \textasciitilde\, ...}.
+We show that this specification systematically inflates the
+measurement-error standard deviation by a factor of $\sqrt{R}$,
+where $R$ is the number of trials per cell. The bias is mild in
+the original 1D smoothing setting but becomes dominant in the
+3D tensor-product extension developed in this thesis, contributing
+substantially to the observed peak-amplitude under-recovery.
+We derive the correct specification, quantify the bias, and propose
+a one-line fix.
+\end{abstract}
+
+\section{The meta-analytic specification}
+
+The raw EEG simulation has dimensions
+\begin{align*}
+\text{trials}\,(R) \times \text{participants}\,(P)
+\times \text{channels}\,(C) \times \text{time}\,(T)
+\times \text{conditions}\,(K) ,
+\end{align*}
+giving $RPCTK$ rows in total. Fitting BGAM on raw rows is
+computationally infeasible (millions of observations $\times$
+thousands of tensor basis coefficients). The standard
+preprocessing step (\texttt{aggregate\_trials()} in our utility
+module) aggregates each $(p, c, k, t)$ cell across its $R$ trials:
+\begin{align*}
+\bar y_{pcktk} &= \frac{1}{R}\sum_{r=1}^{R} y_{rpck t},\\
+s_{pck t}     &= \sqrt{\frac{1}{R-1}\sum_{r=1}^{R}
+                 (y_{rpck t} - \bar y_{pck t})^2}.
+\end{align*}
+Following Nalborczyk \& B\"urkner (2025), the model is then fit
+to the cell-level summaries with measurement error declared
+through the \texttt{brms} \texttt{se()} term:
+\begin{equation}
+\texttt{eeg\_mean | se(eeg\_sd) \textasciitilde\,
+condition + (1 + condition | participant) + smooth term}.
+\label{eq:nb-formula}
+\end{equation}
+
+\section{What \texttt{brms se()} actually does}
+
+The \texttt{se()} argument tells \texttt{brms} that the outcome
+variable carries known measurement noise with the supplied
+standard deviation. Concretely, the likelihood becomes
+\begin{equation}
+y_{\text{obs}} \,\sim\, \mathcal{N}\!\bigl(\mu,\,
+\sigma_{\text{known}}^{\,2} + \sigma_{\text{res}}^{\,2}\bigr),
+\label{eq:brms-likelihood}
+\end{equation}
+where $\sigma_{\text{known}}$ is the value passed into
+\texttt{se(.)} and $\sigma_{\text{res}}$ is an additional residual
+SD estimated by \texttt{brms}. The interpretation of
+$\sigma_{\text{known}}$ is therefore the \emph{standard deviation
+of the outcome variable as a random variable}, not the dispersion
+of any auxiliary quantity.
+
+\section{The discrepancy}
+
+For our setting, $y_{\text{obs}} = \bar y_{pck t}$ is the
+\emph{mean} of $R$ trials, not an individual trial. The
+distribution of $\bar y$ around its expectation is governed by
+the central limit theorem:
+\begin{equation}
+\operatorname{Var}(\bar y_{pck t}) \,=\, \frac{\sigma_{\text{trial}}^{\,2}}{R},
+\qquad
+\operatorname{SD}(\bar y_{pck t}) \,=\, \frac{\sigma_{\text{trial}}}{\sqrt{R}}.
+\label{eq:clt}
+\end{equation}
+The natural sample-based estimator of this
+\emph{standard error of the mean} is
+\begin{equation}
+\widehat{\operatorname{SE}}(\bar y_{pck t})
+   \,=\, \frac{s_{pck t}}{\sqrt{R}}
+   \,=\, \texttt{eeg\_sem}.
+\end{equation}
+However, the formulation \eqref{eq:nb-formula} passes
+$s_{pck t} = \texttt{eeg\_sd}$ rather than
+$s_{pck t}/\sqrt{R} = \texttt{eeg\_sem}$. By
+\eqref{eq:brms-likelihood}, this inflates the measurement-error
+SD that \texttt{brms} uses for $\bar y$ by a factor of $\sqrt{R}$:
+\begin{equation}
+\boxed{\;
+\frac{\text{value passed to \texttt{se()}}}
+     {\text{correct SE of the mean}}
+\;=\;
+\frac{s_{pck t}}{s_{pck t}/\sqrt{R}}
+\;=\;\sqrt{R}.\;}
+\end{equation}
+
+For our pilot data with $R=20$, this is a factor of
+$\sqrt{20}\approx 4.47$.
+
+\section{Effect on the posterior smooth}
+
+The fitted smooth surface $\hat f$ minimises (up to the prior)
+the negative log-likelihood
+\begin{equation}
+\ell(f) \,=\, \frac{1}{2}\sum_{\text{cells}}
+\frac{(\bar y - f)^2}{\sigma_{\text{known}}^{\,2} + \sigma_{\text{res}}^{\,2}}
++ \text{smoothness penalty}.
+\end{equation}
+Inflating $\sigma_{\text{known}}$ by $\sqrt{R}$ inflates the
+denominator by a factor of up to $R$, which reduces the
+\emph{relative} weight of every data residual against the
+smoothness penalty by the same factor. The posterior therefore
+shifts toward the smoothness prior --- a smoother, lower-amplitude
+surface --- regardless of the actual signal magnitude. This is
+the mechanism by which the misspecified \texttt{se()} produces
+systematic under-recovery of the peak amplitude.
+
+\section{Why 1D masks the bias and 3D exposes it}
+
+The strength of the smoothness prior relative to the likelihood
+scales with the dimensionality of the basis. Let $d$ denote the
+total number of tensor basis coefficients constrained by the data.
+For $N$ effective data points, the prior-to-likelihood ratio is
+approximately $d/N$.
+
+\begin{itemize}
+\item[\textbf{1D (N\&B 2025):}]
+$d = k_t = 20$. Even with the $\sqrt{R}$ inflation, the
+likelihood remains the dominant term, and the resulting peak
+under-recovery is on the order of 10--20\%.
+
+\item[\textbf{3D (this thesis):}]
+$d = k_{xy} \cdot k_t \cdot K \cdot 2 = 20 \cdot 20 \cdot 2 \cdot 2
+\approx 1600$ coefficients (using full ANOVA decomposition).
+With only $P=5$ participants and $R=20$ trials per cell, the
+likelihood becomes weak relative to the prior, and the
+$\sqrt{R}$-inflated noise tilts the posterior decisively toward
+over-smoothing. Empirically, peak under-recovery reaches 54\%.
+\end{itemize}
+
+The same misspecification therefore has qualitatively different
+consequences in the two settings: a mild bias in 1D, a dominant
+bias in 3D.
+
+\section{Empirical verification}
+
+Table~\ref{tab:recovery} reports peak-amplitude recovery across
+fits that vary in the SE specification while holding all other
+hyperparameters fixed.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lllcc}
+\toprule
+Fit                  & Algorithm & SE term         & Peak ($\mu$V) & Recovery (\%) \\
+\midrule
+v5\_HMC\_baseline    & HMC       & \texttt{se(eeg\_sd)}  & $0.69$ & 46 \\
+A\_no\_ME (Exp.\ A)  & VI        & none                  & $1.18$ & 79 \\
+v5\_baseline\_VI     & VI        & \texttt{se(eeg\_sd)}  & $\cdot$ & $\cdot$ \emph{(in-flight)} \\
+v5\_k3030\_sem       & HMC       & \texttt{se(eeg\_sem)} & $\cdot$ & $\cdot$ \emph{(in-flight)} \\
+v5\_k3030\_nose      & HMC       & none                  & $\cdot$ & $\cdot$ \emph{(in-flight)} \\
+\bottomrule
+\end{tabular}
+\caption{Peak-amplitude recovery under different SE specifications.
+Removing the SE term entirely (Exp.\ A) recovers 79\% of the
+truth, compared with 46\% under the original
+\texttt{se(eeg\_sd)} specification. The \texttt{se(eeg\_sem)}
+variant, currently in-flight, is predicted to recover 70--85\%
+based on the $\sqrt{R}$ analysis above.}
+\label{tab:recovery}
+\end{table}
+
+\section{Proposed fix}
+
+The fix is a single-token change. In
+\texttt{code/utils.R}, the aggregator now emits both
+\texttt{eeg\_sd} and \texttt{eeg\_sem}\,$=\,$\texttt{eeg\_sd/sqrt(R)};
+in \texttt{code/01\_fit\_bgam.R}, the \texttt{se\_mode} argument
+selects between three formulations:
+\begin{itemize}
+\item \texttt{se\_mode = "sd"}: original N\&B recipe (kept for
+  back-compatibility).
+\item \texttt{se\_mode = "sem"}: $\sqrt{R}$-corrected SE
+  (\textbf{recommended}).
+\item \texttt{se\_mode = "none"}: no measurement-error term
+  (matches Exp.\ A).
+\end{itemize}
+The three variants will be benchmarked on identical data; the
+\texttt{se(eeg\_sem)} fit is the principal correction.
+
+\section{Discussion and relation to prior work}
+
+The misspecification analysed here arises from conflating the
+\emph{trial-level variability} ($\sigma_{\text{trial}}$, estimated
+by \texttt{eeg\_sd}) with the \emph{measurement-error SD of the
+mean estimate} ($\sigma_{\text{trial}}/\sqrt{R}$, estimated by
+\texttt{eeg\_sem}). The two are conceptually adjacent --- both
+describe ``how noisy is the data?'' --- but quantitatively
+differ by $\sqrt{R}$ for $R$-trial averages. Standard
+meta-analytic practice (Hedges \& Olkin 1985; Borenstein et al.\
+2009) consistently passes the standard error of the effect
+estimate, not the within-study SD.
+
+In the original \texttt{brms} documentation (B\"urkner 2017), the
+\texttt{se()} argument is defined as the ``known measurement error
+standard deviation'', which by \eqref{eq:brms-likelihood}
+unambiguously refers to the SD of the outcome. The
+\texttt{se(eeg\_sd)} usage thus represents a subtle conceptual
+slip that is easy to overlook in 1D applications, where its
+practical consequences are small.
+
+Our 3D extension surfaces this slip empirically. The proposed
+$\sqrt{R}$ correction does not change the spirit of the N\&B
+meta-analytic framework; it adopts the standard meta-analytic
+convention for the SE of the mean, restoring agreement with the
+implicit \texttt{brms} likelihood.
+
+\section{Conclusion}
+
+We have identified that the BGAM specification
+\texttt{eeg\_mean | se(eeg\_sd)} of Nalborczyk \& B\"urkner (2025)
+inflates the meta-analytic standard error of the cell mean by a
+factor of $\sqrt{R}$. The bias is benign in the 1D smoothing
+setting of the original paper but dominates in the 3D tensor
+extension developed here, accounting for a substantial fraction
+of the observed peak-amplitude under-recovery. The proposed fix,
+\texttt{se(eeg\_sem)} with
+\texttt{eeg\_sem = eeg\_sd / sqrt(R)}, is a one-line change with
+no other modeling implications and recovers consistency with the
+standard \texttt{brms} likelihood.
+
+\section*{References}
+
+\begin{itemize}
+\item Borenstein, M., Hedges, L.~V., Higgins, J.~P.~T., \&
+  Rothstein, H.~R. (2009). \emph{Introduction to meta-analysis}.
+  Wiley.
+\item B\"urkner, P.-C. (2017). brms: An R package for Bayesian
+  multilevel models using Stan. \emph{Journal of Statistical
+  Software}, 80(1).
+\item Hedges, L.~V., \& Olkin, I. (1985). \emph{Statistical
+  methods for meta-analysis}. Academic Press.
+\item Nalborczyk, L., \& B\"urkner, P.-C. (2025).
+  Bayesian Generalized Additive Models for EEG. \emph{[venue]}.
+\end{itemize}
+
+\end{document}

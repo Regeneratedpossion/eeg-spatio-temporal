@@ -16,16 +16,23 @@ fit_bgam <- function(sim_data,
     sim_data_model <- aggregate_trials(sim_data)
     contrasts(sim_data_model$condition) <- c(-0.5, 0.5)
 
+    bgam_formula <- bf(as.formula(sprintf(
+        paste(
+            "eeg_mean | se(eeg_sem) ~",
+            "condition +",
+            "(1 + condition | participant) +",
+            "t2(xproj, yproj, time,",
+            "by = condition,",
+            "bs = c('tp', 'tp'),",
+            "k = c(%d, %d),",
+            "d = c(2, 1),",
+            "full = %s)"
+        ),
+        k_xy, k_t, as.character(full)
+    )))
+
     bgam_fit <- brm(
-        formula = eeg_mean | se(eeg_sem) ~
-        condition +
-        (1 + condition | participant) +
-        t2(xproj, yproj, time,
-        by = condition,
-        bs = c("tp", "tp"),
-        k = c(k_xy, k_t),
-        d = c(2, 1),
-        full = full),
+        formula = bgam_formula,
         data = sim_data_model,
         family = gaussian(),
         chains = 4,

@@ -12,7 +12,7 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=fjhmrqx@126.com
 
-# Run from project root: sbatch slurm/run_montecarlo_n20.sh
+# Run from project root: sbatch slurm/run_montecarlo_n20_hard_sem.sh
 mkdir -p logs
 
 module load R/4.4.2-gcc141-base

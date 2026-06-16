@@ -131,7 +131,6 @@ K_T=12
 - `code/02_diagnostics.R`: detailed single-fit diagnostics.
 - `code/check_env.R`: checks R/Python packages and project resources.
 - `code/compute_trial_effective_sample_size.R`: trial-correlation check.
-- `code/run_montecarlo.R`: legacy runner kept only for old scripts.
 
 ## Files Not Uploaded
 

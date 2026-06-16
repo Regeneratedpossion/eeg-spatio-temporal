@@ -256,5 +256,4 @@ if (!interactive() && sys.nframe() == 0) {
     pilot <- make_dataset(seed = 42)
     saveRDS(pilot$sim_data, data_path("sim_data_pilot.rds"))
     saveRDS(pilot$ground_truth, data_path("ground_truth_pilot.rds"))
-    cat("For preview plots, run: Rscript code/plot_pilot_preview.R\n")
 }

@@ -251,37 +251,41 @@ the participant count is larger.
 
 ### Cluster Status Snapshot
 
-Checked on `gw01` at `2026-06-15 19:23 CEST`. These jobs were still running.
-All listed jobs were still in `Step 2/3: fit BGAM`; no `sim_*.csv` comparison
-files or `bgam_summary_*.rds` files had been written yet.
+Checked on `gw01` at `2026-06-16 14:36 CEST`. The active jobs are still in
+`Step 2/3: fit BGAM`; no `sim_*.csv` comparison files or
+`bgam_summary_*.rds` files had been written yet.
 
 ```text
 bgam_mc_n20_hard_sem
   30 array tasks, P=20 hard-threshold SEM, k=(20,20), full=FALSE
-  runtime: about 2 days 1-2 hours; time limit: 10 days
-  sampled progress: still in warmup, around 100 / 3000 iterations (3%)
+  state: RUNNING on ultralong
+  runtime: about 2 days 21 hours; time limit: 10 days
+  sampled progress: still in warmup, around 100-200 / 3000 iterations (3-6%)
 
 bgam_mc_n20_hard_sem_k1212
   3 array tasks, P=20 hard-threshold SEM, k=(12,12), full=FALSE
-  runtime: about 1 day 5 hours to 2 days 1 hour; time limit: 10 days
-  sampled progress: still in warmup, around 200-300 / 3000 iterations (6-10%)
+  state: RUNNING on ultralong
+  runtime: about 2 days to 2 days 20 hours; time limit: 10 days
+  sampled progress: still in warmup, around 300-600 / 3000 iterations (10-20%)
 
 bgam_mc_p5_hard_sem
   1 task, P=5 hard-threshold SEM, k=(20,20), full=FALSE
-  runtime: about 1 day 5 hours; time limit: 2 days
-  sampled progress: still in warmup, around 300-400 / 3000 iterations (10-13%)
-  status note: timeout risk
+  previous long-queue job was cancelled; first ultralong resubmission failed
+  because the formula could not find k_xy/k_t
+  code fixed and resubmitted as job 39882029
+  state: PENDING on ultralong; time limit: 10 days
 
 bgam_mc_p10_hard_sem
   1 task, P=10 hard-threshold SEM, k=(20,20), full=FALSE
-  runtime: about 1 day 5 hours; time limit: 2 days
-  sampled progress: still in warmup, around 100 / 3000 iterations (3%)
-  status note: high timeout risk
+  previous long-queue job timed out after 2 days at about 200 / 3000 warmup
+  resubmitted as job 39882034
+  state: PENDING on ultralong; time limit: 10 days
 
 bgam_n20_r20_reff14
   single P=20, R=20 effective-R sensitivity fit with R_eff=14
-  runtime: about 5 days 15 hours; time limit: 10 days
-  sampled progress: still in warmup, around 400-500 / 3000 iterations (13-16%)
+  state: RUNNING on ultralong
+  runtime: about 6 days 10 hours; time limit: 10 days
+  sampled progress: still in warmup, around 600-700 / 3000 iterations (20-23%)
 ```
 
 The SSH logs for the currently running Monte Carlo jobs show `alpha = 0.050`.

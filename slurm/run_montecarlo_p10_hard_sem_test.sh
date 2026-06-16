@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=bgam_mc_p10_hard_sem
-#SBATCH --partition=long
+#SBATCH --partition=ultralong
 #SBATCH --array=1-1
-#SBATCH --time=2-00:00:00
+#SBATCH --time=10-00:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16

@@ -15,6 +15,7 @@ mkdir -p logs
 module load R/4.4.2-gcc141-base
 
 export PROJECT_ROOT=/work/smjifan1/bgam_eeg_project
+export MC_N_PPT=20
 export MC_DATA_SUBDIR=montecarlo_n20_hard
 
 cd "$PROJECT_ROOT"

@@ -1,8 +1,9 @@
 # BGAM Spatio-Temporal EEG Inference
 
 Bayesian generalised additive modelling for detecting simulated EEG effects
-over electrode space and time. The current main pipeline uses a hard-threshold
-spatial signal, trial-mean SEM measurement error, and a 2D spatio-temporal BGAM.
+over electrode space and time. The current main pipeline uses a continuous
+Gaussian spatial signal, hard-thresholded active-electrode labels, trial-mean
+SEM measurement error, and a 2D spatio-temporal BGAM.
 
 The repository is intentionally lightweight. Generated `.rds` data, fitted
 models, figures, logs, and CmdStan cache files are not uploaded to GitHub.
@@ -17,7 +18,7 @@ bgam_eeg_project/
 │
 ├── code/
 │   ├── 00_generate_data.R              # one simulated EEG dataset
-│   ├── 00_generate_montecarlo.R        # 30 Monte Carlo datasets, P=20, R=20
+│   ├── 00_generate_montecarlo.R        # Monte Carlo datasets
 │   ├── 01_fit_bgam.R                   # SEM BGAM model
 │   ├── 02_diagnostics.R                # single-fit diagnostics
 │   ├── 03_compare_methods.R            # single-simulation method comparison
@@ -28,6 +29,7 @@ bgam_eeg_project/
 │   ├── 08_slide_topomap_n20.R
 │   ├── 09_run_montecarlo_sem.R         # one Slurm array task
 │   ├── 10_prior_predictive_check.R
+│   ├── 11_basis_screening.R            # short tp/ps and k screening
 │   └── utils.R                         # paths, thresholds, shared helpers
 │
 ├── resources/
@@ -60,8 +62,9 @@ Run commands from the project root. `PROJECT_ROOT` is optional because scripts
 fall back to the current working directory.
 
 ```bash
-# 1. Generate 30 hard-threshold Monte Carlo datasets, P=20 and R=20.
-MC_DATA_SUBDIR=montecarlo_n20_hard Rscript code/00_generate_montecarlo.R
+# 1. Generate 30 Monte Carlo datasets, P=20 and R=20.
+MC_N_PPT=20 MC_DATA_SUBDIR=montecarlo_n20_hard \
+Rscript code/00_generate_montecarlo.R 30
 
 # 2. Run one simulation locally, or submit the Slurm array version.
 MC_DATA_SUBDIR=montecarlo_n20_hard \
@@ -96,12 +99,13 @@ K_XY=12 K_T=12 Rscript code/09_run_montecarlo_sem.R 1
 
 `code/00_generate_data.R` creates two-condition EEG data with:
 
-- participants: `P = 20` in the Monte Carlo generator;
+- participants: `P = 20` by default in the Monte Carlo generator;
 - trials per participant: `R = 20`;
 - sampling rate: 500 Hz, downsampled to 100 Hz;
 - true signal window: 160-342 ms;
 - seed electrode: `CZ`;
-- spatial signal: Gaussian around `CZ`, hard-thresholded at one spatial SD;
+- spatial signal: continuous Gaussian around `CZ`;
+- active-electrode labels: electrodes within one spatial SD of `CZ`;
 - noise: temporal EEG-like noise plus spatially correlated sensor noise.
 
 Ground truth stores the true onset, offset, seed electrode, active electrodes,

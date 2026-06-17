@@ -251,42 +251,62 @@ the participant count is larger.
 
 ### Cluster Status Snapshot
 
-Checked on `gw01` at `2026-06-16 14:36 CEST`. The active jobs are still in
+Checked on `gw01` at `2026-06-17 13:37 CEST`. The active jobs are still in
 `Step 2/3: fit BGAM`; no `sim_*.csv` comparison files or
 `bgam_summary_*.rds` files had been written yet.
 
 ```text
 bgam_mc_n20_hard_sem
-  30 array tasks, P=20 hard-threshold SEM, k=(20,20), full=FALSE
+  30 array tasks, P=20 hard-injection SEM, k=(20,20), full=FALSE
   state: RUNNING on ultralong
-  runtime: about 2 days 21 hours; time limit: 10 days
+  runtime: about 3 days 19 hours; time limit: 10 days
   sampled progress: still in warmup, around 100-200 / 3000 iterations (3-6%)
 
 bgam_mc_n20_hard_sem_k1212
-  3 array tasks, P=20 hard-threshold SEM, k=(12,12), full=FALSE
+  3 array tasks, P=20 hard-injection SEM, k=(12,12), full=FALSE
   state: RUNNING on ultralong
-  runtime: about 2 days to 2 days 20 hours; time limit: 10 days
-  sampled progress: still in warmup, around 300-600 / 3000 iterations (10-20%)
+  runtime: about 2 days 23 hours to 3 days 19 hours; time limit: 10 days
+  sampled progress: still in warmup, around 500-900 / 3000 iterations (16-30%)
 
 bgam_mc_p5_hard_sem
-  1 task, P=5 hard-threshold SEM, k=(20,20), full=FALSE
-  previous long-queue job was cancelled; first ultralong resubmission failed
-  because the formula could not find k_xy/k_t
-  code fixed and resubmitted as job 39882029
-  state: PENDING on ultralong; time limit: 10 days
+  1 task, P=5 hard-injection SEM, k=(20,20), full=FALSE
+  job 39882029
+  state: RUNNING on ultralong
+  runtime: about 20 hours; time limit: 10 days
+  sampled progress: still in warmup, around 100-200 / 3000 iterations (3-6%)
 
 bgam_mc_p10_hard_sem
-  1 task, P=10 hard-threshold SEM, k=(20,20), full=FALSE
+  1 task, P=10 hard-injection SEM, k=(20,20), full=FALSE
   previous long-queue job timed out after 2 days at about 200 / 3000 warmup
-  resubmitted as job 39882034
+  job 39882034
+  state: RUNNING on ultralong
+  runtime: about 6 hours; time limit: 10 days
+  sampled progress: still in warmup, around 1 / 3000 iterations
+
+bgam_mc_p5_gauss_hl_sem
+  1 task, P=5 continuous Gaussian signal + hard-threshold labels
+  SEM, k=(20,20), full=FALSE
+  job 39883318
   state: PENDING on ultralong; time limit: 10 days
+
+bgam_basis_p5
+  4 screening tasks, P=5 continuous Gaussian signal + hard-threshold labels
+  SEM, full=FALSE, iter=200, warmup=100
+  compares k=(12,12)/(20,20) and bs=tp/ps
+  job 39883321_[1-4]
+  state: PENDING on ultralong; time limit: 2 days
 
 bgam_n20_r20_reff14
   single P=20, R=20 effective-R sensitivity fit with R_eff=14
   state: RUNNING on ultralong
-  runtime: about 6 days 10 hours; time limit: 10 days
-  sampled progress: still in warmup, around 600-700 / 3000 iterations (20-23%)
+  runtime: about 7 days 8 hours; time limit: 10 days
+  sampled progress: still in warmup, around 700-900 / 3000 iterations (23-30%)
 ```
+
+The original `montecarlo_*_hard` datasets used a hard-thresholded signal
+injection. The current generator has been corrected so that the simulated
+signal remains a continuous Gaussian spatial profile, while active electrodes
+are hard-thresholded only in the ground-truth labels.
 
 The SSH logs for the currently running Monte Carlo jobs show `alpha = 0.050`.
 The pilot FP/FN slide above reports the completed pilot diagnosis at

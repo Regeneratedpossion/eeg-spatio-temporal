@@ -79,7 +79,8 @@ load_noise_and_erp_assets <- function() {
 # -------------------------------------------------------
 
 # Part A: spatial weights for the true signal.
-# Signal is centred at CZ. Electrodes inside the one-SD radius keep their Gaussian weight; electrodes outside this radius get weight 0.
+# The simulated signal uses a continuous Gaussian spatial profile.
+# Active electrodes are hard-thresholded later only for evaluation.
 
 compute_spatial_weights <- function(sensors, params) {
     seed_coord <- sensors %>%
@@ -91,11 +92,7 @@ compute_spatial_weights <- function(sensors, params) {
                                     (yproj - seed_coord$yproj)^2),
             spatial_weight_raw = exp(-(spatial_distance^2) /
                                      (2 * params$sigma_space^2)),
-            spatial_weight = if_else(
-                spatial_distance <= params$sigma_space,
-                spatial_weight_raw,
-                0
-            )
+            spatial_weight = spatial_weight_raw
         )
 }
 

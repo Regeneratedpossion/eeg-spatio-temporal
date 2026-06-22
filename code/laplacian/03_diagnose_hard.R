@@ -16,16 +16,15 @@ temporal_recovery_pass <- function(times, seed_odds, ground_truth) {
 }
 
 posterior_cell_summaries <- function(effect_array) {
+    prob_above_rope <- apply(effect_array > ROPE_UV, c(2, 3), mean)
+    min_prob <- 1 / dim(effect_array)[1]
+
     list(
         mean = apply(effect_array, c(2, 3), mean),
         lower = apply(effect_array, c(2, 3), quantile, probs = 0.025),
-        prob_above_rope = apply(effect_array > ROPE_UV, c(2, 3), mean)
+        odds = pmax(prob_above_rope, min_prob) /
+            pmax(1 - prob_above_rope, min_prob)
     )
-}
-
-probability_to_odds <- function(probability, n_draws) {
-    min_prob <- 1 / n_draws
-    pmax(probability, min_prob) / pmax(1 - probability, min_prob)
 }
 
 run_hard_diagnostics <- function() {
@@ -45,11 +44,9 @@ run_hard_diagnostics <- function() {
 
     # Posterior probability: mean(draws > ROPE_UV).
     posterior <- posterior_cell_summaries(effect_array)
-    odds_mat <- probability_to_odds(posterior$prob_above_rope,
-                                    n_draws = dim(effect_array)[1])
 
     # Temporal recovery at the seed electrode.
-    temporal_pass <- temporal_recovery_pass(times, odds_mat[, seed_idx], gt)
+    temporal_pass <- temporal_recovery_pass(times, posterior$odds[, seed_idx], gt)
 
     # Spatial recovery at the true peak time.
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
@@ -62,7 +59,7 @@ run_hard_diagnostics <- function() {
     )
 
     # Spatiotemporal recovery over all channel x time cells.
-    pred_active <- odds_mat > ODDS_THRESHOLD
+    pred_active <- posterior$odds > ODDS_THRESHOLD
     truth_active <- outer(times >= gt$true_onset & times <= gt$true_offset,
                           active_channels, `&`)
     st_F1 <- f1_score(

@@ -73,14 +73,13 @@ run_hard_diagnostics <- function() {
 
     # 6. Amplitude recovery:
     # compare posterior peak/window amplitude with the known simulated truth.
-    seed_effect <- effect_array[, , seed_idx]
-    seed_peak_draws <- effect_array[, peak_idx, seed_idx]
+    seed_draws <- effect_array[, , seed_idx]
+    seed_peak_draws <- seed_draws[, peak_idx]
     window_idx <- which(times >= gt$true_onset & times <= gt$true_offset)
-    window_draws <- rowMeans(seed_effect[, window_idx, drop = FALSE])
-    truth_time <- seq(gt$true_onset, gt$true_offset, length.out = 5000)
-    truth_mean <- mean(truth_temporal_bump(truth_time, gt))
-    cz_neighbours <- c("CZ", "FCZ", "CPZ", "C1", "C2", "FC1", "FC2",
-                       "CP1", "CP2", "Cz", "FCz", "CPz")
+    window_draws <- rowMeans(seed_draws[, window_idx, drop = FALSE])
+    truth_mean <- mean(truth_temporal_bump(
+        seq(gt$true_onset, gt$true_offset, length.out = 5000), gt
+    ))
 
     # 7. Convergence and top-channel checks.
     convergence_pass <- max(rec$conv_summary$n_divergent, na.rm = TRUE) == 0 &&

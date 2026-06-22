@@ -25,6 +25,8 @@ warmup <- 1000L
 time_k <- 10L
 adapt_delta <- 0.999
 max_treedepth <- 13L
+cz_neighbours <- c("CZ", "FCZ", "CPZ", "C1", "C2", "FC1", "FC2",
+                   "CP1", "CP2", "Cz", "FCz", "CPz")
 
 model_formula <- bf(score | se(score_sem) ~
                         condition +

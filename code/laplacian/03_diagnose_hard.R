@@ -21,9 +21,18 @@ run_hard_diagnostics <- function() {
     f1_score <- function(TP, FP, FN) 2 * TP / (2 * TP + FP + FN)
 
     # Posterior summaries for each time x channel cell.
-    posterior_mean <- apply(effect_array, c(2, 3), mean)
-    posterior_lower <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
-    prob_above_rope <- apply(effect_array > ROPE_UV, c(2, 3), mean)
+    posterior_mean <- matrix(NA_real_, length(times), length(channels))
+    posterior_lower <- matrix(NA_real_, length(times), length(channels))
+    prob_above_rope <- matrix(NA_real_, length(times), length(channels))
+
+    for (t in seq_along(times)) {
+        for (ch in seq_along(channels)) {
+            draws <- effect_array[, t, ch]
+            posterior_mean[t, ch] <- mean(draws)
+            posterior_lower[t, ch] <- quantile(draws, 0.025)
+            prob_above_rope[t, ch] <- mean(draws > ROPE_UV)
+        }
+    }
 
     # Convert posterior probability to odds, avoiding exact 0 or Inf.
     min_prob <- 1 / dim(effect_array)[1]
@@ -34,9 +43,12 @@ run_hard_diagnostics <- function() {
     clusters <- find_clusters(times, odds_mat[, seed_idx], ODDS_THRESHOLD)
     onset_est <- clusters$cluster_onset[1]
     offset_est <- clusters$cluster_offset[1]
-    temporal_pass <- !is.na(onset_est) &&
-        abs((onset_est - gt$true_onset) * 1000) <= BIAS_TOLERANCE_MS &&
-        abs((offset_est - gt$true_offset) * 1000) <= BIAS_TOLERANCE_MS
+    temporal_error_ms <- abs(c(
+        onset_est - gt$true_onset,
+        offset_est - gt$true_offset
+    )) * 1000
+    temporal_error_ms[is.na(temporal_error_ms)] <- Inf
+    temporal_pass <- max(temporal_error_ms) <= BIAS_TOLERANCE_MS
 
     # Spatial recovery at the true peak time.
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)

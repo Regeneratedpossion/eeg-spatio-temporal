@@ -29,3 +29,18 @@ model_formula <- bf(score | se(score_sem) ~
                         condition +
                         s(time, by = condition, k = time_k) +
                         (1 + condition | participant))
+
+# Shared ground-truth temporal signal used by the diagnostics.
+truth_temporal_bump <- function(time, ground_truth) {
+    peak_t <- 0.250
+    sigma_t <- 0.050
+    cutoff <- 1.5
+
+    z <- (time - peak_t) / sigma_t
+    raw <- exp(-0.5 * pmin(abs(z), cutoff)^2)
+    baseline <- exp(-0.5 * cutoff^2)
+    bump <- pmax((raw - baseline) / (1 - baseline), 0)
+
+    bump[time < ground_truth$true_onset | time > ground_truth$true_offset] <- 0
+    ground_truth$bump_amplitude * bump
+}

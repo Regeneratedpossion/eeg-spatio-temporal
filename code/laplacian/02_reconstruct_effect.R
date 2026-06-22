@@ -6,18 +6,6 @@
 # bases reconstructs the posterior effect map.
 ###########################################################
 
-truth_temporal_bump <- function(time, ground_truth) {
-    peak_t <- 0.250
-    sigma_t <- 0.050
-    z <- (time - peak_t) / sigma_t
-    val <- exp(-z^2 / 2)
-    val_trunc <- exp(-1.5^2 / 2)
-    val[abs(z) > 1.5] <- val_trunc
-    val_norm <- pmax((val - val_trunc) / (1 - val_trunc), 0)
-    val_norm[time < ground_truth$true_onset | time > ground_truth$true_offset] <- 0
-    ground_truth$bump_amplitude * val_norm
-}
-
 load_laplace_reconstruction <- function() {
     fit_dir <- file.path(project_root(), "results", out_subdir)
     adapt_tag <- gsub("\\.", "p", as.character(adapt_delta))

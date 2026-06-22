@@ -114,9 +114,10 @@ Full BGAM k = (12,12):
 
 Laplacian low-rank basis:
 
-- Fit code: `code/12_laplacian_basis_brms_fixed.R`
-- Hard-threshold diagnostic: `code/13_laplacian_recovery_diagnostics.R`
-- Continuous recovery diagnostic: `code/14_laplacian_continuous_recovery.R`
+- Single workflow code: `code/12_laplacian_basis_brms_fixed.R`
+  - `LAPLACE_ACTION=fit`
+  - `LAPLACE_ACTION=diagnose_hard`
+  - `LAPLACE_ACTION=diagnose_continuous`
 - Main note: `notes/laplacian_k20_constant_result.md`
 - Slurm:
   - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_long.sh`

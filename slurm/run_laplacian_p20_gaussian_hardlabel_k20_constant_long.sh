@@ -26,6 +26,7 @@ export LAPLACE_WARMUP=1000
 export LAPLACE_ADAPT_DELTA=0.999
 export LAPLACE_MAX_TREEDEPTH=13
 export LAPLACE_OUT_SUBDIR=laplacian_basis_brms_p20_gaussian_hardlabel_constant_long/k20
+export LAPLACE_ACTION=fit
 
 cd "$PROJECT_ROOT"
 Rscript code/12_laplacian_basis_brms_fixed.R

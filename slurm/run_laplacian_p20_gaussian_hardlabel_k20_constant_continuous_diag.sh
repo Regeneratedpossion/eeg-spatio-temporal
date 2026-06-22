@@ -22,6 +22,7 @@ export LAPLACE_WARMUP=1000
 export LAPLACE_ADAPT_TAG=0p999
 export LAPLACE_TAG_SUFFIX=constant
 export LAPLACE_FIT_SUBDIR=laplacian_basis_brms_p20_gaussian_hardlabel_constant_long/k20
+export LAPLACE_ACTION=diagnose_continuous
 
 cd "$PROJECT_ROOT"
-Rscript code/14_laplacian_continuous_recovery.R
+Rscript code/12_laplacian_basis_brms_fixed.R

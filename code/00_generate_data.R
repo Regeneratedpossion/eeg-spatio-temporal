@@ -37,15 +37,21 @@ define_simulation_parameters <- function() {
         seed_electrode = "CZ",
         sigma_space = 0.5,
         bump_amplitude = 1.5,
-        rho = 0.15
+        rho = 0.15,
+        signal_mode = "continuous_label"
     )
 }
 
 default_params <- define_simulation_parameters()
 
-simulation_parameters <- function(n_ppt = default_params$n_ppt) {
+simulation_parameters <- function(n_ppt = default_params$n_ppt,
+                                  signal_mode = Sys.getenv(
+                                      "MC_SIGNAL_MODE",
+                                      default_params$signal_mode
+                                  )) {
     params <- default_params
     params$n_ppt <- n_ppt
+    params$signal_mode <- signal_mode
     params$ronset <- params$ronset_ms
     params$true_onset <- params$true_onset_sec
     params$true_offset <- params$true_offset_sec
@@ -79,20 +85,36 @@ load_noise_and_erp_assets <- function() {
 # -------------------------------------------------------
 
 # Part A: spatial weights for the true signal.
-# The simulated signal uses a continuous Gaussian spatial profile.
-# Active electrodes are hard-thresholded later only for evaluation.
+# `continuous_label`: continuous Gaussian signal; threshold only labels active electrodes.
+# `hard_signal`: thresholded Gaussian signal; outside-threshold weights are set to 0.
 
 compute_spatial_weights <- function(sensors, params) {
+    stopifnot(params$signal_mode %in% c("continuous_label", "hard_signal"))
+
     seed_coord <- sensors %>%
         filter(channel == params$seed_electrode)
 
-    sensors %>%
+    sensors <- sensors %>%
         mutate(
             spatial_distance = sqrt((xproj - seed_coord$xproj)^2 +
                                     (yproj - seed_coord$yproj)^2),
             spatial_weight_raw = exp(-(spatial_distance^2) /
-                                     (2 * params$sigma_space^2)),
-            spatial_weight = spatial_weight_raw
+                                     (2 * params$sigma_space^2))
+        )
+
+    active_threshold <- mean(sensors$spatial_weight_raw) +
+        sd(sensors$spatial_weight_raw)
+
+    sensors %>%
+        mutate(
+            active_threshold = active_threshold,
+            signal_mode = params$signal_mode,
+            spatial_weight = if_else(
+                params$signal_mode == "hard_signal" &
+                    spatial_weight_raw < active_threshold,
+                0,
+                spatial_weight_raw
+            )
         )
 }
 
@@ -214,7 +236,10 @@ downsample_dataset <- function(sim_data, params) {
 }
 
 # Save ground-truth values for evaluation.
+# Active-electrode threshold = mean(spatial_weight_raw) + sd(spatial_weight_raw).
 build_ground_truth <- function(params, sensors) {
+    active_threshold <- unique(sensors$active_threshold)
+
     list(
         true_onset = params$true_onset,
         true_offset = params$true_offset,
@@ -224,9 +249,11 @@ build_ground_truth <- function(params, sensors) {
         rho = params$rho,
         outvar = params$outvar,
         downsample_factor = params$downsample_factor,
+        signal_mode = params$signal_mode,
+        active_threshold = active_threshold,
         all_channels = sensors$channel,
         active_electrodes = sensors %>%
-            filter(spatial_distance <= params$sigma_space) %>%
+            filter(spatial_weight_raw >= active_threshold) %>%
             pull(channel)
     )
 }

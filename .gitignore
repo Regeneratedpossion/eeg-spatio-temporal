@@ -35,4 +35,6 @@ slides/*.pdf
 *.synctex.gz
 
 archive/
+share/
+tmp_remote_diagnostics/
 !resources/**/*.rds

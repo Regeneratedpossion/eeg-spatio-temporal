@@ -2,8 +2,9 @@
 # 00_generate_montecarlo.R
 #
 # Generate Monte Carlo datasets for later BGAM fitting and method comparison.
-# The simulated signal is continuous Gaussian; active electrodes are
-# hard-thresholded only in the ground-truth labels.
+# Signal mode is controlled by MC_SIGNAL_MODE:
+#   continuous_label = continuous Gaussian signal; threshold labels active electrodes
+#   hard_signal      = thresholded signal; outside-threshold weights are 0
 #
 # Run:
 #   Rscript code/00_generate_montecarlo.R
@@ -11,6 +12,7 @@
 # Optional settings:
 #   MC_N_PPT=20          participant count
 #   MC_DATA_SUBDIR=...   output folder under data/
+#   MC_SIGNAL_MODE=...   continuous_label or hard_signal
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))

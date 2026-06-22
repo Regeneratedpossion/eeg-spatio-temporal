@@ -201,18 +201,10 @@ message(sprintf("Wrote combined summary: %s", combined_file))
 }
 
 load_laplace_reconstruction <- function() {
-    fit_subdir <- Sys.getenv("LAPLACE_FIT_SUBDIR", "laplacian_basis_brms_fixed")
-    fit_dir <- file.path(project_root(), "results", fit_subdir)
-    data_subdir <- Sys.getenv("LAPLACE_DATA_SUBDIR",
-                              "montecarlo_p20_gaussian_hardlabel")
-    seed <- as.integer(Sys.getenv("LAPLACE_SEED", "1"))
-    adapt_tag <- Sys.getenv("LAPLACE_ADAPT_TAG", "0p999")
-    k_basis <- as.integer(Sys.getenv("LAPLACE_K", "20"))
-    iter <- as.integer(Sys.getenv("LAPLACE_ITER", "3000"))
-    warmup <- as.integer(Sys.getenv("LAPLACE_WARMUP", "1000"))
+    fit_dir <- file.path(project_root(), "results", out_subdir)
+    adapt_tag <- gsub("\\.", "p", as.character(adapt_delta))
     tag <- sprintf("laplacian_k%d_seed%03d_iter%d_warmup%d_adapt%s",
                    k_basis, seed, iter, warmup, adapt_tag)
-    tag <- paste0(tag, Sys.getenv("LAPLACE_TAG_SUFFIX", ""))
 
     summary_file <- file.path(fit_dir, "summary_all.csv")
     conv_summary <- read.csv(summary_file)

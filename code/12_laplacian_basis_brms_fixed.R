@@ -155,6 +155,96 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
     )
 }
 
+fit_one_basis <- function(compiled_fit, meta) {
+    if (is.null(compiled_fit)) {
+        return(brm(
+            formula = model_formula,
+            data = meta$score_data,
+            family = gaussian(),
+            chains = 4,
+            cores = 4,
+            iter = iter,
+            warmup = warmup,
+            seed = seed + meta$task_id,
+            threads = threading(threads = 4),
+            backend = "cmdstanr",
+            refresh = 100,
+            control = list(adapt_delta = adapt_delta,
+                           max_treedepth = max_treedepth)
+        ))
+    }
+
+    update(
+        compiled_fit,
+        newdata = meta$score_data,
+        chains = 4,
+        cores = 4,
+        iter = iter,
+        warmup = warmup,
+        seed = seed + meta$task_id,
+        refresh = 100,
+        recompile = FALSE,
+        control = list(adapt_delta = adapt_delta,
+                       max_treedepth = max_treedepth)
+    )
+}
+
+save_basis_fit <- function(fit, meta) {
+    fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d_adapt%s.rds",
+                                           meta$basis_label, iter, warmup,
+                                           gsub("\\.", "p", as.character(adapt_delta))))
+
+    saveRDS(list(
+        fit = fit,
+        basis_label = meta$basis_label,
+        basis_task = meta$task_id,
+        basis_index = meta$basis_index,
+        eigenvalue = meta$eigenvalue,
+        basis_vector = meta$basis_vector,
+        channels = channels,
+        k_basis = k_basis,
+        score_data = meta$score_data,
+        adapt_delta = adapt_delta,
+        max_treedepth = max_treedepth
+    ), fit_file)
+
+    fit_file
+}
+
+error_summary <- function(meta, start_time, error) {
+    data.frame(
+        basis_task = meta$task_id,
+        basis_label = meta$basis_label,
+        basis_index = meta$basis_index,
+        eigenvalue = meta$eigenvalue,
+        status = "error",
+        seed = seed,
+        k_basis = k_basis,
+        time_k = time_k,
+        iter = iter,
+        warmup = warmup,
+        adapt_delta = adapt_delta,
+        max_treedepth = max_treedepth,
+        elapsed_sec = as.numeric(Sys.time() - start_time, units = "secs"),
+        n_divergent = NA_integer_,
+        n_treedepth = NA_integer_,
+        max_rhat = NA_real_,
+        n_rhat_gt_1_01 = NA_integer_,
+        min_ess_bulk = NA_real_,
+        mean_ess_bulk = NA_real_,
+        min_ess_tail = NA_real_,
+        fit_file = NA_character_,
+        error = conditionMessage(error)
+    )
+}
+
+write_basis_summary <- function(result, meta) {
+    out_file <- file.path(out_dir, sprintf("summary_%s_iter%d_warmup%d_adapt%s.csv",
+                                           meta$basis_label, iter, warmup,
+                                           gsub("\\.", "p", as.character(adapt_delta))))
+    write.csv(result, out_file, row.names = FALSE)
+}
+
 fit_model <- NULL
 all_results <- list()
 
@@ -164,55 +254,9 @@ for (task_id in task_ids) {
     start_time <- Sys.time()
 
     result <- tryCatch({
-        if (is.null(fit_model)) {
-            fit <- brm(
-                formula = model_formula,
-                data = meta$score_data,
-                family = gaussian(),
-                chains = 4,
-                cores = 4,
-                iter = iter,
-                warmup = warmup,
-                seed = seed + task_id,
-                threads = threading(threads = 4),
-                backend = "cmdstanr",
-                refresh = 100,
-                control = list(adapt_delta = adapt_delta,
-                               max_treedepth = max_treedepth)
-            )
-        } else {
-            fit <- update(
-                fit_model,
-                newdata = meta$score_data,
-                chains = 4,
-                cores = 4,
-                iter = iter,
-                warmup = warmup,
-                seed = seed + task_id,
-                refresh = 100,
-                recompile = FALSE,
-                control = list(adapt_delta = adapt_delta,
-                               max_treedepth = max_treedepth)
-            )
-        }
+        fit <- fit_one_basis(fit_model, meta)
         fit_model <- fit
-
-        fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d_adapt%s.rds",
-                                               meta$basis_label, iter, warmup,
-                                               gsub("\\.", "p", as.character(adapt_delta))))
-        saveRDS(list(
-            fit = fit,
-            basis_label = meta$basis_label,
-            basis_task = meta$task_id,
-            basis_index = meta$basis_index,
-            eigenvalue = meta$eigenvalue,
-            basis_vector = meta$basis_vector,
-            channels = channels,
-            k_basis = k_basis,
-            score_data = meta$score_data,
-            adapt_delta = adapt_delta,
-            max_treedepth = max_treedepth
-        ), fit_file)
+        fit_file <- save_basis_fit(fit, meta)
 
         summarise_fit(
             fit = fit,
@@ -221,36 +265,10 @@ for (task_id in task_ids) {
             fit_file = fit_file
         )
     }, error = function(e) {
-        data.frame(
-            basis_task = meta$task_id,
-            basis_label = meta$basis_label,
-            basis_index = meta$basis_index,
-            eigenvalue = meta$eigenvalue,
-            status = "error",
-            seed = seed,
-            k_basis = k_basis,
-            time_k = time_k,
-            iter = iter,
-            warmup = warmup,
-            adapt_delta = adapt_delta,
-            max_treedepth = max_treedepth,
-            elapsed_sec = as.numeric(Sys.time() - start_time, units = "secs"),
-            n_divergent = NA_integer_,
-            n_treedepth = NA_integer_,
-            max_rhat = NA_real_,
-            n_rhat_gt_1_01 = NA_integer_,
-            min_ess_bulk = NA_real_,
-            mean_ess_bulk = NA_real_,
-            min_ess_tail = NA_real_,
-            fit_file = NA_character_,
-            error = conditionMessage(e)
-        )
+        error_summary(meta, start_time, e)
     })
 
-    out_file <- file.path(out_dir, sprintf("summary_%s_iter%d_warmup%d_adapt%s.csv",
-                                           meta$basis_label, iter, warmup,
-                                           gsub("\\.", "p", as.character(adapt_delta))))
-    write.csv(result, out_file, row.names = FALSE)
+    write_basis_summary(result, meta)
     print(result)
     all_results[[length(all_results) + 1]] <- result
 }

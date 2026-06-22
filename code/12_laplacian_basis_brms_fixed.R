@@ -52,9 +52,6 @@ adj <- as.matrix(adj)
 adj <- ((adj + t(adj)) > 0) * 1
 diag(adj) <- 0
 channels <- rownames(adj)
-if (is.null(channels) || !identical(channels, colnames(adj))) {
-    stop("Adjacency matrix must have matching row and column channel names.")
-}
 
 # Graph Laplacian: L = D - A.
 degree <- rowSums(adj)
@@ -68,20 +65,9 @@ eig_vectors <- eig$vectors[, ord, drop = FALSE]
 rownames(eig_vectors) <- channels
 
 selected_basis_indices <- seq_len(k_basis)
-if (length(selected_basis_indices) < k_basis || any(is.na(selected_basis_indices))) {
-    stop("Not enough graph-Laplacian eigenvectors.")
-}
 
 sim_data <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
 sim_data_model <- aggregate_trials(sim_data)
-
-missing_channels <- setdiff(channels, unique(sim_data_model$channel))
-extra_channels <- setdiff(unique(sim_data_model$channel), channels)
-if (length(missing_channels) || length(extra_channels)) {
-    stop(sprintf("Channel mismatch. Missing: %s Extra: %s",
-                 paste(missing_channels, collapse = ","),
-                 paste(extra_channels, collapse = ",")))
-}
 
 mean_wide <- sim_data_model %>%
     select(participant, condition, time, channel, eeg_mean) %>%

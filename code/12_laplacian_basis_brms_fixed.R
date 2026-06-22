@@ -173,6 +173,7 @@ for (task_id in task_ids) {
     }
     fit_model <- fit
 
+    # Save the fitted basis model and record its path for reconstruction.
     fit_file <- file.path(out_dir, paste0("fit_", meta$basis_label, ".rds"))
     saveRDS(list(
         fit = fit,
@@ -194,9 +195,7 @@ for (task_id in task_ids) {
 }
 
 # This combined summary is used later to find all basis fit files for reconstruction.
-combined_file <- file.path(out_dir, sprintf("summary_all_iter%d_warmup%d_adapt%s.csv",
-                                            iter, warmup,
-                                            gsub("\\.", "p", as.character(adapt_delta))))
+combined_file <- file.path(out_dir, "summary_all.csv")
 write.csv(dplyr::bind_rows(all_results), combined_file, row.names = FALSE)
 message(sprintf("Wrote combined summary: %s", combined_file))
 }
@@ -215,10 +214,7 @@ load_laplace_reconstruction <- function() {
                    k_basis, seed, iter, warmup, adapt_tag)
     tag <- paste0(tag, Sys.getenv("LAPLACE_TAG_SUFFIX", ""))
 
-    summary_file <- file.path(
-        fit_dir,
-        sprintf("summary_all_iter%d_warmup%d_adapt%s.csv", iter, warmup, adapt_tag)
-    )
+    summary_file <- file.path(fit_dir, "summary_all.csv")
     conv_summary <- read.csv(summary_file)
     fit_files <- conv_summary$fit_file[order(conv_summary$basis_task)]
 

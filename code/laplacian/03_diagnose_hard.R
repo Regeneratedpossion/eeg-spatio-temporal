@@ -27,6 +27,14 @@ posterior_cell_summaries <- function(effect_array) {
     )
 }
 
+mask_f1 <- function(predicted, truth) {
+    TP <- sum(predicted & truth)
+    FP <- sum(predicted & !truth)
+    FN <- sum(!predicted & truth)
+
+    2 * TP / (2 * TP + FP + FN)
+}
+
 run_hard_diagnostics <- function() {
     rec <- load_laplace_reconstruction()
     out_dir <- file.path(project_root(), "results", "diagnostics",
@@ -40,8 +48,6 @@ run_hard_diagnostics <- function() {
     seed_idx <- match(gt$seed_electrode, channels)
     active_channels <- channels %in% gt$active_electrodes
 
-    f1_score <- function(TP, FP, FN) 2 * TP / (2 * TP + FP + FN)
-
     # Posterior probability: mean(draws > ROPE_UV).
     posterior <- posterior_cell_summaries(effect_array)
 
@@ -52,21 +58,13 @@ run_hard_diagnostics <- function() {
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
     peak_idx <- match(peak_time, times)
     pred_active_space <- posterior$lower[peak_idx, ] > 0
-    spatial_F1 <- f1_score(
-        TP = sum(pred_active_space & active_channels),
-        FP = sum(pred_active_space & !active_channels),
-        FN = sum(!pred_active_space & active_channels)
-    )
+    spatial_F1 <- mask_f1(pred_active_space, active_channels)
 
     # Spatiotemporal recovery over all channel x time cells.
     pred_active <- posterior$odds > ODDS_THRESHOLD
     truth_active <- outer(times >= gt$true_onset & times <= gt$true_offset,
                           active_channels, `&`)
-    st_F1 <- f1_score(
-        TP = sum(pred_active & truth_active),
-        FP = sum(pred_active & !truth_active),
-        FN = sum(!pred_active & truth_active)
-    )
+    st_F1 <- mask_f1(pred_active, truth_active)
 
     # Amplitude recovery at the seed electrode.
     seed_effect <- effect_array[, , seed_idx]

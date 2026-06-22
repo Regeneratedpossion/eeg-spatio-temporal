@@ -50,25 +50,20 @@ sim_data <- readRDS(sim_file)
 sim_data_model <- aggregate_trials(sim_data)
 contrasts(sim_data_model$condition) <- c(-0.5, 0.5)
 
-bgam_formula <- bf(as.formula(sprintf(
-    paste(
-        "eeg_mean | se(eeg_sem) ~",
-        "condition +",
-        "(1 + condition | participant) +",
-        "t2(xproj, yproj, time,",
-        "by = condition,",
-        "bs = c('%s', '%s'),",
-        "k = c(%d, %d),",
-        "d = c(2, 1),",
-        "full = FALSE)"
-    ),
-    space_basis, time_basis, space_k, time_k
-)))
-
 start_time <- Sys.time()
 
 fit <- brm(
-    formula = bgam_formula,
+    formula = bf(
+        eeg_mean | se(eeg_sem) ~
+            condition +
+            (1 + condition | participant) +
+            t2(xproj, yproj, time,
+               by = condition,
+               bs = c(space_basis, time_basis),
+               k = c(space_k, time_k),
+               d = c(2, 1),
+               full = FALSE)
+    ),
     data = sim_data_model,
     family = gaussian(),
     chains = 4,

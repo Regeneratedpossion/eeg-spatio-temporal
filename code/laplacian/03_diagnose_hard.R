@@ -21,18 +21,9 @@ run_hard_diagnostics <- function() {
     f1_score <- function(TP, FP, FN) 2 * TP / (2 * TP + FP + FN)
 
     # Posterior summaries for each time x channel cell.
-    posterior_mean <- matrix(NA_real_, length(times), length(channels))
-    posterior_lower <- matrix(NA_real_, length(times), length(channels))
-    prob_above_rope <- matrix(NA_real_, length(times), length(channels))
-
-    for (t in seq_along(times)) {
-        for (ch in seq_along(channels)) {
-            draws <- effect_array[, t, ch]
-            posterior_mean[t, ch] <- mean(draws)
-            posterior_lower[t, ch] <- quantile(draws, 0.025)
-            prob_above_rope[t, ch] <- mean(draws > ROPE_UV)
-        }
-    }
+    posterior_mean <- apply(effect_array, c(2, 3), mean)
+    posterior_lower <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
+    prob_above_rope <- apply(effect_array > ROPE_UV, c(2, 3), mean)
 
     # Convert posterior probability to odds, avoiding exact 0 or Inf.
     min_prob <- 1 / dim(effect_array)[1]

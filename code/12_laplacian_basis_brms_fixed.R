@@ -127,13 +127,8 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
     )
 }
 
-write_basis_summary <- function(result, meta) {
-    out_file <- file.path(out_dir, sprintf("summary_%s_iter%d_warmup%d_adapt%s.csv",
-                                           meta$basis_label, iter, warmup,
-                                           gsub("\\.", "p", as.character(adapt_delta))))
-    write.csv(result, out_file, row.names = FALSE)
-}
-
+# Fit one temporal GAMM for each Laplacian basis score.
+# The first fit compiles Stan; later fits reuse the compiled model with new score data.
 fit_model <- NULL
 all_results <- list()
 
@@ -193,11 +188,11 @@ for (task_id in task_ids) {
         fit_file = fit_file
     )
 
-    write_basis_summary(result, meta)
     print(result)
     all_results[[length(all_results) + 1]] <- result
 }
 
+# This combined summary is used later to find all basis fit files for reconstruction.
 combined_file <- file.path(out_dir, sprintf("summary_all_iter%d_warmup%d_adapt%s.csv",
                                             iter, warmup,
                                             gsub("\\.", "p", as.character(adapt_delta))))

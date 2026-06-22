@@ -13,18 +13,9 @@ setup_cmdstan_cache()
 # Select one of the two predefined full-BGAM baselines.
 # Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-
-if (task_id == 1) {
-    model_label <- "A_k1212_tp"
-    space_basis <- "tp"
-    time_basis <- "tp"
-} else if (task_id == 2) {
-    model_label <- "B_k1212_ps"
-    space_basis <- "ps"
-    time_basis <- "ps"
-} else {
-    stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
-}
+model_label <- c("A_k1212_tp", "B_k1212_ps")[task_id]
+space_basis <- c("tp", "ps")[task_id]
+time_basis <- space_basis
 
 # Long-chain baseline settings.
 data_subdir <- "montecarlo_p5_gaussian_hardlabel"

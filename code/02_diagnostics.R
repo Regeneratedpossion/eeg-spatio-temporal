@@ -22,14 +22,7 @@ source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 # Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-
-if (identical(task_id, 1L)) {
-    model_label <- "A_k1212_tp"
-} else if (identical(task_id, 2L)) {
-    model_label <- "B_k1212_ps"
-} else {
-    stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
-}
+model_label <- c("A_k1212_tp", "B_k1212_ps")[task_id]
 
 # Input paths for the fitted model and hard-threshold simulation dataset.
 data_subdir <- "montecarlo_p5_gaussian_hardlabel"
@@ -42,10 +35,6 @@ gt_file <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
 # Diagnostic settings.
 fit_file <- paste0("fit_", model_label, ".rds")
 fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
-if (!file.exists(fit_path)) {
-    fit_file <- paste0("fit_", model_label, "_iter3000_warmup1000.rds")
-    fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
-}
 tag <- model_label
 out_dir <- diag_path("june_full")
 cond_levels <- c("cond1", "cond2")

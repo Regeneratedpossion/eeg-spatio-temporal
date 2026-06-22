@@ -246,8 +246,7 @@ load_laplace_reconstruction <- function() {
     warmup <- as.integer(Sys.getenv("LAPLACE_WARMUP", "1000"))
     tag <- sprintf("laplacian_k%d_seed%03d_iter%d_warmup%d_adapt%s",
                    k_basis, seed, iter, warmup, adapt_tag)
-    tag_suffix <- Sys.getenv("LAPLACE_TAG_SUFFIX", "")
-    if (nzchar(tag_suffix)) tag <- paste0(tag, "_", tag_suffix)
+    tag <- paste0(tag, Sys.getenv("LAPLACE_TAG_SUFFIX", ""))
 
     summary_file <- file.path(
         fit_dir,
@@ -255,7 +254,6 @@ load_laplace_reconstruction <- function() {
     )
     conv_summary <- read.csv(summary_file)
     fit_files <- conv_summary$fit_file[order(conv_summary$basis_task)]
-    if (!all(file.exists(fit_files))) stop("Some Laplacian fit files are missing.")
 
     gt <- readRDS(data_path(data_subdir, sprintf("gt_%03d.rds", seed)))
     sim <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
@@ -329,13 +327,10 @@ odds_from_p <- function(p, n_draws) {
 }
 
 f1_metrics <- function(TP, FP, FN) {
-    precision <- if ((TP + FP) > 0) TP / (TP + FP) else NA_real_
-    recall <- if ((TP + FN) > 0) TP / (TP + FN) else NA_real_
-    F1 <- if (is.na(precision) || is.na(recall) || precision + recall == 0) {
-        NA_real_
-    } else {
-        2 * precision * recall / (precision + recall)
-    }
+    precision <- TP / (TP + FP)
+    recall <- TP / (TP + FN)
+    F1 <- 2 * precision * recall / (precision + recall)
+
     c(TP = TP, FP = FP, FN = FN,
       precision = precision, recall = recall, F1 = F1)
 }

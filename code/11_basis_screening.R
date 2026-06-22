@@ -1,8 +1,11 @@
 ###########################################################
 # 11_basis_screening.R
 #
-# Short feasibility screen for basis size and basis type.
-# Uses P=5, seed=1, SEM, Gaussian signal + hard-threshold labels.
+# Single full-BGAM basis-screening entry point.
+#
+# Typical modes:
+#   SCREEN_CONFIG_SET=all  short A-D feasibility screen
+#   SCREEN_CONFIG_SET=ab   formal k=(12,12) A/B tp-vs-ps run
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
@@ -23,16 +26,30 @@ configs <- data.frame(
     bs_time = c("tp", "ps", "tp", "ps")
 )
 
+config_set <- Sys.getenv("SCREEN_CONFIG_SET", "all")
+configs <- switch(
+    config_set,
+    all = configs,
+    ab = configs[configs$label %in% c("A_k1212_tp", "B_k1212_ps"), ],
+    stop("SCREEN_CONFIG_SET must be one of: all, ab.")
+)
+
 cfg <- configs[configs$task_id == task_id, ]
 stopifnot(nrow(cfg) == 1)
 
 data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR",
                           "montecarlo_p5_gaussian_hardlabel")
+out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR", "basis_screening")
 seed <- as.integer(Sys.getenv("SCREEN_SEED", "1"))
 iter <- as.integer(Sys.getenv("SCREEN_ITER", "200"))
 warmup <- as.integer(Sys.getenv("SCREEN_WARMUP", "100"))
+adapt_delta <- as.numeric(Sys.getenv("SCREEN_ADAPT_DELTA", "0.99"))
+max_treedepth <- as.integer(Sys.getenv("SCREEN_MAX_TREEDEPTH", "13"))
+refresh <- as.integer(Sys.getenv("SCREEN_REFRESH", "10"))
+save_fit <- tolower(Sys.getenv("SCREEN_SAVE_FIT", "false")) %in%
+    c("true", "1", "yes")
 
-out_dir <- file.path(project_root(), "results", "basis_screening")
+out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 sim_data <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
@@ -68,9 +85,17 @@ result <- tryCatch({
         seed = seed,
         threads = threading(threads = 4),
         backend = "cmdstanr",
-        refresh = 10,
-        control = list(adapt_delta = 0.99, max_treedepth = 13)
+        refresh = refresh,
+        control = list(adapt_delta = adapt_delta,
+                       max_treedepth = max_treedepth)
     )
+
+    fit_file <- NA_character_
+    if (save_fit) {
+        fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d.rds",
+                                               cfg$label, iter, warmup))
+        saveRDS(fit, fit_file)
+    }
 
     elapsed_sec <- as.numeric(Sys.time() - start_time, units = "secs")
     np <- nuts_params(fit)
@@ -82,6 +107,8 @@ result <- tryCatch({
     data.frame(
         label = cfg$label,
         status = "ok",
+        data_subdir = data_subdir,
+        out_subdir = out_subdir,
         seed = seed,
         k_xy = cfg$k_xy,
         k_t = cfg$k_t,
@@ -89,18 +116,25 @@ result <- tryCatch({
         bs_time = cfg$bs_time,
         iter = iter,
         warmup = warmup,
+        adapt_delta = adapt_delta,
+        max_treedepth = max_treedepth,
         elapsed_sec = elapsed_sec,
         n_divergent = n_div,
         n_treedepth = n_tree,
         max_rhat = max(summ$rhat, na.rm = TRUE),
+        n_rhat_gt_1_01 = sum(summ$rhat > 1.01, na.rm = TRUE),
         min_ess_bulk = min(summ$ess_bulk, na.rm = TRUE),
         mean_ess_bulk = mean(summ$ess_bulk, na.rm = TRUE),
+        min_ess_tail = min(summ$ess_tail, na.rm = TRUE),
+        fit_file = fit_file,
         error = NA_character_
     )
 }, error = function(e) {
     data.frame(
         label = cfg$label,
         status = "error",
+        data_subdir = data_subdir,
+        out_subdir = out_subdir,
         seed = seed,
         k_xy = cfg$k_xy,
         k_t = cfg$k_t,
@@ -108,16 +142,22 @@ result <- tryCatch({
         bs_time = cfg$bs_time,
         iter = iter,
         warmup = warmup,
+        adapt_delta = adapt_delta,
+        max_treedepth = max_treedepth,
         elapsed_sec = as.numeric(Sys.time() - start_time, units = "secs"),
         n_divergent = NA_integer_,
         n_treedepth = NA_integer_,
         max_rhat = NA_real_,
+        n_rhat_gt_1_01 = NA_integer_,
         min_ess_bulk = NA_real_,
         mean_ess_bulk = NA_real_,
+        min_ess_tail = NA_real_,
+        fit_file = NA_character_,
         error = conditionMessage(e)
     )
 })
 
-out_file <- file.path(out_dir, sprintf("basis_screen_%s.csv", cfg$label))
+out_file <- file.path(out_dir, sprintf("basis_screen_%s_iter%d_warmup%d.csv",
+                                       cfg$label, iter, warmup))
 write.csv(result, out_file, row.names = FALSE)
 print(result)

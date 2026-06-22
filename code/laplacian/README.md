@@ -9,8 +9,9 @@ Instead of fitting one full sensor x time BGAMM directly, the 61-channel scalp
 map is first projected onto graph-Laplacian spatial basis functions derived from
 the sensor adjacency matrix. This follows the broader idea of using low-rank
 basis functions to represent spatial processes efficiently (Cressie et al.,
-2022), and uses graph-Laplacian eigenvectors as smooth basis functions on the
-sensor adjacency graph (Chung, 1997; Belkin & Niyogi, 2003).
+2022). Here, the sensors are treated as nodes in an adjacency graph. The
+eigenvectors of the graph Laplacian then provide smooth spatial basis functions
+over this sensor graph (Chung, 1997; Belkin & Niyogi, 2003).
 
 For each participant x condition x time cell:
 

@@ -64,31 +64,30 @@ eig_values <- eig$values[ord]
 eig_vectors <- eig$vectors[, ord, drop = FALSE]
 rownames(eig_vectors) <- channels
 
-selected_basis_indices <- seq_len(k_basis)
-
+# Trial data are first aggregated to participant x condition x time x channel.
 sim_data <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
 sim_data_model <- aggregate_trials(sim_data)
 
-mean_wide <- sim_data_model %>%
-    select(participant, condition, time, channel, eeg_mean) %>%
-    tidyr::pivot_wider(names_from = channel, values_from = eeg_mean) %>%
-    arrange(participant, condition, time)
+# Put the 61 channels into columns so each row is one scalp map.
+wide_by_channel <- function(value_col) {
+    sim_data_model %>%
+        select(participant, condition, time, channel, all_of(value_col)) %>%
+        tidyr::pivot_wider(names_from = channel, values_from = all_of(value_col)) %>%
+        arrange(participant, condition, time)
+}
 
-sem_wide <- sim_data_model %>%
-    select(participant, condition, time, channel, eeg_sem) %>%
-    tidyr::pivot_wider(names_from = channel, values_from = eeg_sem) %>%
-    arrange(participant, condition, time)
+mean_wide <- wide_by_channel("eeg_mean")
+sem_wide <- wide_by_channel("eeg_sem")
 
-Y <- as.matrix(mean_wide[, channels])
-S <- as.matrix(sem_wide[, channels])
+eeg_mean_by_channel <- as.matrix(mean_wide[, channels])
+eeg_sem_by_channel <- as.matrix(sem_wide[, channels])
 
+# Project one scalp map onto one Laplacian basis vector.
 make_score_data <- function(task_id) {
-    basis_index <- selected_basis_indices[task_id]
+    basis_index <- task_id
     basis_vector <- eig_vectors[, basis_index]
-    score <- as.numeric(Y %*% basis_vector)
-    score_sem <- sqrt(as.numeric((S^2) %*% (basis_vector^2)))
-    score_sem[!is.finite(score_sem) | score_sem <= 0] <- min(score_sem[score_sem > 0],
-                                                             na.rm = TRUE)
+    score <- as.numeric(eeg_mean_by_channel %*% basis_vector)
+    score_sem <- sqrt(as.numeric((eeg_sem_by_channel^2) %*% (basis_vector^2)))
 
     score_data <- mean_wide %>%
         select(participant, condition, time) %>%
@@ -110,10 +109,9 @@ make_score_data <- function(task_id) {
 }
 
 summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
-    np <- nuts_params(fit)
-    n_div <- sum(np$Value[np$Parameter == "divergent__"])
-    n_tree <- sum(np$Value[np$Parameter == "treedepth__"] >= max_treedepth)
-    summ <- posterior::summarise_draws(as_draws_df(fit))
+    # One-row sampler diagnostic summary for this basis model.
+    sampler_info <- nuts_params(fit)
+    draw_summary <- posterior::summarise_draws(as_draws_df(fit))
 
     data.frame(
         basis_task = meta$task_id,
@@ -129,13 +127,14 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
         adapt_delta = adapt_delta,
         max_treedepth = max_treedepth,
         elapsed_sec = elapsed_sec,
-        n_divergent = n_div,
-        n_treedepth = n_tree,
-        max_rhat = max(summ$rhat, na.rm = TRUE),
-        n_rhat_gt_1_01 = sum(summ$rhat > 1.01, na.rm = TRUE),
-        min_ess_bulk = min(summ$ess_bulk, na.rm = TRUE),
-        mean_ess_bulk = mean(summ$ess_bulk, na.rm = TRUE),
-        min_ess_tail = min(summ$ess_tail, na.rm = TRUE),
+        n_divergent = sum(sampler_info$Value[sampler_info$Parameter == "divergent__"]),
+        n_treedepth = sum(sampler_info$Value[sampler_info$Parameter == "treedepth__"] >=
+                              max_treedepth),
+        max_rhat = max(draw_summary$rhat, na.rm = TRUE),
+        n_rhat_gt_1_01 = sum(draw_summary$rhat > 1.01, na.rm = TRUE),
+        min_ess_bulk = min(draw_summary$ess_bulk, na.rm = TRUE),
+        mean_ess_bulk = mean(draw_summary$ess_bulk, na.rm = TRUE),
+        min_ess_tail = min(draw_summary$ess_tail, na.rm = TRUE),
         fit_file = fit_file
     )
 }

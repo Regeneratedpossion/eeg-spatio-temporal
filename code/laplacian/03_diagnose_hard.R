@@ -5,6 +5,16 @@
 # active channel x time cells are compared against posterior odds.
 ###########################################################
 
+temporal_recovery_pass <- function(times, seed_odds, ground_truth) {
+    clusters <- find_clusters(times, seed_odds, ODDS_THRESHOLD)
+    estimated <- c(clusters$cluster_onset[1], clusters$cluster_offset[1])
+    truth <- c(ground_truth$true_onset, ground_truth$true_offset)
+
+    error_ms <- abs(estimated - truth) * 1000
+    error_ms[is.na(error_ms)] <- Inf
+    max(error_ms) <= BIAS_TOLERANCE_MS
+}
+
 run_hard_diagnostics <- function() {
     rec <- load_laplace_reconstruction()
     out_dir <- file.path(project_root(), "results", "diagnostics",
@@ -34,15 +44,7 @@ run_hard_diagnostics <- function() {
         pmax(1 - prob_above_rope, min_prob)
 
     # Temporal recovery at the seed electrode.
-    clusters <- find_clusters(times, odds_mat[, seed_idx], ODDS_THRESHOLD)
-    onset_est <- clusters$cluster_onset[1]
-    offset_est <- clusters$cluster_offset[1]
-    temporal_error_ms <- abs(c(
-        onset_est - gt$true_onset,
-        offset_est - gt$true_offset
-    )) * 1000
-    temporal_error_ms[is.na(temporal_error_ms)] <- Inf
-    temporal_pass <- max(temporal_error_ms) <= BIAS_TOLERANCE_MS
+    temporal_pass <- temporal_recovery_pass(times, odds_mat[, seed_idx], gt)
 
     # Spatial recovery at the true peak time.
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)

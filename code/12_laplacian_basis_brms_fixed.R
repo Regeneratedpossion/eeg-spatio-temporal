@@ -46,12 +46,17 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 adjacency_file <- file.path(project_root(), "archive", "models_original_2026_05_04",
                             "adjacency_xproj_yproj_61ch.rds")
 adj <- readRDS(adjacency_file)
+
+# Clean adjacency to an undirected 0/1 graph with no self-connections.
 adj <- as.matrix(adj)
 adj <- ((adj + t(adj)) > 0) * 1
 diag(adj) <- 0
 channels <- rownames(adj)
-stopifnot(!is.null(channels), identical(channels, colnames(adj)))
+if (is.null(channels) || !identical(channels, colnames(adj))) {
+    stop("Adjacency matrix must have matching row and column channel names.")
+}
 
+# Graph Laplacian: L = D - A.
 degree <- rowSums(adj)
 laplacian <- diag(degree) - adj
 eig <- eigen(laplacian, symmetric = TRUE)

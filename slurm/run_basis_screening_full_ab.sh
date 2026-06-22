@@ -27,4 +27,4 @@ export SCREEN_REFRESH=100
 export SCREEN_SAVE_FIT=true
 
 cd "$PROJECT_ROOT"
-Rscript code/11_basis_screening.R "$SLURM_ARRAY_TASK_ID"
+Rscript code/11_basis_screening.R

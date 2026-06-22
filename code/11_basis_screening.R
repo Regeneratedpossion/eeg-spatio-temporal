@@ -12,17 +12,16 @@ setup_cmdstan_cache()
 
 # Select one of the two predefined full-BGAM baselines.
 # Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
-task_id <- as.integer(Sys.getenv(
-    "SLURM_ARRAY_TASK_ID",
-    unset = as.character(as.integer(c(commandArgs(trailingOnly = TRUE), 1)[1]))
-))
+task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
 configs <- list(
     list(label = "A_k1212_tp", k = c(12L, 12L), bs = c("tp", "tp")),
     list(label = "B_k1212_ps", k = c(12L, 12L), bs = c("ps", "ps"))
 )
 cfg <- configs[[task_id]]
-stopifnot(!is.null(cfg))
+if (is.null(cfg)) {
+    stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
+}
 
 # Runtime settings. Defaults reproduce the long-chain k=(12,12) baseline.
 data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR", "montecarlo_p5_gaussian_hardlabel")

@@ -235,27 +235,25 @@ load_laplace_reconstruction <- function() {
 
     first_obj <- readRDS(fit_files[1])
     channels <- first_obj$channels
-    effect_array <- NULL
+    first_score_diff <- condition_score_draws(first_obj, times)
+    effect_array <- array(
+        0,
+        dim = c(nrow(first_score_diff), length(times), length(channels)),
+        dimnames = list(NULL, as.character(times), channels)
+    )
+
+    add_basis_effect <- function(obj, score_diff) {
+        sweep(array(score_diff, dim = dim(effect_array)),
+              3, obj$basis_vector[channels], "*")
+    }
 
     # Reconstruct sensor x time posterior effect:
     # score effect for each basis x spatial basis vector, summed over bases.
-    for (file in fit_files) {
+    effect_array <- effect_array + add_basis_effect(first_obj, first_score_diff)
+    for (file in fit_files[-1]) {
         obj <- readRDS(file)
         score_diff <- condition_score_draws(obj, times)
-        basis_vector <- obj$basis_vector[channels]
-
-        if (is.null(effect_array)) {
-            effect_array <- array(
-                0,
-                dim = c(nrow(score_diff), length(times), length(channels)),
-                dimnames = list(NULL, as.character(times), channels)
-            )
-        }
-
-        for (j in seq_along(channels)) {
-            effect_array[, , j] <- effect_array[, , j] +
-                score_diff * basis_vector[j]
-        }
+        effect_array <- effect_array + add_basis_effect(obj, score_diff)
     }
 
     list(

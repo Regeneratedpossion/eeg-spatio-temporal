@@ -112,19 +112,16 @@ Full BGAM k = (12,12):
   - `results/diagnostics/june_full/summary_fit_A_k1212_tp_iter3000_warmup1000.csv`
   - `results/diagnostics/june_full/summary_fit_B_k1212_ps_iter3000_warmup1000.csv`
 
-Default-control sensitivity requested by Paul:
-
-- Code: `code/18_basis_screening_full_ab_control.R`
-- Slurm: `slurm/run_basis_screening_full_ab_default_control.sh`
-
 Laplacian low-rank basis:
 
 - Fit code: `code/12_laplacian_basis_brms_fixed.R`
 - Hard-threshold diagnostic: `code/13_laplacian_recovery_diagnostics.R`
 - Continuous recovery diagnostic: `code/14_laplacian_continuous_recovery.R`
-- Oracle projection diagnostic: `code/15_laplacian_oracle_projection.R`
 - Main note: `notes/laplacian_k20_constant_result.md`
+- Slurm:
+  - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_long.sh`
+  - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_recovery.sh`
+  - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_continuous_diag.sh`
 - Diagnostics:
   - `results/diagnostics/laplacian_basis_fixed/summary_laplacian_k20_seed001_iter3000_warmup1000_adapt0p999_constant.csv`
   - `results/diagnostics/laplacian_continuous/summary_continuous_laplacian_k20_seed001_iter3000_warmup1000_adapt0p999_constant.csv`
-

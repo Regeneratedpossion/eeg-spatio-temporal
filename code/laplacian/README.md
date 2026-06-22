@@ -1,0 +1,114 @@
+# Low-rank Laplacian basis model
+
+This folder contains the current low-rank spatial-basis approximation for the
+spatiotemporal Bayesian GAMM.
+
+## Model idea
+
+Instead of fitting one full sensor x time BGAMM directly, the 61-channel scalp
+map is first projected onto graph-Laplacian spatial basis functions derived from
+the sensor adjacency matrix.
+
+For each participant x condition x time cell:
+
+1. Build a graph Laplacian from the sensor adjacency matrix.
+2. Take the first 20 smooth eigenvectors, including the constant/global spatial
+   component.
+3. Project each 61-channel scalp map onto these spatial basis vectors.
+4. Fit one Bayesian temporal GAMM to each basis score using `brms`.
+5. Reconstruct the posterior sensor x time effect map by summing the posterior
+   basis-score effects multiplied by their spatial basis vectors.
+
+The main entry point is:
+
+```r
+code/12_laplacian_basis_brms_fixed.R
+```
+
+The workflow is split into:
+
+```text
+00_config.R                 fixed K=20 configuration
+01_fit_basis_scores.R        fit temporal GAMMs to Laplacian basis scores
+02_reconstruct_effect.R      reconstruct sensor x time posterior effects
+03_diagnose_hard.R           hard-threshold active/inactive diagnostics
+04_diagnose_continuous.R     continuous Gaussian-field diagnostics
+```
+
+## Current configuration
+
+```text
+Dataset: P20 gaussian hardlabel
+Spatial basis: graph-Laplacian eigenvectors
+K: 20 + constant/global component
+Temporal model: Bayesian temporal GAMM on each basis score
+iter: 3000
+warmup: 1000
+adapt_delta: 0.999
+max_treedepth: 13
+```
+
+## Current diagnostic results
+
+### Hard-threshold diagnostic
+
+```text
+convergence_pass = FALSE
+temporal_pass = TRUE
+spatial_top_pass = TRUE
+peak_ci_covers_truth = FALSE
+mean_ci_covers_truth = FALSE
+spatial_F1 = 0.340
+spatiotemporal_F1 = 0.545
+peak_recovery = 81.4%
+mean_recovery = 95.1%
+```
+
+`convergence_pass = FALSE` is caused by residual divergent transitions in two
+basis models:
+
+```text
+basis 11: 2 divergent transitions
+basis 19: 14 divergent transitions
+```
+
+However, all basis models have:
+
+```text
+Rhat < 1.01
+ESS > 900
+treedepth warnings = 0
+```
+
+So the model is not globally failing, but the convergence is not completely
+clean under the strict criterion that requires zero divergent transitions.
+
+### Continuous Gaussian-field diagnostic
+
+```text
+spatiotemporal_cor_all = 0.962
+spatiotemporal_cor_effect_window = 0.964
+peak_spatial_cor = 0.976
+peak_recovery = 81.4%
+truth_weighted_mean_recovery = 104.5%
+top25_mean_recovery = 102.7%
+```
+
+## Interpretation
+
+The continuous diagnostic is better matched to this simulation, because the
+true spatial signal is a smooth Gaussian field rather than a binary
+active/inactive mask.
+
+The current result suggests that the low-rank Laplacian model can recover:
+
+- the temporal effect window;
+- the correct top spatial channel around CZ;
+- the continuous spatiotemporal effect shape;
+- the effect amplitude much better after adding the constant/global component.
+
+The main remaining issue is the small number of divergent transitions in basis
+11 and basis 19. The hard-threshold F1 scores should be interpreted as secondary
+diagnostics because they force a binary active/inactive evaluation onto a
+continuous Gaussian signal.
+

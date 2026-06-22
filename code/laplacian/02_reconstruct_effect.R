@@ -21,11 +21,13 @@ load_laplace_reconstruction <- function() {
     condition_levels <- c("cond1", "cond2")
 
     condition_score_draws <- function(obj, times) {
+        participant_id <- c(obj$participant_id, obj$score_data$participant[1])[1]
+
         base <- data.frame(
             time = times,
             score = 0,
             score_sem = 1,
-            participant = obj$participant_id
+            participant = participant_id
         )
         nd1 <- base
         nd2 <- base

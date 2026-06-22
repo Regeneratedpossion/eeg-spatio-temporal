@@ -7,7 +7,10 @@ spatiotemporal Bayesian GAMM.
 
 Instead of fitting one full sensor x time BGAMM directly, the 61-channel scalp
 map is first projected onto graph-Laplacian spatial basis functions derived from
-the sensor adjacency matrix.
+the sensor adjacency matrix. This follows the broader idea of using low-rank
+basis functions to represent spatial processes efficiently (Cressie et al.,
+2022), and uses graph-Laplacian eigenvectors as smooth basis functions on the
+sensor adjacency graph (Chung, 1997; Belkin & Niyogi, 2003).
 
 For each participant x condition x time cell:
 
@@ -94,10 +97,13 @@ top25_mean_recovery = 102.7%
 
 The continuous diagnostic is the better primary evaluation here, because the
 simulated spatial effect is a smooth Gaussian field rather than a binary
-active/inactive mask. Under this evaluation, the low-rank Laplacian model
-recovers the main spatiotemporal pattern well: the time window is detected, the
-strongest spatial effect is around CZ, and the reconstructed sensor x time map
-is highly correlated with the true effect.
+active/inactive mask. This is also closer to spatial statistical models that
+treat the signal as a continuous latent spatial field, often approximated using
+structured low-rank or Markov representations (Lindgren et al., 2011; Cressie
+et al., 2022). Under this evaluation, the low-rank Laplacian model recovers the
+main spatiotemporal pattern well: the time window is detected, the strongest
+spatial effect is around CZ, and the reconstructed sensor x time map is highly
+correlated with the true effect.
 
 Adding the constant/global spatial component improves amplitude recovery. The
 peak effect is recovered at about 81% of the true value, and the truth-weighted

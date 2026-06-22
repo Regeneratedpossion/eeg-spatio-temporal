@@ -19,12 +19,6 @@ For each participant x condition x time cell:
 5. Reconstruct the posterior sensor x time effect map by summing the posterior
    basis-score effects multiplied by their spatial basis vectors.
 
-The main entry point is:
-
-```r
-code/12_laplacian_basis_brms_fixed.R
-```
-
 The workflow is split into:
 
 ```text
@@ -111,4 +105,3 @@ The main remaining issue is the small number of divergent transitions in basis
 11 and basis 19. The hard-threshold F1 scores should be interpreted as secondary
 diagnostics because they force a binary active/inactive evaluation onto a
 continuous Gaussian signal.
-

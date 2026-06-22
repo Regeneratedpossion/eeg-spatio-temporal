@@ -4,6 +4,10 @@
 # Formal full-BGAM k=(12,12) A/B tp-vs-ps run.
 # This is the full-model baseline used for comparison with the
 # K=20 + constant Laplacian approximation.
+#
+# Configurations:
+#   A_k1212_tp: k = c(12, 12), basis = c("tp", "tp")
+#   B_k1212_ps: k = c(12, 12), basis = c("ps", "ps")
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))

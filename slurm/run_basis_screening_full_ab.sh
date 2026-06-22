@@ -16,15 +16,6 @@ mkdir -p logs
 module load R/4.4.2-gcc141-base
 
 export PROJECT_ROOT=/work/smjifan1/bgam_eeg_project
-export SCREEN_DATA_SUBDIR=montecarlo_p5_gaussian_hardlabel
-export SCREEN_OUT_SUBDIR=basis_screening_full_ab
-export SCREEN_SEED=1
-export SCREEN_ITER=3000
-export SCREEN_WARMUP=1000
-export SCREEN_ADAPT_DELTA=0.99
-export SCREEN_MAX_TREEDEPTH=13
-export SCREEN_REFRESH=100
-export SCREEN_SAVE_FIT=true
 
 cd "$PROJECT_ROOT"
 Rscript code/11_basis_screening.R

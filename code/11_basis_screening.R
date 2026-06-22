@@ -22,17 +22,16 @@ if (task_id == 1) {
     stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
 }
 
-# Runtime settings. Defaults reproduce the long-chain k=(12,12) baseline.
-data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR", "montecarlo_p5_gaussian_hardlabel")
-out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR", "basis_screening_full_ab")
-seed <- as.integer(Sys.getenv("SCREEN_SEED", "1"))
-iter <- as.integer(Sys.getenv("SCREEN_ITER", "3000"))
-warmup <- as.integer(Sys.getenv("SCREEN_WARMUP", "1000"))
-adapt_delta <- as.numeric(Sys.getenv("SCREEN_ADAPT_DELTA", "0.99"))
-max_treedepth <- as.integer(Sys.getenv("SCREEN_MAX_TREEDEPTH", "13"))
-refresh <- as.integer(Sys.getenv("SCREEN_REFRESH", "100"))
-save_fit <- tolower(Sys.getenv("SCREEN_SAVE_FIT", "true")) %in%
-    c("true", "1", "yes")
+# Long-chain baseline settings.
+data_subdir <- "montecarlo_p5_gaussian_hardlabel"
+out_subdir <- "basis_screening_full_ab"
+seed <- 1L
+iter <- 3000L
+warmup <- 1000L
+adapt_delta <- 0.99
+max_treedepth <- 13L
+refresh <- 100L
+save_fit <- TRUE
 
 # Load and aggregate trial-level simulation data to participant x sensor x time cells.
 out_dir <- file.path(project_root(), "results", out_subdir)

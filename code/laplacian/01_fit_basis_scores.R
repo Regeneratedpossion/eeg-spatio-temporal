@@ -111,6 +111,7 @@ run_fit <- function() {
     # Later bases use update(..., recompile = FALSE), which saves compile time.
     fit_model <- NULL
     all_results <- list()
+    fit_control <- list(adapt_delta = adapt_delta, max_treedepth = max_treedepth)
 
     for (task_id in task_ids) {
         meta <- make_score_data(task_id)
@@ -120,34 +121,21 @@ run_fit <- function() {
         if (is.null(fit_model)) {
             # First model: full brms call, including Stan compilation.
             fit <- brm(
-                formula = model_formula,
-                data = meta$score_data,
-                family = gaussian(),
-                chains = 4,
-                cores = 4,
-                iter = iter,
-                warmup = warmup,
-                seed = seed + meta$task_id,
+                formula = model_formula, data = meta$score_data,
+                family = gaussian(), chains = 4, cores = 4,
+                iter = iter, warmup = warmup, seed = seed + meta$task_id,
                 threads = threading(threads = 4),
-                backend = "cmdstanr",
-                refresh = 100,
-                control = list(adapt_delta = adapt_delta,
-                               max_treedepth = max_treedepth)
+                backend = "cmdstanr", refresh = 100,
+                control = fit_control
             )
         } else {
             # Later models: same formula, different basis-score data.
             fit <- update(
-                fit_model,
-                newdata = meta$score_data,
-                chains = 4,
-                cores = 4,
-                iter = iter,
-                warmup = warmup,
-                seed = seed + meta$task_id,
-                refresh = 100,
-                recompile = FALSE,
-                control = list(adapt_delta = adapt_delta,
-                               max_treedepth = max_treedepth)
+                fit_model, newdata = meta$score_data,
+                chains = 4, cores = 4,
+                iter = iter, warmup = warmup, seed = seed + meta$task_id,
+                refresh = 100, recompile = FALSE,
+                control = fit_control
             )
         }
         fit_model <- fit

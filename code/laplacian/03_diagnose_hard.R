@@ -15,6 +15,19 @@ temporal_recovery_pass <- function(times, seed_odds, ground_truth) {
     max(error_ms) <= BIAS_TOLERANCE_MS
 }
 
+posterior_cell_summaries <- function(effect_array) {
+    list(
+        mean = apply(effect_array, c(2, 3), mean),
+        lower = apply(effect_array, c(2, 3), quantile, probs = 0.025),
+        prob_above_rope = apply(effect_array > ROPE_UV, c(2, 3), mean)
+    )
+}
+
+probability_to_odds <- function(probability, n_draws) {
+    min_prob <- 1 / n_draws
+    pmax(probability, min_prob) / pmax(1 - probability, min_prob)
+}
+
 run_hard_diagnostics <- function() {
     rec <- load_laplace_reconstruction()
     out_dir <- file.path(project_root(), "results", "diagnostics",
@@ -30,18 +43,10 @@ run_hard_diagnostics <- function() {
 
     f1_score <- function(TP, FP, FN) 2 * TP / (2 * TP + FP + FN)
 
-    # Posterior summaries for each time x channel cell.
-    posterior_mean <- apply(effect_array, c(2, 3), mean)
-    posterior_lower <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
-
-    # Posterior probability of a positive effect larger than the ROPE:
-    # mean(draws > ROPE_UV) = proportion of posterior draws satisfying the inequality.
-    prob_above_rope <- apply(effect_array > ROPE_UV, c(2, 3), mean)
-
-    # Convert posterior probability to odds, avoiding exact 0 or Inf.
-    min_prob <- 1 / dim(effect_array)[1]
-    odds_mat <- pmax(prob_above_rope, min_prob) /
-        pmax(1 - prob_above_rope, min_prob)
+    # Posterior probability: mean(draws > ROPE_UV).
+    posterior <- posterior_cell_summaries(effect_array)
+    odds_mat <- probability_to_odds(posterior$prob_above_rope,
+                                    n_draws = dim(effect_array)[1])
 
     # Temporal recovery at the seed electrode.
     temporal_pass <- temporal_recovery_pass(times, odds_mat[, seed_idx], gt)
@@ -49,7 +54,7 @@ run_hard_diagnostics <- function() {
     # Spatial recovery at the true peak time.
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
     peak_idx <- match(peak_time, times)
-    pred_active_space <- posterior_lower[peak_idx, ] > 0
+    pred_active_space <- posterior$lower[peak_idx, ] > 0
     spatial_F1 <- f1_score(
         TP = sum(pred_active_space & active_channels),
         FP = sum(pred_active_space & !active_channels),
@@ -80,7 +85,7 @@ run_hard_diagnostics <- function() {
         max(rec$conv_summary$n_treedepth, na.rm = TRUE) == 0 &&
         max(rec$conv_summary$max_rhat, na.rm = TRUE) < 1.01 &&
         min(rec$conv_summary$min_ess_bulk, na.rm = TRUE) > 400
-    spatial_top_pass <- channels[which.max(posterior_mean[peak_idx, ])] %in%
+    spatial_top_pass <- channels[which.max(posterior$mean[peak_idx, ])] %in%
         cz_neighbours
     peak_ci <- quantile(seed_peak_draws, c(0.025, 0.975))
     mean_ci <- quantile(window_draws, c(0.025, 0.975))

@@ -43,8 +43,9 @@ out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Graph-Laplacian spatial basis from the sensor adjacency matrix.
-adj <- readRDS(file.path(project_root(), "archive", "models_original_2026_05_04",
-                         "adjacency_xproj_yproj_61ch.rds"))
+adjacency_file <- file.path(project_root(), "archive", "models_original_2026_05_04",
+                            "adjacency_xproj_yproj_61ch.rds")
+adj <- readRDS(adjacency_file)
 adj <- as.matrix(adj)
 adj <- ((adj + t(adj)) > 0) * 1
 diag(adj) <- 0

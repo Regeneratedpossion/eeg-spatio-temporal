@@ -78,39 +78,23 @@ fit <- brm(
                    max_treedepth = max_treedepth)
 )
 
-fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d.rds",
-                                       model_label, iter, warmup))
-saveRDS(fit, fit_file)
-
 elapsed_sec <- as.numeric(Sys.time() - start_time, units = "secs")
 nuts <- nuts_params(fit)
 draw_summary <- posterior::summarise_draws(as_draws_df(fit))
 
-result <- data.frame(
+saveRDS(fit, file.path(out_dir, paste0("fit_", model_label, ".rds")))
+
+diagnostics <- data.frame(
     label = model_label,
-    data_subdir = data_subdir,
-    out_subdir = out_subdir,
-    seed = seed,
-    k_xy = space_k,
-    k_t = time_k,
-    bs_space = space_basis,
-    bs_time = time_basis,
-    iter = iter,
-    warmup = warmup,
-    adapt_delta = adapt_delta,
-    max_treedepth = max_treedepth,
-    elapsed_sec = elapsed_sec,
+    elapsed_hours = round(elapsed_sec / 3600, 2),
     n_divergent = sum(nuts$Value[nuts$Parameter == "divergent__"]),
     n_treedepth = sum(nuts$Value[nuts$Parameter == "treedepth__"] >= max_treedepth),
     max_rhat = max(draw_summary$rhat, na.rm = TRUE),
-    n_rhat_gt_1_01 = sum(draw_summary$rhat > 1.01, na.rm = TRUE),
     min_ess_bulk = min(draw_summary$ess_bulk, na.rm = TRUE),
-    mean_ess_bulk = mean(draw_summary$ess_bulk, na.rm = TRUE),
-    min_ess_tail = min(draw_summary$ess_tail, na.rm = TRUE),
-    fit_file = fit_file
+    min_ess_tail = min(draw_summary$ess_tail, na.rm = TRUE)
 )
 
-out_file <- file.path(out_dir, sprintf("basis_screen_%s_iter%d_warmup%d.csv",
-                                       model_label, iter, warmup))
-write.csv(result, out_file, row.names = FALSE)
-print(result)
+write.csv(diagnostics,
+          file.path(out_dir, paste0("summary_", model_label, ".csv")),
+          row.names = FALSE)
+print(diagnostics)

@@ -7,19 +7,18 @@
 ###########################################################
 
 load_laplace_reconstruction <- function() {
+    # Fitted basis models.
     fit_dir <- file.path(project_root(), "results", out_subdir)
-    adapt_tag <- gsub("\\.", "p", as.character(adapt_delta))
-    tag <- sprintf("laplacian_k%d_seed%03d_iter%d_warmup%d_adapt%s",
-                   k_basis, seed, iter, warmup, adapt_tag)
-
-    conv_summary <- read.csv(file.path(fit_dir, "summary_all.csv"))
+    summary_file <- file.path(fit_dir, "summary_all.csv")
+    conv_summary <- read.csv(summary_file)
     fit_files <- conv_summary$fit_file[order(conv_summary$basis_task)]
 
-    gt <- readRDS(data_path(data_subdir, sprintf("gt_%03d.rds", seed)))
-    sim <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
+    # Ground truth and time grid from the simulation data.
+    ground_truth <- readRDS(data_path(data_subdir, "gt_001.rds"))
+    sim <- readRDS(data_path(data_subdir, "sim_001.rds"))
     sim_model <- aggregate_trials(sim)
     times <- sort(unique(sim_model$time))
-    cond_levels <- c("cond1", "cond2")
+    condition_levels <- c("cond1", "cond2")
 
     condition_score_draws <- function(obj, times) {
         base <- data.frame(
@@ -30,8 +29,8 @@ load_laplace_reconstruction <- function() {
         )
         nd1 <- base
         nd2 <- base
-        nd1$condition <- factor("cond1", levels = cond_levels)
-        nd2$condition <- factor("cond2", levels = cond_levels)
+        nd1$condition <- factor("cond1", levels = condition_levels)
+        nd2$condition <- factor("cond2", levels = condition_levels)
 
         posterior_epred(obj$fit, newdata = nd2, re_formula = NA) -
             posterior_epred(obj$fit, newdata = nd1, re_formula = NA)
@@ -59,10 +58,10 @@ load_laplace_reconstruction <- function() {
     }
 
     list(
-        tag = tag,
+        tag = result_tag,
         data_subdir = data_subdir,
         seed = seed,
-        gt = gt,
+        gt = ground_truth,
         sim_model = sim_model,
         conv_summary = conv_summary,
         effect_array = effect_array,

@@ -17,6 +17,7 @@ task_ids <- seq_len(k_basis)
 
 data_subdir <- "montecarlo_p20_gaussian_hardlabel"
 out_subdir <- "laplacian_basis_brms_p20_gaussian_hardlabel_constant_long/k20"
+result_tag <- "laplacian_k20_seed001_iter3000_warmup1000_adapt0p999"
 
 seed <- 1L
 iter <- 3000L

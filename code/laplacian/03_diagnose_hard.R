@@ -104,7 +104,7 @@ run_hard_diagnostics <- function() {
     mean_recovery <- recovery_summary(window_draws, truth_mean)
 
     # 8. Save one-row hard-threshold diagnostic summary.
-    summary <- data.frame(
+    hard_summary <- data.frame(
         fit_file = rec$tag,
         dataset = data_subdir,
         convergence_pass = convergence_pass(rec$conv_summary),
@@ -118,8 +118,6 @@ run_hard_diagnostics <- function() {
         mean_recovery_pct = mean_recovery$recovery_pct
     )
 
-    summary_path <- file.path(out_dir, "summary_hard.csv")
-    write.csv(summary, summary_path, row.names = FALSE)
-    cat("Saved:", summary_path, "\n")
-    print(summary)
+    write.csv(hard_summary, file.path(out_dir, "summary_hard.csv"), row.names = FALSE)
+    print(hard_summary)
 }

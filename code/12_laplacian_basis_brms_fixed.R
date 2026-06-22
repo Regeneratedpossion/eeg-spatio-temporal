@@ -272,11 +272,6 @@ load_laplace_reconstruction <- function() {
     )
 }
 
-odds_from_p <- function(p, n_draws) {
-    floor <- 1 / n_draws
-    pmax(p, floor) / pmax(1 - p, floor)
-}
-
 f1_metrics <- function(TP, FP, FN) {
     precision <- TP / (TP + FP)
     recall <- TP / (TP + FN)
@@ -284,19 +279,6 @@ f1_metrics <- function(TP, FP, FN) {
 
     c(TP = TP, FP = FP, FN = FN,
       precision = precision, recall = recall, F1 = F1)
-}
-
-truth_window_mean <- function(ground_truth, n = 5000) {
-    true_on <- ground_truth$true_onset
-    true_off <- ground_truth$true_offset
-    peak_t <- 0.250
-    sigma_t <- 0.050
-    z <- (seq(true_on, true_off, length.out = n) - peak_t) / sigma_t
-    val <- exp(-z^2 / 2)
-    val_trunc <- exp(-1.5^2 / 2)
-    val[abs(z) > 1.5] <- val_trunc
-    val_norm <- pmax((val - val_trunc) / (1 - val_trunc), 0)
-    ground_truth$bump_amplitude * mean(val_norm)
 }
 
 run_hard_diagnostics <- function() {
@@ -314,7 +296,8 @@ run_hard_diagnostics <- function() {
     lo_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
     hi_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.975)
     p_sig_mat <- apply(effect_array > ROPE_UV, c(2, 3), mean)
-    odds_mat <- odds_from_p(p_sig_mat, rec$n_draws)
+    p_floor <- 1 / rec$n_draws
+    odds_mat <- pmax(p_sig_mat, p_floor) / pmax(1 - p_sig_mat, p_floor)
 
     full <- expand.grid(time = times, channel = channels, KEEP.OUT.ATTRS = FALSE) %>%
         mutate(
@@ -356,7 +339,8 @@ run_hard_diagnostics <- function() {
     seed_peak_draws <- effect_array[, peak_idx, seed_idx]
     window_idx <- which(times >= gt$true_onset & times <= gt$true_offset)
     window_draws <- rowMeans(effect_array[, window_idx, seed_idx, drop = FALSE][, , 1])
-    truth_mean <- truth_window_mean(gt)
+    truth_time <- seq(gt$true_onset, gt$true_offset, length.out = 5000)
+    truth_mean <- mean(truth_temporal_bump(truth_time, gt))
     cz_neighbours <- c("CZ", "FCZ", "CPZ", "C1", "C2", "FC1", "FC2",
                        "CP1", "CP2", "Cz", "FCz", "CPz")
 

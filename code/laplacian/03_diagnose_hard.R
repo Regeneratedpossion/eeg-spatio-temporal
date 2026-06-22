@@ -20,11 +20,15 @@ run_hard_diagnostics <- function() {
 
     f1_score <- function(TP, FP, FN) 2 * TP / (2 * TP + FP + FN)
 
-    mean_mat <- apply(effect_array, c(2, 3), mean)
-    lo_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
-    p_sig_mat <- apply(effect_array > ROPE_UV, c(2, 3), mean)
-    p_floor <- 1 / dim(effect_array)[1]
-    odds_mat <- pmax(p_sig_mat, p_floor) / pmax(1 - p_sig_mat, p_floor)
+    # Posterior summaries for each time x channel cell.
+    posterior_mean <- apply(effect_array, c(2, 3), mean)
+    posterior_lower <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
+    prob_above_rope <- apply(effect_array > ROPE_UV, c(2, 3), mean)
+
+    # Convert posterior probability to odds, avoiding exact 0 or Inf.
+    min_prob <- 1 / dim(effect_array)[1]
+    odds_mat <- pmax(prob_above_rope, min_prob) /
+        pmax(1 - prob_above_rope, min_prob)
 
     # Temporal recovery at the seed electrode.
     clusters <- find_clusters(times, odds_mat[, seed_idx], ODDS_THRESHOLD)
@@ -37,7 +41,7 @@ run_hard_diagnostics <- function() {
     # Spatial recovery at the true peak time.
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
     peak_idx <- match(peak_time, times)
-    pred_active_space <- lo_mat[peak_idx, ] > 0
+    pred_active_space <- posterior_lower[peak_idx, ] > 0
     spatial_F1 <- f1_score(
         TP = sum(pred_active_space & active_channels),
         FP = sum(pred_active_space & !active_channels),
@@ -68,7 +72,8 @@ run_hard_diagnostics <- function() {
         max(rec$conv_summary$n_treedepth, na.rm = TRUE) == 0 &&
         max(rec$conv_summary$max_rhat, na.rm = TRUE) < 1.01 &&
         min(rec$conv_summary$min_ess_bulk, na.rm = TRUE) > 400
-    spatial_top_pass <- channels[which.max(mean_mat[peak_idx, ])] %in% cz_neighbours
+    spatial_top_pass <- channels[which.max(posterior_mean[peak_idx, ])] %in%
+        cz_neighbours
     peak_ci <- quantile(seed_peak_draws, c(0.025, 0.975))
     mean_ci <- quantile(window_draws, c(0.025, 0.975))
     peak_recovery_pct <- 100 * mean(seed_peak_draws) / gt$bump_amplitude

@@ -104,6 +104,7 @@ make_score_data <- function(task_id) {
         basis_vector = basis_vector,
         basis_label = sprintf("lap%02d_lambda%.6f", task_id, eig_values[basis_index]),
         eigenvalue = eig_values[basis_index],
+        participant_id = score_data$participant[1],
         score_data = score_data
     )
 }
@@ -126,62 +127,6 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
     )
 }
 
-fit_one_basis <- function(compiled_fit, meta) {
-    if (is.null(compiled_fit)) {
-        return(brm(
-            formula = model_formula,
-            data = meta$score_data,
-            family = gaussian(),
-            chains = 4,
-            cores = 4,
-            iter = iter,
-            warmup = warmup,
-            seed = seed + meta$task_id,
-            threads = threading(threads = 4),
-            backend = "cmdstanr",
-            refresh = 100,
-            control = list(adapt_delta = adapt_delta,
-                           max_treedepth = max_treedepth)
-        ))
-    }
-
-    update(
-        compiled_fit,
-        newdata = meta$score_data,
-        chains = 4,
-        cores = 4,
-        iter = iter,
-        warmup = warmup,
-        seed = seed + meta$task_id,
-        refresh = 100,
-        recompile = FALSE,
-        control = list(adapt_delta = adapt_delta,
-                       max_treedepth = max_treedepth)
-    )
-}
-
-save_basis_fit <- function(fit, meta) {
-    fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d_adapt%s.rds",
-                                           meta$basis_label, iter, warmup,
-                                           gsub("\\.", "p", as.character(adapt_delta))))
-
-    saveRDS(list(
-        fit = fit,
-        basis_label = meta$basis_label,
-        basis_task = meta$task_id,
-        basis_index = meta$basis_index,
-        eigenvalue = meta$eigenvalue,
-        basis_vector = meta$basis_vector,
-        channels = channels,
-        k_basis = k_basis,
-        score_data = meta$score_data,
-        adapt_delta = adapt_delta,
-        max_treedepth = max_treedepth
-    ), fit_file)
-
-    fit_file
-}
-
 write_basis_summary <- function(result, meta) {
     out_file <- file.path(out_dir, sprintf("summary_%s_iter%d_warmup%d_adapt%s.csv",
                                            meta$basis_label, iter, warmup,
@@ -197,9 +142,49 @@ for (task_id in task_ids) {
     message(sprintf("Starting %s with adapt_delta=%.3f", meta$basis_label, adapt_delta))
     start_time <- Sys.time()
 
-    fit <- fit_one_basis(fit_model, meta)
+    if (is.null(fit_model)) {
+        fit <- brm(
+            formula = model_formula,
+            data = meta$score_data,
+            family = gaussian(),
+            chains = 4,
+            cores = 4,
+            iter = iter,
+            warmup = warmup,
+            seed = seed + meta$task_id,
+            threads = threading(threads = 4),
+            backend = "cmdstanr",
+            refresh = 100,
+            control = list(adapt_delta = adapt_delta,
+                           max_treedepth = max_treedepth)
+        )
+    } else {
+        fit <- update(
+            fit_model,
+            newdata = meta$score_data,
+            chains = 4,
+            cores = 4,
+            iter = iter,
+            warmup = warmup,
+            seed = seed + meta$task_id,
+            refresh = 100,
+            recompile = FALSE,
+            control = list(adapt_delta = adapt_delta,
+                           max_treedepth = max_treedepth)
+        )
+    }
     fit_model <- fit
-    fit_file <- save_basis_fit(fit, meta)
+
+    fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d_adapt%s.rds",
+                                           meta$basis_label, iter, warmup,
+                                           gsub("\\.", "p", as.character(adapt_delta))))
+    saveRDS(list(
+        fit = fit,
+        basis_task = meta$task_id,
+        basis_vector = meta$basis_vector,
+        channels = channels,
+        participant_id = meta$participant_id
+    ), fit_file)
 
     result <- summarise_fit(
         fit = fit,
@@ -253,7 +238,7 @@ load_laplace_reconstruction <- function() {
             time = times,
             score = 0,
             score_sem = 1,
-            participant = obj$score_data$participant[1]
+            participant = obj$participant_id
         )
         nd1 <- base
         nd2 <- base
@@ -271,7 +256,7 @@ load_laplace_reconstruction <- function() {
             time = times[1],
             score = 0,
             score_sem = 1,
-            participant = first_obj$score_data$participant[1],
+            participant = first_obj$participant_id,
             condition = factor("cond1", levels = cond_levels)
         ),
         re_formula = NA

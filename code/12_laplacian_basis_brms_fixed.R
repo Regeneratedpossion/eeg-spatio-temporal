@@ -127,8 +127,9 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
     )
 }
 
-# Fit one temporal GAMM for each Laplacian basis score.
-# The first fit compiles Stan; later fits reuse the compiled model with new score data.
+# Fit one brms temporal GAMM for each Laplacian basis score.
+# The first basis is fitted with a regular brm() call.
+# Later bases use update(..., recompile = FALSE) to reuse the compiled Stan model.
 fit_model <- NULL
 all_results <- list()
 
@@ -138,6 +139,7 @@ for (task_id in task_ids) {
     start_time <- Sys.time()
 
     if (is.null(fit_model)) {
+        # Regular brms model fit for the first spatial basis score.
         fit <- brm(
             formula = model_formula,
             data = meta$score_data,
@@ -154,6 +156,7 @@ for (task_id in task_ids) {
                            max_treedepth = max_treedepth)
         )
     } else {
+        # Same brms model, new basis-score data, no Stan recompilation.
         fit <- update(
             fit_model,
             newdata = meta$score_data,

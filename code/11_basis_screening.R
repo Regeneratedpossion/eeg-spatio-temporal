@@ -15,9 +15,13 @@ setup_cmdstan_cache()
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
 if (task_id == 1) {
-    cfg <- list(label = "A_k1212_tp", k = c(12L, 12L), bs = c("tp", "tp"))
+    model_label <- "A_k1212_tp"
+    space_basis <- "tp"
+    time_basis <- "tp"
 } else if (task_id == 2) {
-    cfg <- list(label = "B_k1212_ps", k = c(12L, 12L), bs = c("ps", "ps"))
+    model_label <- "B_k1212_ps"
+    space_basis <- "ps"
+    time_basis <- "ps"
 } else {
     stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
 }
@@ -28,6 +32,8 @@ out_subdir <- "basis_screening_full_ab"
 seed <- 1L
 iter <- 3000L
 warmup <- 1000L
+space_k <- 12L
+time_k <- 12L
 adapt_delta <- 0.99
 max_treedepth <- 13L
 refresh <- 100L
@@ -57,7 +63,7 @@ bgam_formula <- bf(as.formula(sprintf(
         "d = c(2, 1),",
         "full = FALSE)"
     ),
-    cfg$bs[1], cfg$bs[2], cfg$k[1], cfg$k[2]
+    space_basis, time_basis, space_k, time_k
 )))
 
 start_time <- Sys.time()
@@ -82,7 +88,7 @@ result <- tryCatch({
     fit_file <- NA_character_
     if (save_fit) {
         fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d.rds",
-                                               cfg$label, iter, warmup))
+                                               model_label, iter, warmup))
         saveRDS(fit, fit_file)
     }
 
@@ -94,15 +100,15 @@ result <- tryCatch({
     summ <- posterior::summarise_draws(as_draws_df(fit))
 
     data.frame(
-        label = cfg$label,
+        label = model_label,
         status = "ok",
         data_subdir = data_subdir,
         out_subdir = out_subdir,
         seed = seed,
-        k_xy = cfg$k[1],
-        k_t = cfg$k[2],
-        bs_space = cfg$bs[1],
-        bs_time = cfg$bs[2],
+        k_xy = space_k,
+        k_t = time_k,
+        bs_space = space_basis,
+        bs_time = time_basis,
         iter = iter,
         warmup = warmup,
         adapt_delta = adapt_delta,
@@ -120,15 +126,15 @@ result <- tryCatch({
     )
 }, error = function(e) {
     data.frame(
-        label = cfg$label,
+        label = model_label,
         status = "error",
         data_subdir = data_subdir,
         out_subdir = out_subdir,
         seed = seed,
-        k_xy = cfg$k[1],
-        k_t = cfg$k[2],
-        bs_space = cfg$bs[1],
-        bs_time = cfg$bs[2],
+        k_xy = space_k,
+        k_t = time_k,
+        bs_space = space_basis,
+        bs_time = time_basis,
         iter = iter,
         warmup = warmup,
         adapt_delta = adapt_delta,
@@ -147,6 +153,6 @@ result <- tryCatch({
 })
 
 out_file <- file.path(out_dir, sprintf("basis_screen_%s_iter%d_warmup%d.csv",
-                                       cfg$label, iter, warmup))
+                                       model_label, iter, warmup))
 write.csv(result, out_file, row.names = FALSE)
 print(result)

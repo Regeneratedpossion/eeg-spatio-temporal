@@ -13,6 +13,10 @@ basis functions to represent spatial processes efficiently (Cressie et al.,
 eigenvectors of the graph Laplacian then provide smooth spatial basis functions
 over this sensor graph (Chung, 1997; Belkin & Niyogi, 2003).
 
+This is currently an approximation: each basis score is fitted with a separate
+brms model, so the reconstruction does not yet represent one joint posterior
+over all spatial basis coefficients.
+
 For each participant x condition x time cell:
 
 1. Build a graph Laplacian from the sensor adjacency matrix.

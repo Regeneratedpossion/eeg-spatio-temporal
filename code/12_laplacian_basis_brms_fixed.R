@@ -38,12 +38,13 @@ model_formula <- bf(score | se(score_sem) ~
                         s(time, by = condition, k = time_k) +
                         (1 + condition | participant))
 
-adj_file <- file.path(project_root(), "archive", "models_original_2026_05_04",
-                      "adjacency_xproj_yproj_61ch.rds")
+# Output folder.
 out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-adj <- readRDS(adj_file)
+# Graph-Laplacian spatial basis from the sensor adjacency matrix.
+adj <- readRDS(file.path(project_root(), "archive", "models_original_2026_05_04",
+                         "adjacency_xproj_yproj_61ch.rds"))
 adj <- as.matrix(adj)
 adj <- ((adj + t(adj)) > 0) * 1
 diag(adj) <- 0
@@ -53,6 +54,8 @@ stopifnot(!is.null(channels), identical(channels, colnames(adj)))
 degree <- rowSums(adj)
 laplacian <- diag(degree) - adj
 eig <- eigen(laplacian, symmetric = TRUE)
+
+# Low eigenvalues give smoother spatial basis functions.
 ord <- order(eig$values)
 eig_values <- eig$values[ord]
 eig_vectors <- eig$vectors[, ord, drop = FALSE]

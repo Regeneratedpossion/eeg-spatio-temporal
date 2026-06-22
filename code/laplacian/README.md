@@ -90,18 +90,23 @@ top25_mean_recovery = 102.7%
 
 ## Interpretation
 
-The continuous diagnostic is better matched to this simulation, because the
-true spatial signal is a smooth Gaussian field rather than a binary
-active/inactive mask.
+The continuous diagnostic is the more appropriate primary evaluation for this
+simulation, because the simulated spatial effect is a smooth Gaussian field
+rather than a binary active/inactive mask. Under this evaluation, the low-rank
+Laplacian model recovers the main spatiotemporal structure well: the temporal
+effect window is detected, the strongest spatial effect is located around CZ,
+and the reconstructed sensor x time effect map is highly correlated with the
+true continuous effect.
 
-The current result suggests that the low-rank Laplacian model can recover:
+Adding the constant/global spatial component also substantially improves
+amplitude recovery. The peak effect is recovered at about 81% of the true value,
+while the truth-weighted and top-25% mean recoveries are close to 100%. This
+suggests that the remaining approximation error is no longer dominated by the
+strong amplitude shrinkage seen in the smaller-basis version.
 
-- the temporal effect window;
-- the correct top spatial channel around CZ;
-- the continuous spatiotemporal effect shape;
-- the effect amplitude much better after adding the constant/global component.
-
-The main remaining issue is the small number of divergent transitions in basis
-11 and basis 19. The hard-threshold F1 scores should be interpreted as secondary
-diagnostics because they force a binary active/inactive evaluation onto a
-continuous Gaussian signal.
+The main limitation is that two basis-score models still show divergent
+transitions: basis 11 has 2 divergences and basis 19 has 14. Therefore, the
+model should not be described as fully clean under strict convergence criteria,
+even though Rhat, ESS, and treedepth diagnostics are otherwise acceptable. The
+hard-threshold F1 scores should be treated as secondary diagnostics because
+they impose a binary active/inactive evaluation on a continuous Gaussian signal.

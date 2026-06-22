@@ -114,6 +114,10 @@ binary active/inactive problem.
 - Cressie, N., Sainsbury-Dale, M., & Zammit-Mangion, A. (2022).
   *Basis-Function Models in Spatial Statistics*.
   https://arxiv.org/abs/2202.03660
+- Lindgren, F., Rue, H., & Lindström, J. (2011). An explicit link between
+  Gaussian fields and Gaussian Markov random fields: the stochastic partial
+  differential equation approach. *Journal of the Royal Statistical Society:
+  Series B*, 73(4), 423-498.
 - Chung, F. R. K. (1997). *Spectral Graph Theory*. American Mathematical
   Society.
 - Belkin, M., & Niyogi, P. (2003). *Laplacian Eigenmaps and Spectral Techniques

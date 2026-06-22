@@ -1,0 +1,85 @@
+###########################################################
+# Reconstruct sensor x time posterior effects.
+#
+# Each fitted model gives the condition effect for one basis score.
+# Multiplying that effect by its spatial basis vector and summing over
+# bases reconstructs the posterior effect map.
+###########################################################
+
+truth_temporal_bump <- function(time, ground_truth) {
+    peak_t <- 0.250
+    sigma_t <- 0.050
+    z <- (time - peak_t) / sigma_t
+    val <- exp(-z^2 / 2)
+    val_trunc <- exp(-1.5^2 / 2)
+    val[abs(z) > 1.5] <- val_trunc
+    val_norm <- pmax((val - val_trunc) / (1 - val_trunc), 0)
+    val_norm[time < ground_truth$true_onset | time > ground_truth$true_offset] <- 0
+    ground_truth$bump_amplitude * val_norm
+}
+
+load_laplace_reconstruction <- function() {
+    fit_dir <- file.path(project_root(), "results", out_subdir)
+    adapt_tag <- gsub("\\.", "p", as.character(adapt_delta))
+    tag <- sprintf("laplacian_k%d_seed%03d_iter%d_warmup%d_adapt%s",
+                   k_basis, seed, iter, warmup, adapt_tag)
+
+    conv_summary <- read.csv(file.path(fit_dir, "summary_all.csv"))
+    fit_files <- conv_summary$fit_file[order(conv_summary$basis_task)]
+
+    gt <- readRDS(data_path(data_subdir, sprintf("gt_%03d.rds", seed)))
+    sim <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
+    sim_model <- aggregate_trials(sim)
+    times <- sort(unique(sim_model$time))
+    cond_levels <- c("cond1", "cond2")
+
+    condition_score_draws <- function(obj, times) {
+        base <- data.frame(
+            time = times,
+            score = 0,
+            score_sem = 1,
+            participant = obj$participant_id
+        )
+        nd1 <- base
+        nd2 <- base
+        nd1$condition <- factor("cond1", levels = cond_levels)
+        nd2$condition <- factor("cond2", levels = cond_levels)
+
+        posterior_epred(obj$fit, newdata = nd2, re_formula = NA) -
+            posterior_epred(obj$fit, newdata = nd1, re_formula = NA)
+    }
+
+    first_obj <- readRDS(fit_files[1])
+    channels <- first_obj$channels
+    first_score_diff <- condition_score_draws(first_obj, times)
+    effect_array <- array(
+        0,
+        dim = c(nrow(first_score_diff), length(times), length(channels)),
+        dimnames = list(NULL, as.character(times), channels)
+    )
+
+    add_basis_effect <- function(obj, score_diff) {
+        sweep(array(score_diff, dim = dim(effect_array)),
+              3, obj$basis_vector[channels], "*")
+    }
+
+    effect_array <- effect_array + add_basis_effect(first_obj, first_score_diff)
+    for (file in fit_files[-1]) {
+        obj <- readRDS(file)
+        score_diff <- condition_score_draws(obj, times)
+        effect_array <- effect_array + add_basis_effect(obj, score_diff)
+    }
+
+    list(
+        tag = tag,
+        data_subdir = data_subdir,
+        seed = seed,
+        gt = gt,
+        sim_model = sim_model,
+        conv_summary = conv_summary,
+        effect_array = effect_array,
+        times = times,
+        channels = channels,
+        n_draws = dim(effect_array)[1]
+    )
+}

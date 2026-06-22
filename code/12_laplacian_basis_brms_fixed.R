@@ -385,49 +385,9 @@ truth_temporal_bump <- function(time, ground_truth) {
     ground_truth$bump_amplitude * val_norm
 }
 
-make_continuous_truth <- function(sim_model, ground_truth, times, channels) {
-    sensors <- sim_model %>%
-        distinct(channel, xproj, yproj) %>%
-        filter(channel %in% channels)
-    seed_coord <- sensors %>% filter(channel == ground_truth$seed_electrode)
-    sensors <- sensors %>%
-        mutate(
-            spatial_distance = sqrt((xproj - seed_coord$xproj)^2 +
-                                    (yproj - seed_coord$yproj)^2),
-            spatial_weight_raw = exp(-(spatial_distance^2) /
-                                     (2 * ground_truth$sigma_space^2))
-        ) %>%
-        arrange(match(channel, channels))
-    truth_mat <- outer(truth_temporal_bump(times, ground_truth),
-                       sensors$spatial_weight_raw)
-    dimnames(truth_mat) <- list(as.character(times), sensors$channel)
-    truth_mat
-}
-
 safe_cor <- function(x, y) {
     if (sd(x) == 0 || sd(y) == 0) return(NA_real_)
     cor(x, y)
-}
-
-cosine_similarity <- function(x, y) {
-    denom <- sqrt(sum(x^2)) * sqrt(sum(y^2))
-    if (denom == 0) return(NA_real_)
-    sum(x * y) / denom
-}
-
-soft_dice <- function(x, y) {
-    x <- pmax(x, 0)
-    y <- pmax(y, 0)
-    if (max(x) > 0) x <- x / max(x)
-    if (max(y) > 0) y <- y / max(y)
-    denom <- sum(x) + sum(y)
-    if (denom == 0) return(NA_real_)
-    2 * sum(pmin(x, y)) / denom
-}
-
-truth_weighted_mean <- function(x, truth) {
-    idx <- truth > 0
-    sum(x[idx] * truth[idx]) / sum(truth[idx])
 }
 
 run_continuous_diagnostics <- function() {
@@ -437,8 +397,18 @@ run_continuous_diagnostics <- function() {
     dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
     estimate_mat <- apply(rec$effect_array, c(2, 3), mean)
-    truth_mat <- make_continuous_truth(rec$sim_model, rec$gt,
-                                       rec$times, rec$channels)
+    sensors <- rec$sim_model %>%
+        distinct(channel, xproj, yproj) %>%
+        filter(channel %in% rec$channels) %>%
+        arrange(match(channel, rec$channels))
+    seed_coord <- sensors %>% filter(channel == rec$gt$seed_electrode)
+    spatial_distance <- sqrt((sensors$xproj - seed_coord$xproj)^2 +
+                             (sensors$yproj - seed_coord$yproj)^2)
+    spatial_weight <- exp(-(spatial_distance^2) / (2 * rec$gt$sigma_space^2))
+    temporal_weight <- truth_temporal_bump(rec$times, rec$gt)
+    truth_mat <- outer(temporal_weight, spatial_weight)
+    dimnames(truth_mat) <- list(as.character(rec$times), rec$channels)
+
     truth_vec <- as.vector(truth_mat)
     estimate_vec <- as.vector(estimate_mat)
     active_idx <- truth_vec > 0
@@ -446,6 +416,18 @@ run_continuous_diagnostics <- function() {
     peak_time <- pick_time((rec$gt$true_onset + rec$gt$true_offset) / 2,
                            rec$times)
     peak_idx <- match(peak_time, rec$times)
+    cosine <- sum(truth_vec * estimate_vec) /
+        (sqrt(sum(truth_vec^2)) * sqrt(sum(estimate_vec^2)))
+    truth_scaled <- truth_vec / max(truth_vec)
+    estimate_scaled <- pmax(estimate_vec, 0) / max(pmax(estimate_vec, 0))
+    soft_dice <- 2 * sum(pmin(truth_scaled, estimate_scaled)) /
+        (sum(truth_scaled) + sum(estimate_scaled))
+    truth_weighted_estimate <- sum(estimate_vec[active_idx] * truth_vec[active_idx]) /
+        sum(truth_vec[active_idx])
+    truth_weighted_truth <- sum(truth_vec[active_idx]^2) / sum(truth_vec[active_idx])
+    truth_weighted_recovery <- 100 * truth_weighted_estimate / truth_weighted_truth
+    top25_recovery <- 100 * mean(estimate_vec[truth_top25_idx]) /
+        mean(truth_vec[truth_top25_idx])
 
     summary <- data.frame(
         fit_file = rec$tag,
@@ -455,22 +437,18 @@ run_continuous_diagnostics <- function() {
                                                     estimate_vec[active_idx]),
         spatiotemporal_rmse = sqrt(mean((estimate_vec - truth_vec)^2)),
         spatiotemporal_mae = mean(abs(estimate_vec - truth_vec)),
-        spatiotemporal_cosine = cosine_similarity(truth_vec, estimate_vec),
-        spatiotemporal_soft_dice = soft_dice(truth_vec, estimate_vec),
+        spatiotemporal_cosine = cosine,
+        spatiotemporal_soft_dice = soft_dice,
         peak_spatial_cor = safe_cor(truth_mat[peak_idx, ],
                                     estimate_mat[peak_idx, ]),
         truth_peak_uV = max(truth_vec),
         estimate_peak_uV = max(estimate_vec),
         peak_recovery_pct = 100 * max(estimate_vec) / max(truth_vec),
-        truth_weighted_mean_recovery_pct =
-            100 * truth_weighted_mean(estimate_vec, truth_vec) /
-            truth_weighted_mean(truth_vec, truth_vec),
-        truth_top25_mean_recovery_pct =
-            100 * mean(estimate_vec[truth_top25_idx]) /
-            mean(truth_vec[truth_top25_idx])
+        truth_weighted_mean_recovery_pct = truth_weighted_recovery,
+        truth_top25_mean_recovery_pct = top25_recovery
     )
 
-    summary_path <- file.path(out_dir, sprintf("summary_continuous_%s.csv", rec$tag))
+    summary_path <- file.path(out_dir, "summary_continuous.csv")
     write.csv(summary, summary_path, row.names = FALSE)
     cat("Saved:", summary_path, "\n")
     print(summary)

@@ -42,6 +42,10 @@ adapt_delta: 0.999
 max_treedepth: 13
 ```
 
+Runtime on the cluster was about 2.5 hours for the 20 basis-score models. The
+slowest single basis model took about 17 minutes. The diagnostic reconstruction
+steps finished within a few minutes.
+
 ## Current diagnostic results
 
 ### Hard-threshold diagnostic

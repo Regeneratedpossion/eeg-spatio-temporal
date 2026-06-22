@@ -25,7 +25,7 @@ run_hard_diagnostics <- function() {
     lo_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
     hi_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.975)
     p_sig_mat <- apply(effect_array > ROPE_UV, c(2, 3), mean)
-    p_floor <- 1 / rec$n_draws
+    p_floor <- 1 / dim(effect_array)[1]
     odds_mat <- pmax(p_sig_mat, p_floor) / pmax(1 - p_sig_mat, p_floor)
 
     full <- expand.grid(time = times, channel = channels, KEEP.OUT.ATTRS = FALSE) %>%
@@ -89,7 +89,7 @@ run_hard_diagnostics <- function() {
 
     summary <- data.frame(
         fit_file = rec$tag,
-        dataset = rec$data_subdir,
+        dataset = data_subdir,
         convergence_pass = convergence_pass,
         temporal_pass = temporal_pass,
         spatial_top_pass = spatial_top_pass,

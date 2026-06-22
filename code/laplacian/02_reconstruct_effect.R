@@ -59,14 +59,11 @@ load_laplace_reconstruction <- function() {
 
     list(
         tag = result_tag,
-        data_subdir = data_subdir,
-        seed = seed,
         gt = ground_truth,
         sim_model = sim_model,
         conv_summary = conv_summary,
         effect_array = effect_array,
         times = times,
-        channels = channels,
-        n_draws = dim(effect_array)[1]
+        channels = channels
     )
 }

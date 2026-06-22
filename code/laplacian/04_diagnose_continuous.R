@@ -54,7 +54,7 @@ run_continuous_diagnostics <- function() {
 
     summary <- data.frame(
         fit_file = rec$tag,
-        dataset = rec$data_subdir,
+        dataset = data_subdir,
         spatiotemporal_cor_all = safe_cor(truth_vec, estimate_vec),
         spatiotemporal_cor_effect_window = safe_cor(truth_vec[active_idx],
                                                     estimate_vec[active_idx]),

@@ -21,42 +21,25 @@ setup_cmdstan_cache()
 laplace_action <- Sys.getenv("LAPLACE_ACTION", "fit")
 
 run_fit <- function() {
-k_basis <- as.integer(Sys.getenv("LAPLACE_K", "10"))
-include_constant_basis <- tolower(Sys.getenv("LAPLACE_INCLUDE_CONSTANT", "false")) %in%
-    c("true", "1", "yes")
-task_spec <- Sys.getenv("LAPLACE_TASKS", unset = sprintf("1:%d", k_basis))
-task_ids <- eval(parse(text = task_spec))
-task_ids <- as.integer(task_ids)
-stopifnot(all(task_ids >= 1), all(task_ids <= k_basis))
+# K=20 + constant Laplacian basis model.
+k_basis <- 20L
+task_ids <- seq_len(k_basis)
+data_subdir <- "montecarlo_p20_gaussian_hardlabel"
+out_subdir <- "laplacian_basis_brms_p20_gaussian_hardlabel_constant_long/k20"
+seed <- 1L
+iter <- 3000L
+warmup <- 1000L
+time_k <- 10L
+adapt_delta <- 0.999
+max_treedepth <- 13L
 
-data_subdir <- Sys.getenv("LAPLACE_DATA_SUBDIR",
-                          "montecarlo_p5_gaussian_hardlabel")
-seed <- as.integer(Sys.getenv("LAPLACE_SEED", "1"))
-iter <- as.integer(Sys.getenv("LAPLACE_ITER", "3000"))
-warmup <- as.integer(Sys.getenv("LAPLACE_WARMUP", "1000"))
-time_k <- as.integer(Sys.getenv("LAPLACE_TIME_K", "10"))
-adapt_delta <- as.numeric(Sys.getenv("LAPLACE_ADAPT_DELTA", "0.999"))
-max_treedepth <- as.integer(Sys.getenv("LAPLACE_MAX_TREEDEPTH", "13"))
-random_effect_mode <- Sys.getenv("LAPLACE_RANDOM_EFFECT", "slope")
-model_formula <- switch(
-    random_effect_mode,
-    slope = bf(score | se(score_sem) ~
-                   condition +
-                   s(time, by = condition, k = time_k) +
-                   (1 + condition | participant)),
-    intercept = bf(score | se(score_sem) ~
-                       condition +
-                       s(time, by = condition, k = time_k) +
-                       (1 | participant)),
-    none = bf(score | se(score_sem) ~
-                  condition +
-                  s(time, by = condition, k = time_k)),
-    stop("LAPLACE_RANDOM_EFFECT must be one of: slope, intercept, none.")
-)
+model_formula <- bf(score | se(score_sem) ~
+                        condition +
+                        s(time, by = condition, k = time_k) +
+                        (1 + condition | participant))
 
 adj_file <- file.path(project_root(), "archive", "models_original_2026_05_04",
                       "adjacency_xproj_yproj_61ch.rds")
-out_subdir <- Sys.getenv("LAPLACE_OUT_SUBDIR", "laplacian_basis_brms_fixed")
 out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -75,12 +58,7 @@ eig_values <- eig$values[ord]
 eig_vectors <- eig$vectors[, ord, drop = FALSE]
 rownames(eig_vectors) <- channels
 
-non_constant <- which(eig_values > 1e-8)
-selected_basis_indices <- if (include_constant_basis) {
-    seq_len(k_basis)
-} else {
-    non_constant[seq_len(k_basis)]
-}
+selected_basis_indices <- seq_len(k_basis)
 if (length(selected_basis_indices) < k_basis || any(is.na(selected_basis_indices))) {
     stop("Not enough graph-Laplacian eigenvectors.")
 }
@@ -155,7 +133,6 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
         warmup = warmup,
         adapt_delta = adapt_delta,
         max_treedepth = max_treedepth,
-        random_effect_mode = random_effect_mode,
         elapsed_sec = elapsed_sec,
         n_divergent = n_div,
         n_treedepth = n_tree,
@@ -248,7 +225,6 @@ for (task_id in task_ids) {
             warmup = warmup,
             adapt_delta = adapt_delta,
             max_treedepth = max_treedepth,
-            random_effect_mode = random_effect_mode,
             elapsed_sec = as.numeric(Sys.time() - start_time, units = "secs"),
             n_divergent = NA_integer_,
             n_treedepth = NA_integer_,

@@ -270,15 +270,6 @@ load_laplace_reconstruction <- function() {
     )
 }
 
-f1_metrics <- function(TP, FP, FN) {
-    precision <- TP / (TP + FP)
-    recall <- TP / (TP + FN)
-    F1 <- 2 * precision * recall / (precision + recall)
-
-    c(TP = TP, FP = FP, FN = FN,
-      precision = precision, recall = recall, F1 = F1)
-}
-
 run_hard_diagnostics <- function() {
     rec <- load_laplace_reconstruction()
     out_dir <- file.path(project_root(), "results", "diagnostics",
@@ -290,6 +281,11 @@ run_hard_diagnostics <- function() {
     channels <- rec$channels
     gt <- rec$gt
     conv_summary <- rec$conv_summary
+    seed_ch <- gt$seed_electrode
+    active_channels <- gt$active_electrodes
+    true_on <- gt$true_onset
+    true_off <- gt$true_offset
+
     mean_mat <- apply(effect_array, c(2, 3), mean)
     lo_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
     hi_mat <- apply(effect_array, c(2, 3), quantile, probs = 0.975)
@@ -305,39 +301,43 @@ run_hard_diagnostics <- function() {
             p_sig = as.vector(p_sig_mat),
             odds = as.vector(odds_mat),
             pred_active = odds > ODDS_THRESHOLD,
-            truth_active = channel %in% gt$active_electrodes &
-                time >= gt$true_onset & time <= gt$true_offset
+            truth_active = channel %in% active_channels &
+                time >= true_on & time <= true_off
         )
 
-    seed_ch <- gt$seed_electrode
     seed_curve <- full %>% filter(channel == seed_ch) %>% arrange(time)
     clusters <- find_clusters(seed_curve$time, seed_curve$odds, ODDS_THRESHOLD)
     onset_est <- clusters$cluster_onset[1]
     offset_est <- clusters$cluster_offset[1]
     temporal_pass <- !is.na(onset_est) &&
-        abs((onset_est - gt$true_onset) * 1000) <= BIAS_TOLERANCE_MS &&
-        abs((offset_est - gt$true_offset) * 1000) <= BIAS_TOLERANCE_MS
+        abs((onset_est - true_on) * 1000) <= BIAS_TOLERANCE_MS &&
+        abs((offset_est - true_off) * 1000) <= BIAS_TOLERANCE_MS
 
-    peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
+    peak_time <- pick_time((true_on + true_off) / 2, times)
     peak_space <- full %>% filter(time == peak_time) %>% arrange(desc(mean_diff))
     pred_active_space <- peak_space$channel[peak_space$lo > 0]
-    spatial <- f1_metrics(
-        TP = length(intersect(pred_active_space, gt$active_electrodes)),
-        FP = length(setdiff(pred_active_space, gt$active_electrodes)),
-        FN = length(setdiff(gt$active_electrodes, pred_active_space))
-    )
-    st <- f1_metrics(
-        TP = sum(full$pred_active & full$truth_active, na.rm = TRUE),
-        FP = sum(full$pred_active & !full$truth_active, na.rm = TRUE),
-        FN = sum(!full$pred_active & full$truth_active, na.rm = TRUE)
-    )
+
+    spatial_TP <- length(intersect(pred_active_space, active_channels))
+    spatial_FP <- length(setdiff(pred_active_space, active_channels))
+    spatial_FN <- length(setdiff(active_channels, pred_active_space))
+    spatial_precision <- spatial_TP / (spatial_TP + spatial_FP)
+    spatial_recall <- spatial_TP / (spatial_TP + spatial_FN)
+    spatial_F1 <- 2 * spatial_precision * spatial_recall /
+        (spatial_precision + spatial_recall)
+
+    st_TP <- sum(full$pred_active & full$truth_active, na.rm = TRUE)
+    st_FP <- sum(full$pred_active & !full$truth_active, na.rm = TRUE)
+    st_FN <- sum(!full$pred_active & full$truth_active, na.rm = TRUE)
+    st_precision <- st_TP / (st_TP + st_FP)
+    st_recall <- st_TP / (st_TP + st_FN)
+    st_F1 <- 2 * st_precision * st_recall / (st_precision + st_recall)
 
     seed_idx <- match(seed_ch, channels)
     peak_idx <- match(peak_time, times)
     seed_peak_draws <- effect_array[, peak_idx, seed_idx]
-    window_idx <- which(times >= gt$true_onset & times <= gt$true_offset)
+    window_idx <- which(times >= true_on & times <= true_off)
     window_draws <- rowMeans(effect_array[, window_idx, seed_idx, drop = FALSE][, , 1])
-    truth_time <- seq(gt$true_onset, gt$true_offset, length.out = 5000)
+    truth_time <- seq(true_on, true_off, length.out = 5000)
     truth_mean <- mean(truth_temporal_bump(truth_time, gt))
     cz_neighbours <- c("CZ", "FCZ", "CPZ", "C1", "C2", "FC1", "FC2",
                        "CP1", "CP2", "Cz", "FCz", "CPz")
@@ -356,8 +356,8 @@ run_hard_diagnostics <- function() {
             gt$bump_amplitude <= unname(quantile(seed_peak_draws, 0.975)),
         mean_ci_covers_truth = unname(quantile(window_draws, 0.025)) <=
             truth_mean && truth_mean <= unname(quantile(window_draws, 0.975)),
-        spatial_F1 = spatial["F1"],
-        spatiotemporal_F1 = st["F1"],
+        spatial_F1 = spatial_F1,
+        spatiotemporal_F1 = st_F1,
         peak_recovery_pct = 100 * mean(seed_peak_draws) / gt$bump_amplitude,
         mean_recovery_pct = 100 * mean(window_draws) / truth_mean
     )

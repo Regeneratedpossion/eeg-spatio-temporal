@@ -107,7 +107,6 @@ Jiahui
 Full BGAM k = (12,12):
 
 - Code: `code/11_basis_screening.R`
-  - `SCREEN_CONFIG_SET=ab`
   - `SCREEN_SAVE_FIT=true`
 - Slurm: `slurm/run_basis_screening_full_ab.sh`
 - Diagnostics:

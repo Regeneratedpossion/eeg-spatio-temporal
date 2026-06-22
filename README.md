@@ -29,7 +29,7 @@ bgam_eeg_project/
 │   ├── 08_slide_topomap_n20.R
 │   ├── 09_run_montecarlo_sem.R         # one Slurm array task
 │   ├── 10_prior_predictive_check.R
-│   ├── 11_basis_screening.R            # short tp/ps and k screening
+│   ├── 11_basis_screening.R            # formal full-BGAM k=(12,12) tp/ps baseline
 │   └── utils.R                         # paths, thresholds, shared helpers
 │
 ├── resources/

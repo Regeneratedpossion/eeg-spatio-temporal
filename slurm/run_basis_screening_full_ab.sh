@@ -16,7 +16,6 @@ mkdir -p logs
 module load R/4.4.2-gcc141-base
 
 export PROJECT_ROOT=/work/smjifan1/bgam_eeg_project
-export SCREEN_CONFIG_SET=ab
 export SCREEN_DATA_SUBDIR=montecarlo_p5_gaussian_hardlabel
 export SCREEN_OUT_SUBDIR=basis_screening_full_ab
 export SCREEN_SEED=1

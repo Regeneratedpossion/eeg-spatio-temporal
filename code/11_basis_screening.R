@@ -1,11 +1,9 @@
 ###########################################################
 # 11_basis_screening.R
 #
-# Single full-BGAM basis-screening entry point.
-#
-# Typical modes:
-#   SCREEN_CONFIG_SET=all  short A-D feasibility screen
-#   SCREEN_CONFIG_SET=ab   formal k=(12,12) A/B tp-vs-ps run
+# Formal full-BGAM k=(12,12) A/B tp-vs-ps run.
+# This is the full-model baseline used for comparison with the
+# K=20 + constant Laplacian approximation.
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
@@ -18,20 +16,12 @@ task_id <- as.integer(Sys.getenv(
 ))
 
 configs <- data.frame(
-    task_id = 1:4,
-    label = c("A_k1212_tp", "B_k1212_ps", "C_k2020_tp", "D_k2020_ps"),
-    k_xy = c(12L, 12L, 20L, 20L),
-    k_t = c(12L, 12L, 20L, 20L),
-    bs_space = c("tp", "ps", "tp", "ps"),
-    bs_time = c("tp", "ps", "tp", "ps")
-)
-
-config_set <- Sys.getenv("SCREEN_CONFIG_SET", "all")
-configs <- switch(
-    config_set,
-    all = configs,
-    ab = configs[configs$label %in% c("A_k1212_tp", "B_k1212_ps"), ],
-    stop("SCREEN_CONFIG_SET must be one of: all, ab.")
+    task_id = 1:2,
+    label = c("A_k1212_tp", "B_k1212_ps"),
+    k_xy = c(12L, 12L),
+    k_t = c(12L, 12L),
+    bs_space = c("tp", "ps"),
+    bs_time = c("tp", "ps")
 )
 
 cfg <- configs[configs$task_id == task_id, ]
@@ -39,14 +29,14 @@ stopifnot(nrow(cfg) == 1)
 
 data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR",
                           "montecarlo_p5_gaussian_hardlabel")
-out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR", "basis_screening")
+out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR", "basis_screening_full_ab")
 seed <- as.integer(Sys.getenv("SCREEN_SEED", "1"))
-iter <- as.integer(Sys.getenv("SCREEN_ITER", "200"))
-warmup <- as.integer(Sys.getenv("SCREEN_WARMUP", "100"))
+iter <- as.integer(Sys.getenv("SCREEN_ITER", "3000"))
+warmup <- as.integer(Sys.getenv("SCREEN_WARMUP", "1000"))
 adapt_delta <- as.numeric(Sys.getenv("SCREEN_ADAPT_DELTA", "0.99"))
 max_treedepth <- as.integer(Sys.getenv("SCREEN_MAX_TREEDEPTH", "13"))
-refresh <- as.integer(Sys.getenv("SCREEN_REFRESH", "10"))
-save_fit <- tolower(Sys.getenv("SCREEN_SAVE_FIT", "false")) %in%
+refresh <- as.integer(Sys.getenv("SCREEN_REFRESH", "100"))
+save_fit <- tolower(Sys.getenv("SCREEN_SAVE_FIT", "true")) %in%
     c("true", "1", "yes")
 
 out_dir <- file.path(project_root(), "results", out_subdir)

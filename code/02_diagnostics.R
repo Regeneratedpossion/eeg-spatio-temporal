@@ -42,6 +42,10 @@ gt_file <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
 # Diagnostic settings.
 fit_file <- paste0("fit_", model_label, ".rds")
 fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
+if (!file.exists(fit_path)) {
+    fit_file <- paste0("fit_", model_label, "_iter3000_warmup1000.rds")
+    fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
+}
 tag <- model_label
 out_dir <- diag_path("june_full")
 cond_levels <- c("cond1", "cond2")

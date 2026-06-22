@@ -227,8 +227,8 @@ load_laplace_reconstruction <- function() {
     times <- sort(unique(sim_model$time))
     cond_levels <- c("cond1", "cond2")
 
+    # Posterior condition effect for one fitted basis-score model.
     condition_score_draws <- function(obj, times) {
-        fit <- obj$fit
         base <- data.frame(
             time = times,
             score = 0,
@@ -239,34 +239,30 @@ load_laplace_reconstruction <- function() {
         nd2 <- base
         nd1$condition <- factor("cond1", levels = cond_levels)
         nd2$condition <- factor("cond2", levels = cond_levels)
-        posterior_epred(fit, newdata = nd2, re_formula = NA) -
-            posterior_epred(fit, newdata = nd1, re_formula = NA)
+
+        posterior_epred(obj$fit, newdata = nd2, re_formula = NA) -
+            posterior_epred(obj$fit, newdata = nd1, re_formula = NA)
     }
 
     first_obj <- readRDS(fit_files[1])
     channels <- first_obj$channels
-    n_draws <- nrow(posterior_epred(
-        first_obj$fit,
-        newdata = data.frame(
-            time = times[1],
-            score = 0,
-            score_sem = 1,
-            participant = first_obj$participant_id,
-            condition = factor("cond1", levels = cond_levels)
-        ),
-        re_formula = NA
-    ))
+    effect_array <- NULL
 
-    effect_array <- array(
-        0,
-        dim = c(n_draws, length(times), length(channels)),
-        dimnames = list(NULL, as.character(times), channels)
-    )
-
+    # Reconstruct sensor x time posterior effect:
+    # score effect for each basis x spatial basis vector, summed over bases.
     for (file in fit_files) {
         obj <- readRDS(file)
         score_diff <- condition_score_draws(obj, times)
         basis_vector <- obj$basis_vector[channels]
+
+        if (is.null(effect_array)) {
+            effect_array <- array(
+                0,
+                dim = c(nrow(score_diff), length(times), length(channels)),
+                dimnames = list(NULL, as.character(times), channels)
+            )
+        }
+
         for (j in seq_along(channels)) {
             effect_array[, , j] <- effect_array[, , j] +
                 score_diff * basis_vector[j]
@@ -283,7 +279,7 @@ load_laplace_reconstruction <- function() {
         effect_array = effect_array,
         times = times,
         channels = channels,
-        n_draws = n_draws
+        n_draws = dim(effect_array)[1]
     )
 }
 

@@ -173,9 +173,7 @@ for (task_id in task_ids) {
     }
     fit_model <- fit
 
-    fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d_adapt%s.rds",
-                                           meta$basis_label, iter, warmup,
-                                           gsub("\\.", "p", as.character(adapt_delta))))
+    fit_file <- file.path(out_dir, paste0("fit_", meta$basis_label, ".rds"))
     saveRDS(list(
         fit = fit,
         basis_task = meta$task_id,

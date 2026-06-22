@@ -53,8 +53,8 @@ load_laplace_reconstruction <- function() {
     effect_array <- effect_array + add_basis_effect(first_obj, first_score_diff)
     for (file in fit_files[-1]) {
         obj <- readRDS(file)
-        score_diff <- condition_score_draws(obj, times)
-        effect_array <- effect_array + add_basis_effect(obj, score_diff)
+        effect_array <- effect_array +
+            add_basis_effect(obj, condition_score_draws(obj, times))
     }
 
     list(

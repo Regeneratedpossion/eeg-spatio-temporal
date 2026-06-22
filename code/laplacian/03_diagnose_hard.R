@@ -23,6 +23,9 @@ run_hard_diagnostics <- function() {
     # Posterior summaries for each time x channel cell.
     posterior_mean <- apply(effect_array, c(2, 3), mean)
     posterior_lower <- apply(effect_array, c(2, 3), quantile, probs = 0.025)
+
+    # Posterior probability of a positive effect larger than the ROPE:
+    # mean(draws > ROPE_UV) = proportion of posterior draws satisfying the inequality.
     prob_above_rope <- apply(effect_array > ROPE_UV, c(2, 3), mean)
 
     # Convert posterior probability to odds, avoiding exact 0 or Inf.

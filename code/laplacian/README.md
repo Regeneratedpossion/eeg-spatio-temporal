@@ -108,3 +108,14 @@ transitions. Therefore, this result is promising but not fully clean under
 strict convergence criteria. The hard-threshold F1 scores should be treated as
 secondary diagnostics, because they turn a continuous Gaussian signal into a
 binary active/inactive problem.
+
+## References
+
+- Cressie, N., Sainsbury-Dale, M., & Zammit-Mangion, A. (2022).
+  *Basis-Function Models in Spatial Statistics*.
+  https://arxiv.org/abs/2202.03660
+- Chung, F. R. K. (1997). *Spectral Graph Theory*. American Mathematical
+  Society.
+- Belkin, M., & Niyogi, P. (2003). *Laplacian Eigenmaps and Spectral Techniques
+  for Embedding and Clustering*. Advances in Neural Information Processing
+  Systems.

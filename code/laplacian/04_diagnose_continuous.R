@@ -1,8 +1,8 @@
 ###########################################################
 # Continuous Gaussian-field diagnostics.
 #
-# This is better matched to the simulated signal than hard active/inactive
-# labels because the spatial Gaussian effect is continuous.
+# The simulated truth is a smooth Gaussian effect over sensors, not a binary
+# active/inactive mask. These diagnostics compare the full continuous field.
 ###########################################################
 
 safe_cor <- function(x, y) {

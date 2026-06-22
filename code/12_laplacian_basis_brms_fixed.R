@@ -116,25 +116,12 @@ summarise_fit <- function(fit, meta, elapsed_sec, fit_file) {
     data.frame(
         basis_task = meta$task_id,
         basis_label = meta$basis_label,
-        basis_index = meta$basis_index,
-        eigenvalue = meta$eigenvalue,
-        status = "ok",
-        seed = seed,
-        k_basis = k_basis,
-        time_k = time_k,
-        iter = iter,
-        warmup = warmup,
-        adapt_delta = adapt_delta,
-        max_treedepth = max_treedepth,
         elapsed_sec = elapsed_sec,
         n_divergent = sum(sampler_info$Value[sampler_info$Parameter == "divergent__"]),
         n_treedepth = sum(sampler_info$Value[sampler_info$Parameter == "treedepth__"] >=
                               max_treedepth),
         max_rhat = max(draw_summary$rhat, na.rm = TRUE),
-        n_rhat_gt_1_01 = sum(draw_summary$rhat > 1.01, na.rm = TRUE),
         min_ess_bulk = min(draw_summary$ess_bulk, na.rm = TRUE),
-        mean_ess_bulk = mean(draw_summary$ess_bulk, na.rm = TRUE),
-        min_ess_tail = min(draw_summary$ess_tail, na.rm = TRUE),
         fit_file = fit_file
     )
 }

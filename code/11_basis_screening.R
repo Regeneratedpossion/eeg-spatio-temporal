@@ -14,25 +14,22 @@ source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 setup_cmdstan_cache()
 
+# Select one of the two predefined full-BGAM baselines.
+# Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
 task_id <- as.integer(Sys.getenv(
     "SLURM_ARRAY_TASK_ID",
     unset = as.character(as.integer(c(commandArgs(trailingOnly = TRUE), 1)[1]))
 ))
 
-configs <- data.frame(
-    task_id = 1:2,
-    label = c("A_k1212_tp", "B_k1212_ps"),
-    k_xy = c(12L, 12L),
-    k_t = c(12L, 12L),
-    bs_space = c("tp", "ps"),
-    bs_time = c("tp", "ps")
+configs <- list(
+    list(label = "A_k1212_tp", k = c(12L, 12L), bs = c("tp", "tp")),
+    list(label = "B_k1212_ps", k = c(12L, 12L), bs = c("ps", "ps"))
 )
+cfg <- configs[[task_id]]
+stopifnot(!is.null(cfg))
 
-cfg <- configs[configs$task_id == task_id, ]
-stopifnot(nrow(cfg) == 1)
-
-data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR",
-                          "montecarlo_p5_gaussian_hardlabel")
+# Runtime settings. Defaults reproduce the long-chain k=(12,12) baseline.
+data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR", "montecarlo_p5_gaussian_hardlabel")
 out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR", "basis_screening_full_ab")
 seed <- as.integer(Sys.getenv("SCREEN_SEED", "1"))
 iter <- as.integer(Sys.getenv("SCREEN_ITER", "3000"))
@@ -43,6 +40,7 @@ refresh <- as.integer(Sys.getenv("SCREEN_REFRESH", "100"))
 save_fit <- tolower(Sys.getenv("SCREEN_SAVE_FIT", "true")) %in%
     c("true", "1", "yes")
 
+# Load and aggregate trial-level simulation data to participant x sensor x time cells.
 out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -62,7 +60,7 @@ bgam_formula <- bf(as.formula(sprintf(
         "d = c(2, 1),",
         "full = FALSE)"
     ),
-    cfg$bs_space, cfg$bs_time, cfg$k_xy, cfg$k_t
+    cfg$bs[1], cfg$bs[2], cfg$k[1], cfg$k[2]
 )))
 
 start_time <- Sys.time()
@@ -104,10 +102,10 @@ result <- tryCatch({
         data_subdir = data_subdir,
         out_subdir = out_subdir,
         seed = seed,
-        k_xy = cfg$k_xy,
-        k_t = cfg$k_t,
-        bs_space = cfg$bs_space,
-        bs_time = cfg$bs_time,
+        k_xy = cfg$k[1],
+        k_t = cfg$k[2],
+        bs_space = cfg$bs[1],
+        bs_time = cfg$bs[2],
         iter = iter,
         warmup = warmup,
         adapt_delta = adapt_delta,
@@ -130,10 +128,10 @@ result <- tryCatch({
         data_subdir = data_subdir,
         out_subdir = out_subdir,
         seed = seed,
-        k_xy = cfg$k_xy,
-        k_t = cfg$k_t,
-        bs_space = cfg$bs_space,
-        bs_time = cfg$bs_time,
+        k_xy = cfg$k[1],
+        k_t = cfg$k[2],
+        bs_space = cfg$bs[1],
+        bs_time = cfg$bs[2],
         iter = iter,
         warmup = warmup,
         adapt_delta = adapt_delta,

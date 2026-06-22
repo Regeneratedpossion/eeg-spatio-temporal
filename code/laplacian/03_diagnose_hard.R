@@ -35,6 +35,22 @@ mask_f1 <- function(predicted, truth) {
     2 * TP / (2 * TP + FP + FN)
 }
 
+convergence_pass <- function(summary) {
+    max(summary$n_divergent, na.rm = TRUE) == 0 &&
+        max(summary$n_treedepth, na.rm = TRUE) == 0 &&
+        max(summary$max_rhat, na.rm = TRUE) < 1.01 &&
+        min(summary$min_ess_bulk, na.rm = TRUE) > 400
+}
+
+recovery_summary <- function(draws, truth) {
+    ci <- quantile(draws, c(0.025, 0.975))
+
+    list(
+        ci_covers_truth = ci[1] <= truth && truth <= ci[2],
+        recovery_pct = 100 * mean(draws) / truth
+    )
+}
+
 run_hard_diagnostics <- function() {
     # 1. Load reconstructed posterior effect map and ground truth.
     rec <- load_laplace_reconstruction()
@@ -81,32 +97,25 @@ run_hard_diagnostics <- function() {
         seq(gt$true_onset, gt$true_offset, length.out = 5000), gt
     ))
 
-    # 7. Convergence and top-channel checks.
-    convergence_pass <- max(rec$conv_summary$n_divergent, na.rm = TRUE) == 0 &&
-        max(rec$conv_summary$n_treedepth, na.rm = TRUE) == 0 &&
-        max(rec$conv_summary$max_rhat, na.rm = TRUE) < 1.01 &&
-        min(rec$conv_summary$min_ess_bulk, na.rm = TRUE) > 400
+    # 7. Convergence, top-channel, and amplitude checks.
     spatial_top_pass <- channels[which.max(posterior$mean[peak_idx, ])] %in%
         cz_neighbours
-    peak_ci <- quantile(seed_peak_draws, c(0.025, 0.975))
-    mean_ci <- quantile(window_draws, c(0.025, 0.975))
-    peak_recovery_pct <- 100 * mean(seed_peak_draws) / gt$bump_amplitude
-    mean_recovery_pct <- 100 * mean(window_draws) / truth_mean
+    peak_recovery <- recovery_summary(seed_peak_draws, gt$bump_amplitude)
+    mean_recovery <- recovery_summary(window_draws, truth_mean)
 
     # 8. Save one-row hard-threshold diagnostic summary.
     summary <- data.frame(
         fit_file = rec$tag,
         dataset = data_subdir,
-        convergence_pass = convergence_pass,
+        convergence_pass = convergence_pass(rec$conv_summary),
         temporal_pass = temporal_pass,
         spatial_top_pass = spatial_top_pass,
-        peak_ci_covers_truth = peak_ci[1] <= gt$bump_amplitude &&
-            gt$bump_amplitude <= peak_ci[2],
-        mean_ci_covers_truth = mean_ci[1] <= truth_mean && truth_mean <= mean_ci[2],
+        peak_ci_covers_truth = peak_recovery$ci_covers_truth,
+        mean_ci_covers_truth = mean_recovery$ci_covers_truth,
         spatial_F1 = spatial_F1,
         spatiotemporal_F1 = st_F1,
-        peak_recovery_pct = peak_recovery_pct,
-        mean_recovery_pct = mean_recovery_pct
+        peak_recovery_pct = peak_recovery$recovery_pct,
+        mean_recovery_pct = mean_recovery$recovery_pct
     )
 
     summary_path <- file.path(out_dir, "summary_hard.csv")

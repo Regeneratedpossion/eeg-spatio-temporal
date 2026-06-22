@@ -342,27 +342,32 @@ run_hard_diagnostics <- function() {
     cz_neighbours <- c("CZ", "FCZ", "CPZ", "C1", "C2", "FC1", "FC2",
                        "CP1", "CP2", "Cz", "FCz", "CPz")
 
+    convergence_pass <- max(conv_summary$n_divergent, na.rm = TRUE) == 0 &&
+        max(conv_summary$n_treedepth, na.rm = TRUE) == 0 &&
+        max(conv_summary$max_rhat, na.rm = TRUE) < 1.01 &&
+        min(conv_summary$min_ess_bulk, na.rm = TRUE) > 400
+    spatial_top_pass <- peak_space$channel[1] %in% cz_neighbours
+    peak_ci <- quantile(seed_peak_draws, c(0.025, 0.975))
+    mean_ci <- quantile(window_draws, c(0.025, 0.975))
+    peak_recovery_pct <- 100 * mean(seed_peak_draws) / gt$bump_amplitude
+    mean_recovery_pct <- 100 * mean(window_draws) / truth_mean
+
     summary <- data.frame(
         fit_file = rec$tag,
         dataset = rec$data_subdir,
-        convergence_pass = max(conv_summary$n_divergent, na.rm = TRUE) == 0 &&
-            max(conv_summary$n_treedepth, na.rm = TRUE) == 0 &&
-            max(conv_summary$max_rhat, na.rm = TRUE) < 1.01 &&
-            min(conv_summary$min_ess_bulk, na.rm = TRUE) > 400,
+        convergence_pass = convergence_pass,
         temporal_pass = temporal_pass,
-        spatial_top_pass = peak_space$channel[1] %in% cz_neighbours,
-        peak_ci_covers_truth = unname(quantile(seed_peak_draws, 0.025)) <=
-            gt$bump_amplitude &&
-            gt$bump_amplitude <= unname(quantile(seed_peak_draws, 0.975)),
-        mean_ci_covers_truth = unname(quantile(window_draws, 0.025)) <=
-            truth_mean && truth_mean <= unname(quantile(window_draws, 0.975)),
+        spatial_top_pass = spatial_top_pass,
+        peak_ci_covers_truth = peak_ci[1] <= gt$bump_amplitude &&
+            gt$bump_amplitude <= peak_ci[2],
+        mean_ci_covers_truth = mean_ci[1] <= truth_mean && truth_mean <= mean_ci[2],
         spatial_F1 = spatial_F1,
         spatiotemporal_F1 = st_F1,
-        peak_recovery_pct = 100 * mean(seed_peak_draws) / gt$bump_amplitude,
-        mean_recovery_pct = 100 * mean(window_draws) / truth_mean
+        peak_recovery_pct = peak_recovery_pct,
+        mean_recovery_pct = mean_recovery_pct
     )
 
-    summary_path <- file.path(out_dir, sprintf("summary_%s.csv", rec$tag))
+    summary_path <- file.path(out_dir, "summary_hard.csv")
     write.csv(summary, summary_path, row.names = FALSE)
     cat("Saved:", summary_path, "\n")
     print(summary)

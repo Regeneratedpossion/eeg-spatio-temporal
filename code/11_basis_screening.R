@@ -33,11 +33,15 @@ max_treedepth <- 13L
 refresh <- 100L
 save_fit <- TRUE
 
-# Load and aggregate trial-level simulation data to participant x sensor x time cells.
+# Output folder.
 out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-sim_data <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
+# Simulation data.
+sim_file <- data_path(data_subdir, "sim_001.rds")
+sim_data <- readRDS(sim_file)
+
+# Participant x sensor x time means and SEMs.
 sim_data_model <- aggregate_trials(sim_data)
 contrasts(sim_data_model$condition) <- c(-0.5, 0.5)
 

@@ -1,7 +1,7 @@
 ###########################################################
 # 02_diagnostics.R
 #
-# Full diagnostics for one fitted BGAM model.
+# Full diagnostics for the k=(12,12) full-BGAM baseline models.
 #
 # Outputs:
 #   Target 1  convergence
@@ -20,31 +20,29 @@ library(posterior)
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
-# Input paths for the fitted model and hard-threshold dataset.
-fit_file <- Sys.getenv("FIT_FILE", "bgam_fit_v5_k20_sem.rds")
-data_subdir <- Sys.getenv("MC_DATA_SUBDIR", "montecarlo_n20_hard")
-seed <- as.integer(Sys.getenv("SEED", "1"))
+# Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
+task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+
+if (identical(task_id, 1L)) {
+    model_label <- "A_k1212_tp"
+} else if (identical(task_id, 2L)) {
+    model_label <- "B_k1212_ps"
+} else {
+    stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
+}
+
+# Input paths for the fitted model and hard-threshold simulation dataset.
+data_subdir <- "montecarlo_p5_gaussian_hardlabel"
+fit_subdir <- "basis_screening_full_ab"
+seed <- 1L
 dataset <- data_subdir
 sim_file <- file.path(data_subdir, sprintf("sim_%03d.rds", seed))
 gt_file <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
 
-# Read k from the fit name so diagnostics can work with different basis sizes.
-resolve_k <- function(file) {
-    hit <- regmatches(file, regexpr("k\\d{2}(\\d{2})?", file, perl = TRUE))
-    if (!nzchar(hit)) return(list(k_xy = 20L, k_t = 20L))
-
-    digits <- sub("^k", "", hit)
-    k_xy <- as.integer(substr(digits, 1, 2))
-    k_t <- if (nchar(digits) == 4) as.integer(substr(digits, 3, 4)) else k_xy
-    list(k_xy = k_xy, k_t = k_t)
-}
-
 # Diagnostic settings.
-k <- resolve_k(fit_file)
-k_xy <<- k$k_xy
-k_t <<- k$k_t
-full <<- grepl("_full", fit_file, fixed = TRUE)
-tag <- tools::file_path_sans_ext(fit_file)
+fit_file <- paste0("fit_", model_label, ".rds")
+fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
+tag <- model_label
 out_dir <- diag_path("june_full")
 cond_levels <- c("cond1", "cond2")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
@@ -361,7 +359,9 @@ run_all_diagnostics <- function(fit, sim_model, times, seed_ch, true_on,
         peak_ci_covers_truth = amp$target4$ci_covers_truth,
         mean_ci_covers_truth = amp$target4b$ci_covers_truth,
         spatial_F1 = spat$spatial["F1"],
-        spatiotemporal_F1 = spat$st["F1"]
+        spatiotemporal_F1 = spat$st["F1"],
+        peak_recovery_pct = amp$target4$recovery_pct,
+        mean_recovery_pct = amp$target4b$recovery_pct
     )
     print(summary)
     write_diag(summary, "summary", out_dir, tag)
@@ -370,7 +370,7 @@ run_all_diagnostics <- function(fit, sim_model, times, seed_ch, true_on,
 }
 
 # Load data.
-fit <- readRDS(fit_path(fit_file))
+fit <- readRDS(fit_path)
 sim_data <- readRDS(data_path(sim_file))
 ground_truth <- readRDS(data_path(gt_file))
 sim_model <- aggregate_trials(sim_data)

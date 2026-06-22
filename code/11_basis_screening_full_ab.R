@@ -1,7 +1,15 @@
 ###########################################################
 # Full diagnostic rerun for basis screening A/B.
-# Uses same model as code/11_basis_screening.R, but writes
-# to a separate output directory to preserve short-screen CSVs.
+# This is the single full-BGAM k=(12,12) A/B script.
+#
+# Defaults reproduce the original full run:
+#   SCREEN_DATA_SUBDIR=montecarlo_p5_gaussian_hardlabel
+#   SCREEN_OUT_SUBDIR=basis_screening_full_ab
+#   SCREEN_ADAPT_DELTA=0.99
+#   SCREEN_MAX_TREEDEPTH=13
+#
+# The same script can run sampler-control sensitivity checks by
+# overriding these environment variables.
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
@@ -27,11 +35,15 @@ stopifnot(nrow(cfg) == 1)
 
 data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR",
                           "montecarlo_p5_gaussian_hardlabel")
+out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR",
+                         "basis_screening_full_ab")
 seed <- as.integer(Sys.getenv("SCREEN_SEED", "1"))
 iter <- as.integer(Sys.getenv("SCREEN_ITER", "3000"))
 warmup <- as.integer(Sys.getenv("SCREEN_WARMUP", "1000"))
+adapt_delta <- as.numeric(Sys.getenv("SCREEN_ADAPT_DELTA", "0.99"))
+max_treedepth <- as.integer(Sys.getenv("SCREEN_MAX_TREEDEPTH", "13"))
 
-out_dir <- file.path(project_root(), "results", "basis_screening_full_ab")
+out_dir <- file.path(project_root(), "results", out_subdir)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 sim_data <- readRDS(data_path(data_subdir, sprintf("sim_%03d.rds", seed)))
@@ -68,7 +80,8 @@ result <- tryCatch({
         threads = threading(threads = 4),
         backend = "cmdstanr",
         refresh = 100,
-        control = list(adapt_delta = 0.99, max_treedepth = 13)
+        control = list(adapt_delta = adapt_delta,
+                       max_treedepth = max_treedepth)
     )
 
     fit_file <- file.path(out_dir, sprintf("fit_%s_iter%d_warmup%d.rds",
@@ -85,6 +98,8 @@ result <- tryCatch({
     data.frame(
         label = cfg$label,
         status = "ok",
+        data_subdir = data_subdir,
+        out_subdir = out_subdir,
         seed = seed,
         k_xy = cfg$k_xy,
         k_t = cfg$k_t,
@@ -92,6 +107,8 @@ result <- tryCatch({
         bs_time = cfg$bs_time,
         iter = iter,
         warmup = warmup,
+        adapt_delta = adapt_delta,
+        max_treedepth = max_treedepth,
         elapsed_sec = elapsed_sec,
         n_divergent = n_div,
         n_treedepth = n_tree,
@@ -107,6 +124,8 @@ result <- tryCatch({
     data.frame(
         label = cfg$label,
         status = "error",
+        data_subdir = data_subdir,
+        out_subdir = out_subdir,
         seed = seed,
         k_xy = cfg$k_xy,
         k_t = cfg$k_t,
@@ -114,6 +133,8 @@ result <- tryCatch({
         bs_time = cfg$bs_time,
         iter = iter,
         warmup = warmup,
+        adapt_delta = adapt_delta,
+        max_treedepth = max_treedepth,
         elapsed_sec = as.numeric(Sys.time() - start_time, units = "secs"),
         n_divergent = NA_integer_,
         n_treedepth = NA_integer_,

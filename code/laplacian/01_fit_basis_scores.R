@@ -91,14 +91,15 @@ run_fit <- function() {
         # Minimal diagnostics needed to decide whether this basis fit is usable.
         sampler_info <- nuts_params(fit)
         draw_summary <- posterior::summarise_draws(as_draws_df(fit))
+        divergent <- sampler_info$Value[sampler_info$Parameter == "divergent__"]
+        treedepth <- sampler_info$Value[sampler_info$Parameter == "treedepth__"]
 
         data.frame(
             basis_task = meta$task_id,
             basis_label = meta$basis_label,
             elapsed_sec = elapsed_sec,
-            n_divergent = sum(sampler_info$Value[sampler_info$Parameter == "divergent__"]),
-            n_treedepth = sum(sampler_info$Value[sampler_info$Parameter == "treedepth__"] >=
-                                  max_treedepth),
+            n_divergent = sum(divergent),
+            n_treedepth = sum(treedepth >= max_treedepth),
             max_rhat = max(draw_summary$rhat, na.rm = TRUE),
             min_ess_bulk = min(draw_summary$ess_bulk, na.rm = TRUE),
             fit_file = fit_file

@@ -14,12 +14,11 @@ setup_cmdstan_cache()
 # Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
-configs <- list(
-    list(label = "A_k1212_tp", k = c(12L, 12L), bs = c("tp", "tp")),
-    list(label = "B_k1212_ps", k = c(12L, 12L), bs = c("ps", "ps"))
-)
-cfg <- configs[[task_id]]
-if (is.null(cfg)) {
+if (task_id == 1) {
+    cfg <- list(label = "A_k1212_tp", k = c(12L, 12L), bs = c("tp", "tp"))
+} else if (task_id == 2) {
+    cfg <- list(label = "B_k1212_ps", k = c(12L, 12L), bs = c("ps", "ps"))
+} else {
     stop("Run as a Slurm array with SLURM_ARRAY_TASK_ID=1 or 2.")
 }
 

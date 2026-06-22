@@ -36,6 +36,7 @@ mask_f1 <- function(predicted, truth) {
 }
 
 run_hard_diagnostics <- function() {
+    # 1. Load reconstructed posterior effect map and ground truth.
     rec <- load_laplace_reconstruction()
     out_dir <- file.path(project_root(), "results", "diagnostics",
                          "laplacian_basis_fixed")
@@ -48,25 +49,30 @@ run_hard_diagnostics <- function() {
     seed_idx <- match(gt$seed_electrode, channels)
     active_channels <- channels %in% gt$active_electrodes
 
+    # 2. Summarise the posterior effect map at every time x channel cell.
     # Posterior probability: mean(draws > ROPE_UV).
     posterior <- posterior_cell_summaries(effect_array)
 
-    # Temporal recovery at the seed electrode.
+    # 3. Temporal recovery:
+    # does the detected seed-channel cluster recover the true onset/offset?
     temporal_pass <- temporal_recovery_pass(times, posterior$odds[, seed_idx], gt)
 
-    # Spatial recovery at the true peak time.
+    # 4. Spatial recovery:
+    # at the true peak time, compare predicted active channels with true channels.
     peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
     peak_idx <- match(peak_time, times)
     pred_active_space <- posterior$lower[peak_idx, ] > 0
     spatial_F1 <- mask_f1(pred_active_space, active_channels)
 
-    # Spatiotemporal recovery over all channel x time cells.
+    # 5. Spatiotemporal recovery:
+    # compare predicted and true active masks over all time x channel cells.
     pred_active <- posterior$odds > ODDS_THRESHOLD
     truth_active <- outer(times >= gt$true_onset & times <= gt$true_offset,
                           active_channels, `&`)
     st_F1 <- mask_f1(pred_active, truth_active)
 
-    # Amplitude recovery at the seed electrode.
+    # 6. Amplitude recovery:
+    # compare posterior peak/window amplitude with the known simulated truth.
     seed_effect <- effect_array[, , seed_idx]
     seed_peak_draws <- effect_array[, peak_idx, seed_idx]
     window_idx <- which(times >= gt$true_onset & times <= gt$true_offset)
@@ -76,6 +82,7 @@ run_hard_diagnostics <- function() {
     cz_neighbours <- c("CZ", "FCZ", "CPZ", "C1", "C2", "FC1", "FC2",
                        "CP1", "CP2", "Cz", "FCz", "CPz")
 
+    # 7. Convergence and top-channel checks.
     convergence_pass <- max(rec$conv_summary$n_divergent, na.rm = TRUE) == 0 &&
         max(rec$conv_summary$n_treedepth, na.rm = TRUE) == 0 &&
         max(rec$conv_summary$max_rhat, na.rm = TRUE) < 1.01 &&
@@ -87,6 +94,7 @@ run_hard_diagnostics <- function() {
     peak_recovery_pct <- 100 * mean(seed_peak_draws) / gt$bump_amplitude
     mean_recovery_pct <- 100 * mean(window_draws) / truth_mean
 
+    # 8. Save one-row hard-threshold diagnostic summary.
     summary <- data.frame(
         fit_file = rec$tag,
         dataset = data_subdir,

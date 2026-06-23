@@ -321,10 +321,10 @@ laplacian constant-basis diagnostics
     results/diagnostics/laplacian_continuous/
 ```
 
-The run inventory is now tracked in `results/tables/ssh_model_run_inventory.csv`
-and `results/tables/ssh_model_run_inventory_with_speed_notes.csv`. The SSH logs
-for the currently running Monte Carlo jobs show `alpha = 0.050`. The pilot
-FP/FN slide above reports the completed pilot diagnosis at `alpha = 0.10`.
+The run inventory and convergence-diagnostic summary are tracked in
+`results/tables/ssh_model_run_inventory.csv`. The SSH logs for the currently
+running Monte Carlo jobs show `alpha = 0.050`. The pilot FP/FN slide above
+reports the completed pilot diagnosis at `alpha = 0.10`.
 
 ---
 

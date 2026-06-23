@@ -109,9 +109,8 @@ Full BGAM k = (12,12):
 - Code: `code/11_basis_screening.R`
   - `SCREEN_SAVE_FIT=true`
 - Slurm: `slurm/run_basis_screening_full_ab.sh`
-- Diagnostics:
-  - `results/diagnostics/june_full/summary_fit_A_k1212_tp_iter3000_warmup1000.csv`
-  - `results/diagnostics/june_full/summary_fit_B_k1212_ps_iter3000_warmup1000.csv`
+- Diagnostics summary:
+  - `results/tables/ssh_model_run_inventory.csv`
 
 Laplacian low-rank basis:
 

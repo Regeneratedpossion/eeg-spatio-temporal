@@ -1,2 +1,0 @@
-"fit_file","dataset","window_onset_ms","window_offset_ms","truth_peak_uV","truth_mean_uV","est_mean_uV","lo95_uV","hi95_uV","recovery_pct","ci_covers_truth","n_window_points"
-"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel",160,342,1.5,0.730704158779692,0.717065234240387,0.691100041262398,0.743124300121825,98.1334546443417,TRUE,19

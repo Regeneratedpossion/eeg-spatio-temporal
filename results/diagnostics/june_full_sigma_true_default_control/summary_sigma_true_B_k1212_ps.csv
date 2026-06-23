@@ -1,2 +1,0 @@
-"fit_file","dataset","convergence_pass","temporal_pass","spatial_top_pass","peak_ci_covers_truth","mean_ci_covers_truth","spatial_F1","spatiotemporal_F1","peak_recovery_pct","mean_recovery_pct"
-"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel",FALSE,TRUE,TRUE,FALSE,TRUE,0.192307692307692,0.326295585412668,81.6085992528828,98.1334546443417

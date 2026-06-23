@@ -1,2 +1,0 @@
-"fit_file","dataset","seed_electrode","true_onset_ms","true_offset_ms","est_onset_ms","est_offset_ms","bias_onset_ms","bias_offset_ms","pass"
-"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","CZ",160,342,170,330,10,-12,TRUE

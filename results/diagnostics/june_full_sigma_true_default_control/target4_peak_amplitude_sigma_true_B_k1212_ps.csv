@@ -1,2 +1,0 @@
-"fit_file","dataset","seed_electrode","truth_peak_uV","est_peak_uV","est_lo95_uV","est_hi95_uV","recovery_pct","ci_covers_truth"
-"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","CZ",1.5,1.22412898879324,1.18289423934551,1.2647706901442,81.6085992528828,FALSE

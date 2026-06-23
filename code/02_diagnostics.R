@@ -43,7 +43,7 @@ gt_file <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
 fit_file <- Sys.getenv("DIAG_FIT_FILE", unset = paste0("fit_", model_label, ".rds"))
 fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
 tag <- Sys.getenv("DIAG_TAG", unset = model_label)
-out_dir <- diag_path(Sys.getenv("DIAG_OUT_SUBDIR", unset = "june_full"))
+out_dir <- diag_path(Sys.getenv("DIAG_OUT_SUBDIR", unset = "full_bgam"))
 cond_levels <- c("cond1", "cond2")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 

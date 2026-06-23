@@ -1,0 +1,8 @@
+"fit_file","dataset","metric","value"
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","divergent_transitions",2
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","max_treedepth_hits",0
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","max_rhat",1.00534531744039
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","n_rhat_gt_1.01",0
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","min_ess_bulk",1045.58500910163
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","mean_ess_bulk",7228.08694137327
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel","min_ess_tail",2369.54709391471

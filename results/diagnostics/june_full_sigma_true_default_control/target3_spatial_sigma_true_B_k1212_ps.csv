@@ -1,0 +1,2 @@
+"fit_file","dataset","peak_time_ms","seed_electrode","top_channel","top_channel_match","n_pred_active","n_gt_active","TP","FP","FN","precision","recall","F1"
+"fit_montecarlo_p5_gaussian_hardlabel_B_k1212_ps_adapt0p8_td10_iter3000_warmup1000.rds","montecarlo_p5_gaussian_hardlabel",250,"CZ","CZ",TRUE,47,5,5,42,0,0.106382978723404,1,0.192307692307692

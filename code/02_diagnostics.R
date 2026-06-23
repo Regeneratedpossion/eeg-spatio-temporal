@@ -21,22 +21,29 @@ library(posterior)
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 # Slurm array task 1 -> A_k1212_tp; task 2 -> B_k1212_ps.
-task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-model_label <- c("A_k1212_tp", "B_k1212_ps")[task_id]
+# Environment variables can override these defaults for one-off diagnostics.
+task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID", unset = "1"))
+model_label <- Sys.getenv(
+    "DIAG_MODEL_LABEL",
+    unset = c("A_k1212_tp", "B_k1212_ps")[task_id]
+)
 
 # Input paths for the fitted model and hard-threshold simulation dataset.
-data_subdir <- "montecarlo_p5_gaussian_hardlabel"
-fit_subdir <- "basis_screening_full_ab"
+data_subdir <- Sys.getenv(
+    "DIAG_DATA_SUBDIR",
+    unset = "montecarlo_p5_gaussian_hardlabel"
+)
+fit_subdir <- Sys.getenv("DIAG_FIT_SUBDIR", unset = "basis_screening_full_ab")
 seed <- 1L
 dataset <- data_subdir
 sim_file <- file.path(data_subdir, sprintf("sim_%03d.rds", seed))
 gt_file <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
 
 # Diagnostic settings.
-fit_file <- paste0("fit_", model_label, ".rds")
+fit_file <- Sys.getenv("DIAG_FIT_FILE", unset = paste0("fit_", model_label, ".rds"))
 fit_path <- file.path(project_root(), "results", fit_subdir, fit_file)
-tag <- model_label
-out_dir <- diag_path("june_full")
+tag <- Sys.getenv("DIAG_TAG", unset = model_label)
+out_dir <- diag_path(Sys.getenv("DIAG_OUT_SUBDIR", unset = "june_full"))
 cond_levels <- c("cond1", "cond2")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 

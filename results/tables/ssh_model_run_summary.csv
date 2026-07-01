@@ -1,6 +1,4 @@
 "group","run_id","participant","basis","sigma","adapt_delta","converged","divergent","treedepth","max_rhat","min_ess_bulk","onset_offset_ms","mean_recovery_pct","peak_recovery_pct","spatial_F1","st_F1","wall_clock_hours"
-"full_bgam_default_control","39961266_2","P5","B_k1212_ps full BGAM","default","0.80","FALSE","2","23","1.0053","1201.1","+10/-12","98.54","82.26","0.192","0.326","7.42"
-"full_bgam_default_control","39961266_4","P20","B_k1212_ps full BGAM","default","0.80","TRUE","0","290","1.0035","997.7","+10/-12","99.52","84.05","0.340","0.528","49.23"
 "full_bgam_sigma_true_diagnostic","39962984_1","P5","A_k1212_tp full BGAM","sigmaTRUE","0.80","FALSE","1","4285","1.0046","1324.9","+10/-2","98.38","82.11","0.200","0.333","20.68"
 "full_bgam_sigma_true_diagnostic","39963463_2","P5","B_k1212_ps full BGAM","sigmaTRUE","0.80","FALSE","2","0","1.0053","1045.6","+10/-12","98.13","81.61","0.192","0.326","5.56"
 "full_bgam_sigma_true_diagnostic","39962984_4","P20","B_k1212_ps full BGAM","sigmaTRUE","0.80","TRUE","0","244","1.0032","1218.0","+10/-12","99.40","83.89","0.340","0.528","54.70"

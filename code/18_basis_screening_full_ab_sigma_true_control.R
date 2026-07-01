@@ -18,9 +18,8 @@ task_id <- as.integer(Sys.getenv(
 
 configs <- data.frame(
     task_id = 1:2,
-    label = c("A_k1212_tp", "B_k1212_ps"),
-    k_xy = c(12L, 12L),
-    k_t = c(12L, 12L),
+    label_prefix = c("A", "B"),
+    basis_suffix = c("tp", "ps"),
     bs_space = c("tp", "ps"),
     bs_time = c("tp", "ps")
 )
@@ -33,10 +32,17 @@ data_subdir <- Sys.getenv("SCREEN_DATA_SUBDIR",
 seed <- as.integer(Sys.getenv("SCREEN_SEED", "1"))
 iter <- as.integer(Sys.getenv("SCREEN_ITER", "3000"))
 warmup <- as.integer(Sys.getenv("SCREEN_WARMUP", "1000"))
+k_xy <- as.integer(Sys.getenv("SCREEN_K_XY", "12"))
+k_t <- as.integer(Sys.getenv("SCREEN_K_T", "12"))
 adapt_delta <- as.numeric(Sys.getenv("SCREEN_ADAPT_DELTA", "0.8"))
 max_treedepth <- as.integer(Sys.getenv("SCREEN_MAX_TREEDEPTH", "10"))
 out_subdir <- Sys.getenv("SCREEN_OUT_SUBDIR",
                          "basis_screening_full_ab_sigma_true_default_control")
+
+cfg$k_xy <- k_xy
+cfg$k_t <- k_t
+cfg$label <- sprintf("%s_k%02d%02d_%s",
+                     cfg$label_prefix, cfg$k_xy, cfg$k_t, cfg$basis_suffix)
 
 adapt_tag <- gsub("\\.", "p", as.character(adapt_delta))
 label_tag <- sprintf("%s_%s_adapt%s_td%d",

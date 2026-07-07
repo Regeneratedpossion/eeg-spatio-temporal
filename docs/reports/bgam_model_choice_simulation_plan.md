@@ -22,8 +22,24 @@ The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or a
 20 Monte Carlo repetitions, with at most 5 full BGAM jobs running at the same time.
 ```
 
-## Interpretation
+## Simulation Data-Generation Parameters
 
-The full BGAM repetitions should be used for the main recovery and false-positive results.
-
-Cheaper proxy checks can still be run with many more seeds, for example `100-1000`, to test specific mechanisms such as coloured temporal noise, spatial asymmetry, and basis-size sensitivity. These proxy checks do not replace the full BGAM; they explain whether the observed behaviour is systematic across many random seeds.
+| Category | Parameter | Symbol / code | Current value | Status | Notes |
+|---|---|---|---:|---|---|
+| Data size | Participants | `n_ppt`, `P` | 20 | confirmed | Main analysis data: `montecarlo_p20_gaussian_hardlabel` |
+| Data size | Trials per participant per condition | `n_trials`, `R` | 20 | confirmed | 20 trials for each participant and condition |
+| Data size | Electrodes | `C` | 61 | confirmed | Reused from the pilot electrode layout |
+| Time axis | Original sampling rate | `srate` | 500 Hz | confirmed | Data are generated on a 2 ms grid |
+| Time axis | Downsampling factor | `downsample_factor` | 5 | confirmed | Analysis data are at 100 Hz, with a 10 ms grid |
+| Conditions | Number of conditions | `condition` | 2 | confirmed | `cond1`, `cond2` |
+| Signal mode | Main data mode | `signal_mode` | `continuous_label` | confirmed | The injected signal is continuous; hard labels are used only for evaluation |
+| Signal | Peak signal amplitude | `bump_amplitude`, `A` | 1.5 | confirmed | With baseline noise sd about 1.0, peak SNR is about 1.5 |
+| Signal | Spatial signal width | `sigma_space` | 0.5 | confirmed | Code and ground truth both use 0.5 |
+| Noise | Spatial noise correlation length | `rho` | 0.15 | confirmed | Weak short-range spatial correlation |
+| Noise | Variance of each noise component | `outvar` | 0.5 | confirmed | Temporal and spatial noise components are independent and added together |
+| Time truth | True onset | `true_onset` | 0.160 s | confirmed | 160 ms |
+| Time truth | True offset | `true_offset` | 0.342 s | confirmed | Last active analysis-grid point is 0.340 s |
+| Space truth | Seed electrode | `seed_electrode` | CZ | confirmed | Centre of the injected spatial signal |
+| Participant variation | Onset-latency range | `ronset` | Uniform `{150, 152, ..., 170}` ms | confirmed | One onset latency per participant |
+| Evaluation label | Active-electrode threshold | `active_threshold` | mean + SD of raw spatial weights | confirmed | Current threshold is about 0.397 |
+| Evaluation label | Active electrodes | `active_electrodes` | 9 electrodes | confirmed | C1, C2, CP1, CP2, CPZ, CZ, FC1, FC2, FCZ |

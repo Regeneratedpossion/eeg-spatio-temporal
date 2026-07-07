@@ -60,9 +60,11 @@ fit <- brm(
 
 ## Inference and Evaluation Parameters
 
-These settings define how posterior draws are turned into recovery summaries and detected regions.
+The evaluation proceeds in three steps. First, the posterior condition effect is turned into a binary detection decision at each electrode-time cell. Second, a SESOI threshold calibrates this decision rule against baseline fluctuations, so that small noise-driven effects are not counted as detections. Third, recovery metrics compare the resulting detections and effect estimates with the known ground truth.
 
-### Posterior Decision Rule
+### Step 1: Posterior Detection Rule
+
+This step turns the posterior distribution of the condition effect into a detected / not-detected decision.
 
 | Parameter | Symbol / code | Current value | Notes |
 |---|---|---:|---|
@@ -73,7 +75,9 @@ These settings define how posterior draws are turned into recovery summaries and
 | Odds threshold | `ODDS_THRESHOLD` | 10 | Cells with odds above 10 are treated as detected |
 | Probability equivalent | derived | about 0.91 | `odds > 10` corresponds to `p_sig > 10/11` |
 
-### SESOI Rule
+### Step 2: SESOI Calibration
+
+This step changes the effect threshold from `delta = 0` to a baseline-calibrated SESOI. The purpose is to reduce detections caused by baseline fluctuations.
 
 | Parameter | Symbol / code | Current value | Notes |
 |---|---|---:|---|
@@ -84,7 +88,7 @@ These settings define how posterior draws are turned into recovery summaries and
 | Current baseline window | `baseline_end` | 0.15 s | Lower practical-null FPR than 0.10 s for the global SESOI |
 | Zero-threshold comparison | `threshold_type = zero` | `delta = 0` | Used as the baseline comparison |
 
-For the current `B_k1612_ps` run, the practical-null false-positive rate was:
+The following check supports the current preference for the global SESOI rule:
 
 | Rule | Baseline window | Practical-null FPR | Active post-offset rate | Active true-window rate |
 |---|---:|---:|---:|---:|
@@ -94,17 +98,19 @@ For the current `B_k1612_ps` run, the practical-null false-positive rate was:
 | electrode SESOI | 0.10 s | 0.125 | 0.208 | 1.000 |
 | electrode SESOI | 0.15 s | 0.123 | 0.076 | 1.000 |
 
-### Recovery Metrics
+### Step 3: Recovery Metrics
 
-| Target | Code / metric | Definition |
-|---|---|---|
-| Temporal recovery | `target2_temporal` | Estimated onset and offset at CZ, compared with `true_onset` and `true_offset` |
-| Onset/offset pass rule | `BIAS_TOLERANCE_MS` | Pass if both onset and offset bias are within 20 ms |
-| Spatial recovery | `target3_spatial` | F1 score for detected active electrodes at peak time |
-| Spatio-temporal recovery | `target3b_spatiotemporal` | F1 score over electrode-time cells |
-| Peak amplitude recovery | `target4_peak_amplitude` | Estimated peak effect at CZ divided by true peak amplitude |
-| Window-mean recovery | `target4b_mean_amplitude` | Mean estimated effect in the true window divided by the true window mean |
-| False positive summary | `practical_null_fpr` | Proportion of detected cells outside the practical signal region |
+This step compares the posterior detections and effect estimates with the known simulation truth.
+
+| Recovery question | Code / metric | Truth used | Definition |
+|---|---|---|---|
+| Temporal recovery | `target2_temporal` | true onset / offset | Estimated onset and offset at CZ, compared with `true_onset` and `true_offset` |
+| Temporal pass rule | `BIAS_TOLERANCE_MS` | true onset / offset | Pass if both onset and offset bias are within 20 ms |
+| Spatial recovery | `target3_spatial` | hard active-electrode label | F1 score for detected active electrodes at peak time |
+| Spatio-temporal recovery | `target3b_spatiotemporal` | hard electrode-time mask | F1 score over electrode-time cells |
+| Peak amplitude recovery | `target4_peak_amplitude` | continuous ground truth | Estimated peak effect at CZ divided by true peak amplitude |
+| Window-mean recovery | `target4b_mean_amplitude` | continuous ground truth | Mean estimated effect in the true window divided by the true window mean |
+| False-positive summary | `practical_null_fpr` | practical null region | Proportion of detected cells outside the practical signal region |
 
 ## Simulation Data-Generation Parameters
 

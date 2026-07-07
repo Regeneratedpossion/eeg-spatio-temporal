@@ -26,16 +26,12 @@ The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or a
 
 | Parameter | Current setting | Reason / note |
 |---|---:|---|
-| Full BGAM repetitions | 20 | Enough to check whether recovery and false positives are stable across seeds, while keeping runtime manageable |
+| Full BGAM repetitions | 20 | Main planned batch |
 | Seed set | 1--20 | One independent simulated dataset per seed |
 | Maximum concurrent full BGAM jobs | 5 | Keeps the batch feasible under the current SSH / fair-share situation |
-| Wall-clock time per fit | about 37.50 h | Based on the current `B_k1612_ps` run |
-| CPU cost per fit | about 600 CPU-hours | 37.50 h x 16 CPUs |
-| Expected total CPU cost | about 12,000 CPU-hours | 20 repetitions x 600 CPU-hours |
-| Expected wall-clock time if 5 run together | about 150 h plus queue time | 20 / 5 batches x 37.50 h |
-| Smaller fallback plan | 10 repetitions | Possible if queue time or failures become a problem |
-| Larger extension | 30 repetitions | Possible later if the 20-run batch completes cleanly |
-| Main summaries across repetitions | mean, SD, range | Used for recovery metrics, false positives, runtime, and convergence diagnostics |
+| Runtime per fit | about 37.50 wall-clock hours | Based on the current `B_k1612_ps` run |
+| Expected batch duration | about 150 h plus queue time | If 5 jobs run in parallel |
+| Fallback / extension | 10 or 30 repetitions | 10 if runtime becomes difficult; 30 only if the 20-run batch completes cleanly |
 
 ## BGAM Model Configuration
 

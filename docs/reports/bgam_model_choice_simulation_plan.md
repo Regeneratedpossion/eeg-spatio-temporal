@@ -205,7 +205,7 @@ The planned comparison uses three representative methods to compare different le
 
 | Method | Role | Reason |
 |---|---|---|
-| FDR-corrected mass-univariate test | Point-wise baseline | Controls multiple comparisons but does not borrow information across neighbouring electrodes or time points (Benjamini and Hochberg, 1995; Groppe et al., 2011) |
+| FDR-corrected mass-univariate test | Point-wise baseline | Controls multiple comparisons but does not borrow information across neighbouring electrodes or time points (Groppe et al., 2011) |
 | Cluster-based permutation test | Standard EEG/MEG spatio-temporal baseline | Uses electrode-time adjacency to form clusters (Maris and Oostenveld, 2007) |
 | Spatio-temporal BGAM | Proposed model-based approach | Estimates the full spatio-temporal effect surface with posterior uncertainty (Nalborczyk and Buerkner, 2025) |
 
@@ -213,4 +213,4 @@ This gives a simple comparison hierarchy: FDR does not model spatio-temporal nei
 
 For fair comparison, all methods will be converted to binary detected / not-detected maps over electrode-time cells. These maps will be compared with the hard-label ground truth using precision, recall, F1, false-positive rate, and onset/offset bias. Continuous recovery metrics, such as peak recovery and mean recovery, will be reported only for BGAM, because cluster-based and FDR methods are inference procedures rather than full effect-surface estimation models.
 
-References for this section: Benjamini and Hochberg (1995), Groppe et al. (2011), Maris and Oostenveld (2007), and Nalborczyk and Buerkner (2025).
+References for this section: Groppe et al. (2011), Maris and Oostenveld (2007), and Nalborczyk and Buerkner (2025).

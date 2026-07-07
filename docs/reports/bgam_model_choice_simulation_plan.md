@@ -201,15 +201,13 @@ The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the fol
 
 ## Planned Model Comparison
 
-The planned comparison uses three representative methods. The goal is not to compare every possible EEG inference procedure, but to compare three levels of spatio-temporal modelling.
-
-FDR-corrected mass-univariate testing gives a point-wise baseline: each electrode-time cell is tested separately, followed by multiple-comparison correction (Benjamini and Hochberg, 1995; Groppe et al., 2011). Cluster-based permutation testing is the standard EEG/MEG spatio-temporal baseline: neighbouring electrode-time cells are grouped into clusters and tested by permutation (Maris and Oostenveld, 2007). The spatio-temporal BGAM is the proposed model-based approach: it estimates a smooth condition-effect surface over electrodes and time, with posterior uncertainty (Nalborczyk and Buerkner, 2025).
+The planned comparison uses three representative methods to compare different levels of spatio-temporal modelling.
 
 | Method | Role | Reason |
 |---|---|---|
-| FDR-corrected mass-univariate test | Point-wise baseline | Controls multiple comparisons but does not borrow information across neighbouring electrodes or time points |
-| Cluster-based permutation test | Standard EEG/MEG spatio-temporal baseline | Uses electrode-time adjacency to form clusters |
-| Spatio-temporal BGAM | Proposed model-based approach | Estimates the full spatio-temporal effect surface with posterior uncertainty |
+| FDR-corrected mass-univariate test | Point-wise baseline | Controls multiple comparisons but does not borrow information across neighbouring electrodes or time points (Benjamini and Hochberg, 1995; Groppe et al., 2011) |
+| Cluster-based permutation test | Standard EEG/MEG spatio-temporal baseline | Uses electrode-time adjacency to form clusters (Maris and Oostenveld, 2007) |
+| Spatio-temporal BGAM | Proposed model-based approach | Estimates the full spatio-temporal effect surface with posterior uncertainty (Nalborczyk and Buerkner, 2025) |
 
 This gives a simple comparison hierarchy: FDR does not model spatio-temporal neighbourhoods, cluster permutation uses neighbourhoods to define significant clusters, and BGAM directly models the condition effect as a smooth spatio-temporal surface.
 

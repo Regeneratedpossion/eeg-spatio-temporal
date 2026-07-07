@@ -16,34 +16,19 @@ Source table: [`results/tables/ssh_model_run_summary.csv`](../../results/tables/
 
 ## Monte Carlo Repetition Plan
 
-The SSH check suggests that the model is computationally feasible but still expensive. The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs.
-
-Approximate compute cost per full BGAM fit:
+The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or about `600` CPU-hours per fit. Based on this runtime and the current SSH job limits, I suggest running:
 
 ```text
-37.50 hours x 16 CPUs = about 600 CPU-hours
+20 Monte Carlo repetitions, with at most 5 full BGAM jobs running at the same time.
 ```
 
-The current SSH account allows many submitted jobs, but fair-share priority still matters. I therefore suggest:
-
-```text
-Run 20 Monte Carlo repetitions of the final full BGAM, with at most 5 running at the same time.
-```
-
-In Slurm array notation:
+In Slurm this would be:
 
 ```bash
 #SBATCH --array=1-20%5
 ```
 
-This means:
-
-- `20` total Monte Carlo repetitions.
-- At most `5` full BGAM jobs running at once.
-- Expected compute cost: about `20 x 600 = 12,000 CPU-hours`.
-- Expected wall-clock duration if 5 jobs run in parallel: about `20 / 5 x 37.5 = 150` hours, plus queue time.
-
-A smaller version would be `10` repetitions. A larger version, such as `30` repetitions, is possible in principle, but I would not start with it unless the queue situation remains favourable and the 20-run batch completes cleanly.
+This gives enough repetitions to check whether recovery and false positives are stable across seeds, while keeping the total runtime manageable. Ten repetitions would be possible but rather minimal. Thirty repetitions may be possible later, but I would first run the 20-repetition batch and check whether it completes cleanly.
 
 ## Interpretation
 

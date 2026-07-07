@@ -43,6 +43,54 @@ The planned Monte Carlo repetitions use the same full BGAM configuration as the 
 | Maximum treedepth | `max_treedepth` | 10 | Current `B_k1612_ps` setting |
 | Threading | `threads` | 4 per chain | Run with 4 chains and 4 threads per chain |
 
+## Inference and Evaluation Parameters
+
+These settings define how posterior draws are turned into recovery summaries and detected regions.
+
+### Posterior Decision Rule
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| Condition effect | `Delta` | `cond2 - cond1` | Difference between signal-plus-noise and noise-only conditions |
+| Diagnostic threshold | `delta` | 0 | Used for diagnostic plots: any positive effect |
+| Posterior probability | `p_sig` | `Pr(Delta > delta)` | Estimated from posterior draws |
+| Posterior odds | `odds` | `p_sig / (1 - p_sig)` | Set to `Inf` when `p_sig = 1` |
+| Odds threshold | `ODDS_THRESHOLD` | 10 | Cells with odds above 10 are treated as detected |
+| Probability equivalent | derived | about 0.91 | `odds > 10` corresponds to `p_sig > 10/11` |
+
+### SESOI Rule
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| SESOI target | `Delta` | condition difference | SESOI is defined on the effect surface, not on temporal slope |
+| SESOI type | `threshold_type` | `global_delta_sesoi` | Current preferred rule based on false-positive reduction |
+| SESOI construction | `sesoi` | maximum baseline posterior mean difference | `max(0, max(diff_mean))` within the baseline period |
+| Baseline windows checked | `SESOI_BASELINE_ENDS` | `0.10, 0.15` s | Both were evaluated |
+| Current baseline window | `baseline_end` | 0.15 s | Lower practical-null FPR than 0.10 s for the global SESOI |
+| Zero-threshold comparison | `threshold_type = zero` | `delta = 0` | Used as the baseline comparison |
+
+For the current `B_k1612_ps` run, the practical-null false-positive rate was:
+
+| Rule | Baseline window | Practical-null FPR | Active post-offset rate | Active true-window rate |
+|---|---:|---:|---:|---:|
+| zero threshold | -- | 0.306 | 0.243 | 1.000 |
+| global SESOI | 0.10 s | 0.060 | 0.000 | 0.994 |
+| global SESOI | 0.15 s | 0.057 | 0.000 | 0.994 |
+| electrode SESOI | 0.10 s | 0.125 | 0.208 | 1.000 |
+| electrode SESOI | 0.15 s | 0.123 | 0.076 | 1.000 |
+
+### Recovery Metrics
+
+| Target | Code / metric | Definition |
+|---|---|---|
+| Temporal recovery | `target2_temporal` | Estimated onset and offset at CZ, compared with `true_onset` and `true_offset` |
+| Onset/offset pass rule | `BIAS_TOLERANCE_MS` | Pass if both onset and offset bias are within 20 ms |
+| Spatial recovery | `target3_spatial` | F1 score for detected active electrodes at peak time |
+| Spatio-temporal recovery | `target3b_spatiotemporal` | F1 score over electrode-time cells |
+| Peak amplitude recovery | `target4_peak_amplitude` | Estimated peak effect at CZ divided by true peak amplitude |
+| Window-mean recovery | `target4b_mean_amplitude` | Mean estimated effect in the true window divided by the true window mean |
+| False positive summary | `practical_null_fpr` | Proportion of detected cells outside the practical signal region |
+
 ## Simulation Data-Generation Parameters
 
 The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the folder name, the stored ground truth uses `signal_mode = continuous_label`: the injected signal is continuous, and hard labels are used only for evaluation.

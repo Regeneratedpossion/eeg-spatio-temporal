@@ -14,30 +14,6 @@ Source table: [`results/tables/ssh_model_run_summary.csv`](../../results/tables/
 | basis sensitivity | 39986292 | 20 | **B_k1612_ps full BGAM** | 0.80 | TRUE | 0 | 22 | +10/-2 | 108.95 | 91.68 | 0.340 | 0.577 | 37.50 | 0.306 |
 | low-rank Laplacian | 39963478-39963483 | 20 | Laplacian K20 + constant temporal BGAMM | 0.999 | FALSE | 16 | 0 | +10/-12 | 95.07 | 81.41 | 0.340 | 0.545 | 2.50 |  |
 
-## Current Preferred Model
-
-My current preferred full BGAM specification is:
-
-```text
-B_k1612_ps full BGAM, P = 20, sigmaTRUE, adapt_delta = 0.80
-```
-
-The main reasons are:
-
-- It converged without divergent transitions.
-- It had fewer treedepth hits than the earlier P20 `B_k1212_ps` runs.
-- It improved temporal recovery: onset/offset bias was `+10/-2` ms, compared with `+10/-12` ms for the earlier P20 `B_k1212_ps` run.
-- It improved peak recovery: `91.68%`, compared with `83.89%` for `B_k1212_ps`.
-- It improved spatio-temporal F1: `0.577`, compared with `0.528` for `B_k1212_ps`.
-- It was faster than the earlier P20 `B_k1212_ps` runs: `37.50 h` versus `54.70-66.40 h`.
-
-One remaining concern is false positives. The practical-null false-positive rate is similar to the earlier P20 model:
-
-- `B_k1212_ps`: `0.296`
-- `B_k1612_ps`: `0.306`
-
-For this reason, the `B_k1612_ps` model should be used together with the SESOI-based posterior decision rule when reporting detected regions.
-
 ## Monte Carlo Repetition Plan
 
 The SSH check suggests that the model is computationally feasible but still expensive. The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs.

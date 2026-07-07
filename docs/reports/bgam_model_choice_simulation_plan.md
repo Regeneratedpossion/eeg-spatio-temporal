@@ -125,16 +125,6 @@ $$
 \frac{p_{c,t}^{\mathrm{SESOI}}}{1 - p_{c,t}^{\mathrm{SESOI}}} > 10.
 $$
 
-The following check supports the current preference for the global SESOI rule:
-
-| Rule | Baseline window | Practical-null FPR | Active post-offset rate | Active true-window rate |
-|---|---:|---:|---:|---:|
-| zero threshold | -- | 0.306 | 0.243 | 1.000 |
-| global SESOI | 0.10 s | 0.060 | 0.000 | 0.994 |
-| global SESOI | 0.15 s | 0.057 | 0.000 | 0.994 |
-| electrode SESOI | 0.10 s | 0.125 | 0.208 | 1.000 |
-| electrode SESOI | 0.15 s | 0.123 | 0.076 | 1.000 |
-
 ### Step 3: Recovery Metrics
 
 This step compares the posterior detections and effect estimates with the known simulation truth.

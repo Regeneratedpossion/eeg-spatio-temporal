@@ -26,22 +26,39 @@ The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or a
 
 The planned Monte Carlo repetitions use the same full BGAM configuration as the current `B_k1612_ps` run.
 
-| Parameter | Symbol / code | Current value | Notes |
-|---|---|---:|---|
-| Smooth basis | `bs` | `c("ps", "ps")` | P-spline basis for space and time |
-| Basis dimensions | `k` | `c(16, 12)` | Spatial basis dimension 16, temporal basis dimension 12 |
-| Tensor-product structure | `d` | `c(2, 1)` | 2D spatial margin plus 1D temporal margin |
-| Tensor-product option | `full` | `FALSE` | Current brms/mgcv tensor setting |
-| Condition-specific smooths | `by = condition` | yes | Each condition has its own smooth surface, fitted in one model |
-| Participant-level effects | `(1 + condition \| participant)` | yes | Varying intercept and varying condition effect |
-| Response family | `family` | Gaussian | Model is fitted to participant-level EEG cell means |
-| Measurement error | `se(eeg_sem, sigma = TRUE)` | yes | Uses trial-level SEM and estimates an additional residual sigma |
-| Priors | `prior` | brms defaults | Default weakly informative priors |
-| MCMC chains | `chains` | 4 | Current full BGAM setting |
-| Iterations / warmup | `iter`, `warmup` | `3000 / 1000` | 2000 post-warmup draws per chain |
-| `adapt_delta` | `adapt_delta` | 0.80 | Current `B_k1612_ps` setting |
-| Maximum treedepth | `max_treedepth` | 10 | Current `B_k1612_ps` setting |
-| Threading | `threads` | 4 per chain | Run with 4 chains and 4 threads per chain |
+```r
+bgam_formula <- bf(
+  eeg_mean | se(eeg_sem, sigma = TRUE) ~
+    condition +
+    (1 + condition | participant) +
+    t2(
+      xproj, yproj, time,
+      by = condition,
+      bs = c("ps", "ps"),
+      k = c(16, 12),
+      d = c(2, 1),
+      full = FALSE
+    )
+)
+
+fit <- brm(
+  formula = bgam_formula,
+  data = sim_data_model,
+  family = gaussian(),
+  chains = 4,
+  cores = 4,
+  iter = 3000,
+  warmup = 1000,
+  threads = threading(threads = 4),
+  backend = "cmdstanr",
+  control = list(
+    adapt_delta = 0.80,
+    max_treedepth = 10
+  )
+)
+```
+
+This configuration uses P-spline bases, a spatial basis dimension of 16, a temporal basis dimension of 12, condition-specific smooths, and participant-level varying intercepts and condition effects.
 
 ## Inference and Evaluation Parameters
 

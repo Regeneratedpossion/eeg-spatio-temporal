@@ -198,3 +198,25 @@ The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the fol
 | Active electrodes | `active_electrodes` | 9 electrodes | C1, C2, CP1, CP2, CPZ, CZ, FC1, FC2, FCZ |
 | Continuous ground truth | `A * w_c * f(t)` | continuous field | Used for continuous recovery metrics |
 | Hard-label ground truth | active electrodes x active time window | binary mask | Used for hard-label precision, recall, and F1 |
+
+## Planned Model Comparison
+
+The planned comparison focuses on three methods.
+
+| Method | Role | Reason |
+|---|---|---|
+| FDR-corrected mass-univariate test | Point-wise baseline | Tests each electrode-time cell separately and corrects for multiple comparisons, but does not use spatio-temporal neighbourhood information |
+| Cluster-based permutation test | Standard EEG/MEG spatio-temporal baseline | Uses electrode-time adjacency to form clusters and is the conventional comparison method for EEG/MEG data |
+| Spatio-temporal BGAM | Proposed model-based approach | Estimates a smooth condition-effect surface over electrodes and time, with posterior uncertainty |
+
+These methods form a simple comparison hierarchy:
+
+```text
+FDR: point-wise correction, no spatio-temporal borrowing
+Cluster permutation: traditional spatio-temporal inference
+BGAM: model-based spatio-temporal effect estimation
+```
+
+For fair comparison, all methods will be converted to binary detected / not-detected maps over electrode-time cells. These maps will be compared with the hard-label ground truth using precision, recall, F1, false-positive rate, and onset/offset bias.
+
+Continuous recovery metrics, such as peak recovery and mean recovery, will be reported only for BGAM. Cluster-based and FDR methods are inference procedures, not full effect-surface estimation models.

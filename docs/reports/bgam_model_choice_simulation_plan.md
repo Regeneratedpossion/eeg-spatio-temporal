@@ -212,5 +212,3 @@ The planned comparison uses three representative methods to compare different le
 This gives a simple comparison hierarchy: FDR does not model spatio-temporal neighbourhoods, cluster permutation uses neighbourhoods to define significant clusters, and BGAM directly models the condition effect as a smooth spatio-temporal surface.
 
 For fair comparison, all methods will be converted to binary detected / not-detected maps over electrode-time cells. These maps will be compared with the hard-label ground truth using precision, recall, F1, false-positive rate, and onset/offset bias. Continuous recovery metrics, such as peak recovery and mean recovery, will be reported only for BGAM, because cluster-based and FDR methods are inference procedures rather than full effect-surface estimation models.
-
-References for this section: Groppe et al. (2011), Maris and Oostenveld (2007), and Nalborczyk and Buerkner (2025).

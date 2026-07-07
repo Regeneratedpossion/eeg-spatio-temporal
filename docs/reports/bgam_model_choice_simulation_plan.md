@@ -58,8 +58,6 @@ fit <- brm(
 )
 ```
 
-This configuration uses P-spline bases, a spatial basis dimension of 16, a temporal basis dimension of 12, condition-specific smooths, and participant-level varying intercepts and condition effects.
-
 ## Inference and Evaluation Parameters
 
 These settings define how posterior draws are turned into recovery summaries and detected regions.

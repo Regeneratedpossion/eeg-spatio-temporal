@@ -32,7 +32,7 @@ The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the fol
 |---|---|---:|---|
 | Participants | `n_ppt`, `P` | 20 | Main analysis sample size |
 | Trials per participant per condition | `n_trials`, `R` | 20 | 20 trials for each participant and condition |
-| Conditions | `condition` | 2 | `cond1`, `cond2` |
+| Conditions | `condition` | 2 | `cond1` is noise only; `cond2` is signal plus independent noise |
 | Electrodes | `C` | 61 | Reused from the pilot electrode layout |
 
 ### Time Axis

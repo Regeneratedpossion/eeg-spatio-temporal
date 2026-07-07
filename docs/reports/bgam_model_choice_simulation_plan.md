@@ -88,18 +88,31 @@ $$
 
 Here, $\delta = 0$ is used for diagnostic plots. The threshold $\mathrm{odds}_{c,t} > 10$ corresponds to $p_{c,t} > 10/11$, or about $0.91$.
 
-### Step 2: SESOI Calibration
+### Step 2: SESOI Correction
 
-This step changes the effect threshold from `delta = 0` to a baseline-calibrated SESOI. The purpose is to reduce detections caused by baseline fluctuations.
+This step replaces the zero threshold with a baseline-derived SESOI threshold.
 
-| Parameter | Symbol / code | Current value | Notes |
-|---|---|---:|---|
-| SESOI target | `Delta` | condition difference | SESOI is defined on the effect surface, not on temporal slope |
-| SESOI type | `threshold_type` | `global_delta_sesoi` | Current preferred rule based on false-positive reduction |
-| SESOI construction | `sesoi` | maximum baseline posterior mean difference | `max(0, max(diff_mean))` within the baseline period |
-| Baseline windows checked | `SESOI_BASELINE_ENDS` | `0.10, 0.15` s | Both were evaluated |
-| Current baseline window | `baseline_end` | 0.15 s | Lower practical-null FPR than 0.10 s for the global SESOI |
-| Zero-threshold comparison | `threshold_type = zero` | `delta = 0` | Used as the baseline comparison |
+$$
+\widehat{\delta}_{\mathrm{SESOI}}
+= \max\left(0,\ \max_{c,\ t \in B}\widehat{\Delta}_{c,t}\right)
+$$
+
+where $B$ is the baseline window. The current setting uses $B = [0, 0.15]$ s.
+
+The posterior probability is then computed as:
+
+$$
+p_{c,t}^{\mathrm{SESOI}}
+= \Pr(\Delta_{c,t} > \widehat{\delta}_{\mathrm{SESOI}} \mid \mathrm{data})
+$$
+
+and the detection rule becomes:
+
+$$
+\mathrm{detected}_{c,t}^{\mathrm{SESOI}} = \mathrm{TRUE}
+\quad \mathrm{if} \quad
+\frac{p_{c,t}^{\mathrm{SESOI}}}{1 - p_{c,t}^{\mathrm{SESOI}}} > 10.
+$$
 
 The following check supports the current preference for the global SESOI rule:
 

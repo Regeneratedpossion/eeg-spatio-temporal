@@ -24,22 +24,51 @@ The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or a
 
 ## Simulation Data-Generation Parameters
 
-| Category | Parameter | Symbol / code | Current value | Status | Notes |
-|---|---|---|---:|---|---|
-| Data size | Participants | `n_ppt`, `P` | 20 | confirmed | Main analysis data: `montecarlo_p20_gaussian_hardlabel` |
-| Data size | Trials per participant per condition | `n_trials`, `R` | 20 | confirmed | 20 trials for each participant and condition |
-| Data size | Electrodes | `C` | 61 | confirmed | Reused from the pilot electrode layout |
-| Time axis | Original sampling rate | `srate` | 500 Hz | confirmed | Data are generated on a 2 ms grid |
-| Time axis | Downsampling factor | `downsample_factor` | 5 | confirmed | Analysis data are at 100 Hz, with a 10 ms grid |
-| Conditions | Number of conditions | `condition` | 2 | confirmed | `cond1`, `cond2` |
-| Signal mode | Main data mode | `signal_mode` | `continuous_label` | confirmed | The injected signal is continuous; hard labels are used only for evaluation |
-| Signal | Peak signal amplitude | `bump_amplitude`, `A` | 1.5 | confirmed | With baseline noise sd about 1.0, peak SNR is about 1.5 |
-| Signal | Spatial signal width | `sigma_space` | 0.5 | confirmed | Code and ground truth both use 0.5 |
-| Noise | Spatial noise correlation length | `rho` | 0.15 | confirmed | Weak short-range spatial correlation |
-| Noise | Variance of each noise component | `outvar` | 0.5 | confirmed | Temporal and spatial noise components are independent and added together |
-| Time truth | True onset | `true_onset` | 0.160 s | confirmed | 160 ms |
-| Time truth | True offset | `true_offset` | 0.342 s | confirmed | Last active analysis-grid point is 0.340 s |
-| Space truth | Seed electrode | `seed_electrode` | CZ | confirmed | Centre of the injected spatial signal |
-| Participant variation | Onset-latency range | `ronset` | Uniform `{150, 152, ..., 170}` ms | confirmed | One onset latency per participant |
-| Evaluation label | Active-electrode threshold | `active_threshold` | mean + SD of raw spatial weights | confirmed | Current threshold is about 0.397 |
-| Evaluation label | Active electrodes | `active_electrodes` | 9 electrodes | confirmed | C1, C2, CP1, CP2, CPZ, CZ, FC1, FC2, FCZ |
+The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the folder name, the stored ground truth uses `signal_mode = continuous_label`: the injected signal is continuous, and hard labels are used only for evaluation.
+
+### Data Structure
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| Participants | `n_ppt`, `P` | 20 | Main analysis sample size |
+| Trials per participant per condition | `n_trials`, `R` | 20 | 20 trials for each participant and condition |
+| Conditions | `condition` | 2 | `cond1`, `cond2` |
+| Electrodes | `C` | 61 | Reused from the pilot electrode layout |
+
+### Time Axis
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| Original sampling rate | `srate` | 500 Hz | Data are generated on a 2 ms grid |
+| Downsampling factor | `downsample_factor` | 5 | Analysis data are at 100 Hz |
+| Analysis time grid | `time` | 0 to 0.50 s, step 0.01 s | 51 time points after downsampling |
+
+### Injected Signal
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| Signal mode | `signal_mode` | `continuous_label` | Continuous Gaussian signal; hard labels are evaluation labels only |
+| Signal centre | `seed_electrode` | CZ | Centre of the injected spatial signal |
+| Peak signal amplitude | `bump_amplitude`, `A` | 1.5 | With baseline noise sd about 1.0, peak SNR is about 1.5 |
+| Spatial signal width | `sigma_space` | 0.5 | Code and ground truth both use 0.5 |
+| True onset | `true_onset` | 0.160 s | 160 ms |
+| True offset | `true_offset` | 0.342 s | Last active analysis-grid point is 0.340 s |
+| Participant onset latencies | `ronset` | Uniform `{150, 152, ..., 170}` ms | One onset latency per participant |
+
+### Injected Noise
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| Temporal noise variance | `outvar` | 0.5 | EEG-like coloured temporal noise component |
+| Spatial noise variance | `outvar` | 0.5 | Spatially correlated Gaussian noise component |
+| Spatial noise correlation length | `rho` | 0.15 | Weak short-range spatial correlation |
+| Total baseline noise scale | derived | about 1.0 sd | Two independent variance-0.5 components are added |
+
+### Evaluation Ground Truth
+
+| Parameter | Symbol / code | Current value | Notes |
+|---|---|---:|---|
+| Active-electrode threshold | `active_threshold` | mean + SD of raw spatial weights | Current threshold is about 0.397 |
+| Active electrodes | `active_electrodes` | 9 electrodes | C1, C2, CP1, CP2, CPZ, CZ, FC1, FC2, FCZ |
+| Continuous ground truth | `A * w_c * f(t)` | continuous field | Used for continuous recovery metrics |
+| Hard-label ground truth | active electrodes x active time window | binary mask | Used for hard-label precision, recall, and F1 |

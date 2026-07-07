@@ -66,14 +66,15 @@ The evaluation proceeds in three steps. First, the posterior condition effect is
 
 This step turns the posterior distribution of the condition effect into a detected / not-detected decision.
 
-| Parameter | Symbol / code | Current value | Notes |
-|---|---|---:|---|
-| Condition effect | `Delta` | `cond2 - cond1` | Difference between signal-plus-noise and noise-only conditions |
-| Diagnostic threshold | `delta` | 0 | Used for diagnostic plots: any positive effect |
-| Posterior probability | `p_sig` | `Pr(Delta > delta)` | Estimated from posterior draws |
-| Posterior odds | `odds` | `p_sig / (1 - p_sig)` | Set to `Inf` when `p_sig = 1` |
-| Odds threshold | `ODDS_THRESHOLD` | 10 | Cells with odds above 10 are treated as detected |
-| Probability equivalent | derived | about 0.91 | `odds > 10` corresponds to `p_sig > 10/11` |
+```text
+Delta_c,t = cond2_c,t - cond1_c,t
+p_c,t = Pr(Delta_c,t > delta | data)
+odds_c,t = p_c,t / (1 - p_c,t)
+
+detected_c,t = TRUE if odds_c,t > 10
+```
+
+Here, `delta = 0` is used for diagnostic plots. The threshold `odds > 10` corresponds to `p_c,t > 10/11`, or about `0.91`.
 
 ### Step 2: SESOI Calibration
 

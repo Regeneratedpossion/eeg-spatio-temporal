@@ -1,7 +1,0 @@
-"model","baseline_end","threshold_type","odds_threshold","n_cells","n_flagged","flagged_rate","null_cells","null_flagged","practical_null_fpr","active_post_offset_rate","active_true_window_rate"
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8",0.10,"electrode_delta_sesoi",10,3111,694,0.223079,2040,254,0.124510,0.208333,1.000000
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8",0.10,"global_delta_sesoi",10,3111,493,0.158470,2040,123,0.060294,0.000000,0.994152
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8",0.10,"zero",10,3111,1115,0.358406,2040,624,0.305882,0.243056,1.000000
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8",0.15,"electrode_delta_sesoi",10,3111,664,0.213436,2040,251,0.123039,0.076389,1.000000
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8",0.15,"global_delta_sesoi",10,3111,483,0.155256,2040,116,0.056863,0.000000,0.994152
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8",0.15,"zero",10,3111,1115,0.358406,2040,624,0.305882,0.243056,1.000000

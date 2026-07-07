@@ -1,4 +1,0 @@
-"model","time","left_mean","right_mean","anterior_mean","posterior_mean","lateral_diff","ap_diff","mean_abs_residual","rmse_residual"
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8_noisecheck",0.16,0.002164,0.005154,0.004684,0.002380,0.002990,0.002304,0.062392,0.075045
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8_noisecheck",0.25,0.018802,0.019674,0.007641,0.032459,0.000872,-0.024818,0.068183,0.082718
-"B_k1612_ps_p20_sigmaTRUE_adapt0p8_noisecheck",0.34,0.021589,0.005153,0.010846,0.016844,-0.016437,-0.005998,0.056299,0.071177

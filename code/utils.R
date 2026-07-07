@@ -62,7 +62,8 @@ slide_inputs <- function() {
     gt_default <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
 
     list(
-        out_dir = fig_path("n20_hard_sem_slides"),
+        out_dir = fig_path(Sys.getenv("SLIDE_OUT_SUBDIR",
+                                      "n20_hard_sem_slides")),
         sim_file = resolve_path(data_path(), Sys.getenv("SLIDE_SIM_FILE", sim_default)),
         gt_file = resolve_path(data_path(), Sys.getenv("SLIDE_GT_FILE", gt_default)),
         fit_file = resolve_path(

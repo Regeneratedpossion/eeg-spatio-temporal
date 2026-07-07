@@ -15,6 +15,7 @@ source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 inputs <- slide_inputs()
 dir.create(inputs$out_dir, showWarnings = FALSE, recursive = TRUE)
+slide_tag <- Sys.getenv("SLIDE_TAG", "n20_hard_sem")
 
 basis <- basis_settings()
 k_xy <<- basis$k_xy
@@ -89,7 +90,8 @@ p <- ggplot(post_prob, aes(x = time)) +
     facet_wrap(~ channel, ncol = 3) +
     coord_cartesian(ylim = c(0, 1)) +
     labs(
-        title = "Posterior probability per electrode: P=20, R=20",
+        title = sprintf("Posterior probability per electrode: P=20, R=20, k=(%d,%d)",
+                        k_xy, k_t),
         subtitle = sprintf("Green band = odds > %s. Dashed verticals: true onset / peak / offset.",
                            ODDS_THRESHOLD),
         x = "Time (s)",
@@ -98,5 +100,5 @@ p <- ggplot(post_prob, aes(x = time)) +
     theme_minimal(base_size = 10) +
     theme(strip.text = element_text(face = "bold"))
 
-ggsave(file.path(inputs$out_dir, "posterior_p_sig_facets_n20_hard_sem.pdf"),
+ggsave(file.path(inputs$out_dir, paste0("posterior_p_sig_facets_", slide_tag, ".pdf")),
        p, width = 10, height = 6, device = cairo_pdf)

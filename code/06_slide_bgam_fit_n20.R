@@ -16,6 +16,7 @@ source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 inputs <- slide_inputs()
 dir.create(inputs$out_dir, showWarnings = FALSE, recursive = TRUE)
+slide_tag <- Sys.getenv("SLIDE_TAG", "bgam_fit_v5_k20_n20_hard_sem")
 
 basis <- basis_settings()
 k_xy <<- basis$k_xy
@@ -177,5 +178,5 @@ p_fit <- plot_fit(
     epred_diff = summarise_prediction_difference(epred)
 )
 
-ggsave(file.path(inputs$out_dir, "pred_vs_raw_bgam_fit_v5_k20_n20_hard_sem.pdf"),
+ggsave(file.path(inputs$out_dir, paste0("pred_vs_raw_", slide_tag, ".pdf")),
        p_fit, width = 10.5, height = 9.5, device = cairo_pdf)

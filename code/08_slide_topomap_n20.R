@@ -16,6 +16,8 @@ source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 inputs <- slide_inputs()
 dir.create(inputs$out_dir, showWarnings = FALSE, recursive = TRUE)
+slide_tag <- Sys.getenv("SLIDE_TAG", "n20_hard_sem")
+truth_mode <- Sys.getenv("GROUND_TRUTH_MODE", "continuous")
 
 sim_data <- readRDS(inputs$sim_file)
 gt <- readRDS(inputs$gt_file)
@@ -33,7 +35,8 @@ target_times <- times[vapply(c(0.160, 0.250, 0.340),
                              function(x) which.min(abs(times - x)), integer(1))]
 
 layer_levels <- c("0. Ground truth", "1. Empirical difference",
-                  "2. BGAM estimate", "3. Residual")
+                  "2. Noise residual (empirical - truth)", "3. BGAM estimate",
+                  "4. Empirical - BGAM")
 cond_levels <- c("cond1", "cond2")
 seed_xy <- sensors %>% filter(channel == gt$seed_electrode) %>% slice(1)
 
@@ -54,14 +57,16 @@ temporal_weight <- function(t) {
                 0), 0)
 }
 
-# Ground truth: hard-threshold spatial signal times temporal ERP weight.
+# Ground truth: continuous Gaussian spatial signal times temporal ERP weight.
+# Set GROUND_TRUTH_MODE=hard_boundary only to reproduce the earlier archive plot.
 gt_elec <- crossing(sensors, time = target_times) %>%
     mutate(
         d_to_seed = sqrt((xproj - seed_xy$xproj)^2 + (yproj - seed_xy$yproj)^2),
+        spatial_weight_raw = exp(-d_to_seed^2 / (2 * gt$sigma_space^2)),
         spatial_weight = if_else(
-            d_to_seed <= gt$sigma_space,
-            exp(-d_to_seed^2 / (2 * gt$sigma_space^2)),
-            0
+            truth_mode == "hard_boundary" & d_to_seed > gt$sigma_space,
+            0,
+            spatial_weight_raw
         ),
         value = gt$bump_amplitude * temporal_weight(time) * spatial_weight,
         layer = "0. Ground truth"
@@ -75,6 +80,16 @@ emp_elec <- sim_model %>%
     pivot_wider(names_from = condition, values_from = eeg) %>%
     mutate(value = cond2 - cond1,
            layer = "1. Empirical difference")
+
+# Residual against ground truth: empirical difference minus injected signal.
+# This is the most direct check for whether the realised noise/finite-sample
+# fluctuation has spatial structure.
+noise_resid_elec <- emp_elec %>%
+    select(channel, time, xproj, yproj, empirical = value) %>%
+    left_join(gt_elec %>% select(channel, time, truth = value),
+              by = c("channel", "time")) %>%
+    mutate(value = empirical - truth,
+           layer = "2. Noise residual (empirical - truth)")
 
 # BGAM estimate: posterior mean of cond2 - cond1 on the same grid.
 pred_grid <- expand_grid(
@@ -93,7 +108,7 @@ model_elec <- add_epred_draws(pred_grid, fit, re_formula = NA) %>%
     group_by(channel, time) %>%
     summarise(value = mean(diff), .groups = "drop") %>%
     left_join(sensors, by = "channel") %>%
-    mutate(layer = "2. BGAM estimate")
+    mutate(layer = "3. BGAM estimate")
 
 # Residual: empirical difference minus BGAM estimate.
 resid_elec <- emp_elec %>%
@@ -101,7 +116,25 @@ resid_elec <- emp_elec %>%
     left_join(model_elec %>% select(channel, time, model = value),
               by = c("channel", "time")) %>%
     mutate(value = empirical - model,
-           layer = "3. Residual")
+           layer = "4. Empirical - BGAM")
+
+noise_resid_summary <- noise_resid_elec %>%
+    group_by(time) %>%
+    summarise(
+        left_mean = mean(value[xproj < 0], na.rm = TRUE),
+        right_mean = mean(value[xproj > 0], na.rm = TRUE),
+        anterior_mean = mean(value[yproj > 0], na.rm = TRUE),
+        posterior_mean = mean(value[yproj < 0], na.rm = TRUE),
+        lateral_diff = right_mean - left_mean,
+        ap_diff = anterior_mean - posterior_mean,
+        mean_abs_residual = mean(abs(value), na.rm = TRUE),
+        rmse_residual = sqrt(mean(value^2, na.rm = TRUE)),
+        .groups = "drop"
+    )
+write.csv(noise_resid_summary,
+          file.path(inputs$out_dir,
+                    paste0("topomap_noise_residual_summary_", slide_tag, ".csv")),
+          row.names = FALSE)
 
 interp_layer <- function(elec_df) {
     bind_rows(lapply(split(elec_df, elec_df$time), function(e) {
@@ -115,20 +148,23 @@ interp_layer <- function(elec_df) {
     }))
 }
 
-elec_layers <- bind_rows(gt_elec, emp_elec, model_elec, resid_elec) %>%
+elec_layers <- bind_rows(gt_elec, emp_elec, noise_resid_elec,
+                         model_elec, resid_elec) %>%
     mutate(layer = factor(layer, levels = layer_levels),
            active = channel %in% gt$active_electrodes)
 
 plot_grid <- bind_rows(
     interp_layer(gt_elec),
     interp_layer(emp_elec),
+    interp_layer(noise_resid_elec),
     interp_layer(model_elec),
     interp_layer(resid_elec)
 ) %>%
     mutate(layer = factor(layer, levels = layer_levels))
 
 shared_lim <- plot_grid %>%
-    filter(layer != "3. Residual") %>%
+    filter(layer %in% c("0. Ground truth", "1. Empirical difference",
+                        "3. BGAM estimate")) %>%
     pull(value) %>%
     abs() %>%
     max(na.rm = TRUE)
@@ -175,19 +211,23 @@ plot_one <- function(layer_name) {
 
 p <- plot_one("0. Ground truth") /
     plot_one("1. Empirical difference") /
-    plot_one("2. BGAM estimate") /
-    plot_one("3. Residual") +
+    plot_one("2. Noise residual (empirical - truth)") /
+    plot_one("3. BGAM estimate") /
+    plot_one("4. Empirical - BGAM") +
     plot_annotation(
         title = "Topomaps over the signal window: P=20, R=20",
-        subtitle = "Columns: onset / peak / offset. Residual = empirical - model.",
+        subtitle = paste(
+            "Columns: onset / peak / offset.",
+            "Noise residual = empirical difference - ground truth."
+        ),
         theme = theme(
             plot.title = element_text(face = "bold", size = 12),
             plot.subtitle = element_text(color = "grey25", size = 9)
         )
     )
 
-ggsave(file.path(inputs$out_dir, "topomap_n20_hard_sem_three_times.pdf"),
-       p, width = 11.2, height = 9.2, device = cairo_pdf)
-ggsave(file.path(inputs$out_dir, "topomap_n20_hard_sem_three_times.png"),
-       p, width = 11.2, height = 9.2, dpi = 300,
+ggsave(file.path(inputs$out_dir, paste0("topomap_", slide_tag, "_three_times.pdf")),
+       p, width = 11.2, height = 11.0, device = cairo_pdf)
+ggsave(file.path(inputs$out_dir, paste0("topomap_", slide_tag, "_three_times.png")),
+       p, width = 11.2, height = 11.0, dpi = 300,
        device = function(...) grDevices::png(..., type = "cairo"))

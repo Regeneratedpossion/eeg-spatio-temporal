@@ -66,13 +66,25 @@ The evaluation proceeds in three steps. First, the posterior condition effect is
 
 This step turns the posterior distribution of the condition effect into a detected / not-detected decision.
 
-$\Delta_{c,t} = \mathrm{cond2}_{c,t} - \mathrm{cond1}_{c,t}$
+$$
+\Delta_{c,t} = \mathrm{cond2}_{c,t} - \mathrm{cond1}_{c,t}
+$$
 
-$p_{c,t} = \Pr(\Delta_{c,t} > \delta \mid \mathrm{data})$
+$$
+p_{c,t} = \Pr(\Delta_{c,t} > \delta \mid \mathrm{data})
+$$
 
-$\mathrm{odds}_{c,t} = \dfrac{p_{c,t}}{1 - p_{c,t}}$
+$$
+\mathrm{odds}_{c,t} = \frac{p_{c,t}}{1 - p_{c,t}}
+$$
 
-$\mathrm{detected}_{c,t} = \mathrm{TRUE}$ if $\mathrm{odds}_{c,t} > 10$
+$$
+\mathrm{detected}_{c,t} =
+\begin{cases}
+\mathrm{TRUE}, & \mathrm{if}\ \mathrm{odds}_{c,t} > 10,\\
+\mathrm{FALSE}, & \mathrm{otherwise}.
+\end{cases}
+$$
 
 Here, $\delta = 0$ is used for diagnostic plots. The threshold $\mathrm{odds}_{c,t} > 10$ corresponds to $p_{c,t} > 10/11$, or about $0.91$.
 

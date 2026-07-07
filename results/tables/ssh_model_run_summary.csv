@@ -4,5 +4,5 @@
 "full_bgam_sigma_true_diagnostic","39962984_4","P20","B_k1212_ps full BGAM","sigmaTRUE","0.80","TRUE","0","244","1.0032","1218.0","+10/-12","99.40","83.89","0.340","0.528","54.70","0.296"
 "adapt_delta_sensitivity","39965039_1","P5","B_k1212_ps full BGAM","sigmaTRUE","0.95","FALSE","1","0","1.0036","1322.1","+10/-12","98.15","81.61","0.192","0.325","10.77",""
 "adapt_delta_sensitivity","39965039_2","P20","B_k1212_ps full BGAM","sigmaTRUE","0.95","TRUE","0","140","1.0035","1395.9","+10/-12","99.41","83.89","0.340","0.528","66.40",""
-"basis_sensitivity","manual_k1612","P20","B_k1612_ps full BGAM","sigmaTRUE","0.80","TRUE","0","22","1.0043","1182.4","NA","NA","NA","NA","NA","37.50","0.306"
+"basis_sensitivity","39986292","P20","B_k1612_ps full BGAM","sigmaTRUE","0.80","TRUE","0","22","1.0043","1182.4","+10/-2","108.95","91.68","0.340","0.577","37.50","0.306"
 "low_rank_laplacian_approximation","39963478-39963483","P20","Laplacian K20+constant temporal BGAMM","basis_score","0.999","FALSE","16","0","1.0097","956.0","+10/-12","95.07","81.41","0.340","0.545","2.50",""

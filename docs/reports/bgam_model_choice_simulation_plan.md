@@ -66,15 +66,15 @@ The evaluation proceeds in three steps. First, the posterior condition effect is
 
 This step turns the posterior distribution of the condition effect into a detected / not-detected decision.
 
-```text
-Delta_c,t = cond2_c,t - cond1_c,t
-p_c,t = Pr(Delta_c,t > delta | data)
-odds_c,t = p_c,t / (1 - p_c,t)
+$\Delta_{c,t} = \mathrm{cond2}_{c,t} - \mathrm{cond1}_{c,t}$
 
-detected_c,t = TRUE if odds_c,t > 10
-```
+$p_{c,t} = \Pr(\Delta_{c,t} > \delta \mid \mathrm{data})$
 
-Here, `delta = 0` is used for diagnostic plots. The threshold `odds > 10` corresponds to `p_c,t > 10/11`, or about `0.91`.
+$\mathrm{odds}_{c,t} = \dfrac{p_{c,t}}{1 - p_{c,t}}$
+
+$\mathrm{detected}_{c,t} = \mathrm{TRUE}$ if $\mathrm{odds}_{c,t} > 10$
+
+Here, $\delta = 0$ is used for diagnostic plots. The threshold $\mathrm{odds}_{c,t} > 10$ corresponds to $p_{c,t} > 10/11$, or about $0.91$.
 
 ### Step 2: SESOI Calibration
 

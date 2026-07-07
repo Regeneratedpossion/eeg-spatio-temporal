@@ -130,8 +130,7 @@ This step compares the posterior detections and effect estimates with the known 
 
 | Recovery question | Code / metric | Truth used | Definition |
 |---|---|---|---|
-| Temporal recovery | `target2_temporal` | true onset / offset | Estimated onset and offset at CZ, compared with `true_onset` and `true_offset` |
-| Temporal pass rule | `BIAS_TOLERANCE_MS` | true onset / offset | Pass if both onset and offset bias are within 20 ms |
+| Temporal recovery | `target2_temporal`; pass if bias <= `BIAS_TOLERANCE_MS = 20 ms` | true onset / offset | Estimated onset and offset at CZ, compared with `true_onset` and `true_offset` |
 | Spatial recovery | `target3_spatial` | hard active-electrode label | F1 score for detected active electrodes at peak time |
 | Spatio-temporal recovery | `target3b_spatiotemporal` | hard electrode-time mask | F1 score over electrode-time cells |
 | Peak amplitude recovery | `target4_peak_amplitude` | continuous ground truth | Estimated peak effect at CZ divided by true peak amplitude |

@@ -16,22 +16,28 @@ Source table: [`results/tables/ssh_model_run_summary.csv`](../../results/tables/
 
 ## Monte Carlo Repetition Plan
 
-The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or about `600` CPU-hours per fit. Based on this runtime and the current SSH job limits, a feasible Monte Carlo plan is:
+The current `B_k1612_ps` run took `37.50` wall-clock hours using `16` CPUs, or about `600` CPU-hours per fit. Based on this runtime, the Monte Carlo plan should separate the computationally expensive BGAM fits from the faster frequentist comparison methods:
 
 ```text
-20 Monte Carlo repetitions, with at most 5 full BGAM jobs running at the same time.
+Full simulation bank: 1,000 simulated datasets for the frequentist comparison methods.
+BGAM subset: at least 100 complete BGAM fits, with 1,000 complete BGAM fits as the ideal target if HPC resources allow.
 ```
+
+The previously planned `20` BGAM repetitions should be treated only as a pilot or resource-feasibility batch, not as the final publishable simulation size.
 
 ### Monte Carlo Design Parameters
 
 | Parameter | Current setting | Reason / note |
 |---|---:|---|
-| Full BGAM repetitions | 20 | Main planned batch |
-| Seed set | 1--20 | One independent simulated dataset per seed |
-| Maximum concurrent full BGAM jobs | 5 | Keeps the batch feasible under the current SSH / fair-share situation |
+| Full simulation bank | 1,000 datasets | Main dataset bank for FDR, Holm, cluster-mass, and TFCE methods |
+| Full BGAM repetitions | at least 100, ideally 1,000 | `100` is the minimum target for meaningful BGAM summaries; `1,000` is the ideal publishable target if computation permits |
+| Pilot BGAM repetitions | 20 | Initial feasibility batch for runtime, convergence, and queue diagnostics |
+| Seed set | 1--1,000 | One independent simulated dataset per seed |
+| Maximum concurrent full BGAM jobs | to be increased if HPC policy allows | More parallelism is needed to make `100+` BGAM fits feasible |
 | Runtime per fit | about 37.50 wall-clock hours | Based on the current `B_k1612_ps` run |
-| Expected batch duration | about 150 h plus queue time | If 5 jobs run in parallel |
-| Fallback / extension | 10 or 30 repetitions | 10 if runtime becomes difficult; 30 only if the 20-run batch completes cleanly |
+| CPU cost per fit | about 600 CPU-hours | `37.50` wall-clock hours using `16` CPUs |
+| Expected BGAM cost | about 60,000 CPU-hours for 100 fits | About 600,000 CPU-hours for 1,000 fits |
+| Fallback / extension | BGAM subset smaller than 100 only if unavoidable | The non-BGAM methods should still be evaluated on the full 1,000-dataset bank |
 
 ## BGAM Model Configuration
 
@@ -97,7 +103,14 @@ $$
 \end{cases}
 $$
 
-Here, $\delta = 0$ is used for diagnostic plots. The threshold $\mathrm{odds}_{c,t} > 10$ corresponds to $p_{c,t} > 10/11$, or about $0.91$.
+Here, $\delta = 0$ is used for diagnostic plots. The main threshold $\mathrm{odds}_{c,t} > 10$ corresponds to $p_{c,t} > 10/11$, or about $0.91$.
+
+Threshold sensitivity will also be assessed across the following cutoffs:
+
+| Threshold family | Planned thresholds | Purpose |
+|---|---|---|
+| Posterior odds | 1, 3, 6, 10, 20, 50, 100 | Evaluate sensitivity of BGAM detection maps to posterior-evidence cutoffs |
+| Significance level | 0.05, 0.01, 0.005, 0.001 | Evaluate sensitivity of frequentist methods to corrected p-value cutoffs |
 
 ### Step 2: SESOI Correction
 
@@ -108,7 +121,7 @@ $$
 = \max\left(0,\ \max_{c,\ t \in B}\widehat{\Delta}_{c,t}\right)
 $$
 
-where $B$ is the baseline window. The current setting uses $B = [0, 0.15]$ s.
+where $B$ is the baseline window. The planned setting uses $B = [0, 0.10]$ s. This shorter baseline window reduces the risk that a smoothed condition effect contributes to the baseline-derived SESOI estimate.
 
 The posterior probability is then computed as:
 
@@ -134,9 +147,12 @@ This step compares the posterior detections and effect estimates with the known 
 | Temporal onset/offset recovery | `target2_temporal` | true onset / offset | Estimated onset and offset bias at CZ; counted as a pass if the bias is <= `BIAS_TOLERANCE_MS = 20 ms` |
 | Spatial recovery | `target3_spatial` | hard active-electrode label | F1 score for detected active electrodes at peak time |
 | Spatio-temporal recovery | `target3b_spatiotemporal` | hard electrode-time mask | F1 score over electrode-time cells |
+| Cluster overlap | `target3c_iou` | hard electrode-time mask | Intersection over union, defined as detected-truth intersection divided by detected-truth union |
 | Peak amplitude recovery | `target4_peak_amplitude` | continuous ground truth | Estimated peak effect at CZ divided by true peak amplitude |
 | Window-mean recovery | `target4b_mean_amplitude` | continuous ground truth | Mean estimated effect in the true window divided by the true window mean |
 | False-positive summary | `practical_null_fpr` | practical null region | Proportion of detected cells outside the practical signal region |
+
+For onset and offset recovery, the summaries should include bias, mean absolute error (MAE), root mean squared error (RMSE), and variance across Monte Carlo repetitions.
 
 ## Simulation Data-Generation Parameters
 
@@ -169,7 +185,9 @@ The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the fol
 | Spatial signal width | `sigma_space` | 0.5 | Code and ground truth both use 0.5 |
 | True onset | `true_onset` | 0.160 s | 160 ms |
 | True offset | `true_offset` | 0.342 s | Last active analysis-grid point is 0.340 s |
-| Participant onset latencies | `ronset` | Uniform `{150, 152, ..., 170}` ms | One onset latency per participant |
+| Participant onset latencies | `ronset` | Uniform `{140, 142, ..., 180}` ms | Wider between-participant onset heterogeneity |
+| Participant amplitude variability | subject-specific multiplier | to be added | Introduces between-participant effect-size heterogeneity |
+| Participant noise variability | subject-specific noise scale | to be added | Introduces between-participant noise-level heterogeneity |
 
 ### Injected Noise
 
@@ -191,14 +209,17 @@ The current main dataset is `montecarlo_p20_gaussian_hardlabel`. Despite the fol
 
 ## Planned Model Comparison
 
-The planned comparison uses three representative methods to compare different levels of spatio-temporal modelling.
+The planned comparison reuses the methods from the preprint and compares them with the spatio-temporal BGAM.
 
 | Method | Role | Reason |
 |---|---|---|
-| FDR-corrected mass-univariate test | Point-wise baseline | Controls multiple comparisons but does not borrow information across neighbouring electrodes or time points (Groppe et al., 2011) |
-| Cluster-based permutation test | Standard EEG/MEG spatio-temporal baseline | Uses electrode-time adjacency to form clusters (Maris and Oostenveld, 2007) |
+| FDR-BY01 | Conservative point-wise baseline | Controls false discovery rate under more general dependence assumptions |
+| FDR-BH95 | Standard point-wise FDR baseline | Controls false discovery rate using the Benjamini-Hochberg procedure |
+| Holm correction | Family-wise error-rate baseline | Provides a stricter point-wise multiple-comparison correction |
+| Cluster mass | Standard EEG/MEG spatio-temporal baseline | Uses electrode-time adjacency to form clusters and evaluates cluster mass |
+| TFCE | Cluster-enhancement baseline | Uses threshold-free cluster enhancement to avoid choosing a single cluster-forming threshold |
 | Spatio-temporal BGAM | Proposed model-based approach | Estimates the full spatio-temporal effect surface with posterior uncertainty (Nalborczyk and Buerkner, 2025) |
 
-This gives a simple comparison hierarchy: FDR does not model spatio-temporal neighbourhoods, cluster permutation uses neighbourhoods to define significant clusters, and BGAM directly models the condition effect as a smooth spatio-temporal surface.
+This gives a simple comparison hierarchy: point-wise corrections do not model spatio-temporal neighbourhoods, cluster-mass and TFCE use neighbourhood structure to support cluster-level inference, and BGAM directly models the condition effect as a smooth spatio-temporal surface.
 
-For fair comparison, all methods will be converted to binary detected / not-detected maps over electrode-time cells. These maps will be compared with the hard-label ground truth using precision, recall, F1, false-positive rate, and onset/offset bias. Continuous recovery metrics, such as peak recovery and mean recovery, will be reported only for BGAM, because cluster-based and FDR methods are inference procedures rather than full effect-surface estimation models.
+For fair comparison, all methods will be converted to binary detected / not-detected maps over electrode-time cells. These maps will be compared with the hard-label ground truth using precision, recall, F1, IoU, false-positive rate, and onset/offset bias, MAE, RMSE, and variance. Continuous recovery metrics, such as peak recovery and mean recovery, will be reported only for BGAM, because cluster-based and corrected p-value methods are inference procedures rather than full effect-surface estimation models.

@@ -3,8 +3,8 @@
 ## Scope
 
 Replace the obsolete `P=5` methods-comparison frame with two matrix frames and
-synchronize the two following FP/FN frames. The four-frame block must describe only the current
-`P=20`, `alpha=0.05` conventional-method analysis over the 18 seeds completed
+synchronize the two following FP/FN frames. The four-frame block must describe
+only the current `P=20`, `alpha=0.05` conventional-method analysis over the 18 seeds completed
 for every heterogeneity scenario. The old pilot results must not remain in this
 block.
 
@@ -48,6 +48,6 @@ claiming that the interim ranking is final.
 - Compile `thesis_progress_slides.tex` with `latexmk` in halt-on-error mode.
 - Check the log for undefined references and new overfull boxes.
 - Extract PDF text to confirm that `P=5`, `alpha=0.10`, and the old method label
-  are absent from the three-frame block.
-- Render and visually inspect all three updated frames for clipping and legible
+  are absent from the four-frame block.
+- Render and visually inspect all four updated frames for clipping and legible
   type.

@@ -84,21 +84,6 @@ f1_metrics <- function(TP, FP, FN) {
       precision = precision, recall = recall, F1 = F1)
 }
 
-truth_window_mean <- function(ground_truth, n = 5000) {
-    true_on <- ground_truth$true_onset
-    true_off <- ground_truth$true_offset
-    peak_t <- 0.250
-    sigma_t <- 0.050
-
-    z <- (seq(true_on, true_off, length.out = n) - peak_t) / sigma_t
-    val <- exp(-z^2 / 2)
-    val_trunc <- exp(-1.5^2 / 2)
-    val[abs(z) > 1.5] <- val_trunc
-    val_norm <- pmax((val - val_trunc) / (1 - val_trunc), 0)
-
-    ground_truth$bump_amplitude * mean(val_norm)
-}
-
 recovery_summary <- function(draws, truth) {
     est <- mean(draws)
     lo <- unname(quantile(draws, 0.025))
@@ -181,7 +166,12 @@ temporal_diagnostics <- function(fit, sim_model, times, seed_ch,
 # Evaluate spatial and spatiotemporal localisation and build Target 3/3B.
 spatial_diagnostics <- function(fit, sim_model, times, true_on, true_off,
                                 seed_ch, ground_truth, fit_file, dataset) {
-    peak_time <- pick_time((true_on + true_off) / 2, times)
+    seed_truth <- continuous_truth_cells(
+        ground_truth,
+        channels = seed_ch,
+        times = times
+    )
+    peak_time <- seed_truth$time[which.max(seed_truth$effect)]
     elec <- sim_model %>% select(channel, xproj, yproj) %>% distinct()
 
     newd_space <- expand_grid(
@@ -254,29 +244,36 @@ spatial_diagnostics <- function(fit, sim_model, times, true_on, true_off,
 
     list(target3 = target3, target3b = target3b,
          diff_space = diff_space, diff_st = diff_st,
-         spatial = spatial, st = st)
+         spatial = spatial, st = st, peak_time = peak_time)
 }
 
 # Evaluate peak and window-mean amplitude and build Target 4/4B.
 amplitude_diagnostics <- function(fit, diff_space, seed_row, times,
-                                  true_on, true_off, seed_ch, truth_peak,
+                                  true_on, true_off, seed_ch, peak_time,
                                   ground_truth, fit_file, dataset) {
     cz_space <- diff_space %>% filter(channel == seed_ch) %>% slice(1)
-    peak <- recovery_summary(cz_space$mean_diff, truth_peak)
+    window_times <- times[times >= true_on & times <= true_off]
+    truth <- continuous_truth_summary(
+        ground_truth,
+        channel = seed_ch,
+        peak_time = peak_time,
+        window_times = window_times
+    )
+    peak <- recovery_summary(cz_space$mean_diff, truth$peak)
 
     target4 <- data.frame(
         fit_file = fit_file,
         dataset = dataset,
         seed_electrode = seed_ch,
-        truth_peak_uV = truth_peak,
+        truth_peak_uV = truth$peak,
         est_peak_uV = peak$est,
         est_lo95_uV = cz_space$lo,
         est_hi95_uV = cz_space$hi,
         recovery_pct = peak$recovery_pct,
-        ci_covers_truth = cz_space$lo <= truth_peak && truth_peak <= cz_space$hi
+        ci_covers_truth = cz_space$lo <= truth$peak &&
+            truth$peak <= cz_space$hi
     )
 
-    window_times <- times[times >= true_on & times <= true_off]
     newd_window <- expand_grid(
         time = window_times,
         condition = factor(cond_levels, levels = cond_levels)
@@ -288,16 +285,14 @@ amplitude_diagnostics <- function(fit, diff_space, seed_row, times,
         group_by(.draw) %>%
         summarise(mean_in_window = mean(diff), .groups = "drop")
 
-    truth_mean <- truth_window_mean(ground_truth)
-    
-    window <- recovery_summary(window_draws$mean_in_window, truth_mean)
+    window <- recovery_summary(window_draws$mean_in_window, truth$window_mean)
     target4b <- data.frame(
         fit_file = fit_file,
         dataset = dataset,
         window_onset_ms = true_on * 1000,
         window_offset_ms = true_off * 1000,
-        truth_peak_uV = truth_peak,
-        truth_mean_uV = truth_mean,
+        truth_peak_uV = truth$peak,
+        truth_mean_uV = truth$window_mean,
         est_mean_uV = window$est,
         lo95_uV = window$lo,
         hi95_uV = window$hi,
@@ -317,7 +312,7 @@ write_diag <- function(x, name, out_dir, tag) {
 
 # Run all diagnostic targets and save their output tables.
 run_all_diagnostics <- function(fit, sim_model, times, seed_ch, true_on,
-                                true_off, truth_peak, ground_truth,
+                                true_off, ground_truth,
                                 fit_file, dataset, out_dir, tag) {
     conv <- convergence_diagnostics(fit, fit_file, dataset)
     print(conv$target1)
@@ -340,7 +335,7 @@ run_all_diagnostics <- function(fit, sim_model, times, seed_ch, true_on,
     write_diag(spat$diff_st, "target3b_spatiotemporal_full", out_dir, tag)
 
     amp <- amplitude_diagnostics(fit, spat$diff_space, temp$seed_row, times,
-                                 true_on, true_off, seed_ch, truth_peak,
+                                 true_on, true_off, seed_ch, spat$peak_time,
                                  ground_truth, fit_file, dataset)
     print(amp$target4)
     write_diag(amp$target4, "target4_peak_amplitude", out_dir, tag)
@@ -379,8 +374,7 @@ times <- sort(unique(sim_model$time))
 seed_ch <- ground_truth$seed_electrode
 true_on <- ground_truth$true_onset
 true_off <- ground_truth$true_offset
-truth_peak <- ground_truth$bump_amplitude
 
 run_all_diagnostics(fit, sim_model, times, seed_ch, true_on,
-                    true_off, truth_peak, ground_truth,
+                    true_off, ground_truth,
                     fit_file, dataset, out_dir, tag)

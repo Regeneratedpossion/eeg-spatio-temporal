@@ -75,7 +75,12 @@ run_hard_diagnostics <- function() {
 
     # 4. Spatial recovery:
     # at the true peak time, compare predicted active channels with true channels.
-    peak_time <- pick_time((gt$true_onset + gt$true_offset) / 2, times)
+    seed_truth <- continuous_truth_cells(
+        gt,
+        channels = gt$seed_electrode,
+        times = times
+    )
+    peak_time <- seed_truth$time[which.max(seed_truth$effect)]
     peak_idx <- match(peak_time, times)
     pred_active_space <- posterior$lower[peak_idx, ] > 0
     spatial_F1 <- mask_f1(pred_active_space, active_channels)
@@ -93,15 +98,18 @@ run_hard_diagnostics <- function() {
     seed_peak_draws <- seed_draws[, peak_idx]
     window_idx <- which(times >= gt$true_onset & times <= gt$true_offset)
     window_draws <- rowMeans(seed_draws[, window_idx, drop = FALSE])
-    truth_mean <- mean(truth_temporal_bump(
-        seq(gt$true_onset, gt$true_offset, length.out = 5000), gt
-    ))
+    truth <- continuous_truth_summary(
+        gt,
+        channel = gt$seed_electrode,
+        peak_time = peak_time,
+        window_times = times[window_idx]
+    )
 
     # 7. Convergence, top-channel, and amplitude checks.
     spatial_top_pass <- channels[which.max(posterior$mean[peak_idx, ])] %in%
         cz_neighbours
-    peak_recovery <- recovery_summary(seed_peak_draws, gt$bump_amplitude)
-    mean_recovery <- recovery_summary(window_draws, truth_mean)
+    peak_recovery <- recovery_summary(seed_peak_draws, truth$peak)
+    mean_recovery <- recovery_summary(window_draws, truth$window_mean)
 
     # 8. Save one-row hard-threshold diagnostic summary.
     hard_summary <- data.frame(

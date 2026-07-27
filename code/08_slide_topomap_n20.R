@@ -17,7 +17,6 @@ source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 inputs <- slide_inputs()
 dir.create(inputs$out_dir, showWarnings = FALSE, recursive = TRUE)
 slide_tag <- Sys.getenv("SLIDE_TAG", "n20_hard_sem")
-truth_mode <- Sys.getenv("GROUND_TRUTH_MODE", "continuous")
 
 sim_data <- readRDS(inputs$sim_file)
 gt <- readRDS(inputs$gt_file)
@@ -38,7 +37,6 @@ layer_levels <- c("0. Ground truth", "1. Empirical difference",
                   "2. Noise residual (empirical - truth)", "3. BGAM estimate",
                   "4. Empirical - BGAM")
 cond_levels <- c("cond1", "cond2")
-seed_xy <- sensors %>% filter(channel == gt$seed_electrode) %>% slice(1)
 
 # Interpolation grid inside the scalp circle.
 head_radius <- max(sqrt(sensors$xproj^2 + sensors$yproj^2)) * 1.05
@@ -48,29 +46,15 @@ base_grid <- expand.grid(
 ) %>%
     filter(sqrt(xproj^2 + yproj^2) <= head_radius)
 
-temporal_weight <- function(t) {
-    peak <- (gt$true_onset + gt$true_offset) / 2
-    sigma_t <- (gt$true_offset - gt$true_onset) / 3
-    z <- (t - peak) / sigma_t
-    pmax(ifelse(abs(z) <= 1.5,
-                (dnorm(z) - dnorm(1.5)) / (dnorm(0) - dnorm(1.5)),
-                0), 0)
-}
-
-# Ground truth: continuous Gaussian spatial signal times temporal ERP weight.
-# Set GROUND_TRUTH_MODE=hard_boundary only to reproduce the earlier archive plot.
-gt_elec <- crossing(sensors, time = target_times) %>%
-    mutate(
-        d_to_seed = sqrt((xproj - seed_xy$xproj)^2 + (yproj - seed_xy$yproj)^2),
-        spatial_weight_raw = exp(-d_to_seed^2 / (2 * gt$sigma_space^2)),
-        spatial_weight = if_else(
-            truth_mode == "hard_boundary" & d_to_seed > gt$sigma_space,
-            0,
-            spatial_weight_raw
-        ),
-        value = gt$bump_amplitude * temporal_weight(time) * spatial_weight,
-        layer = "0. Ground truth"
-    )
+# Ground truth is read from the exact population effect saved on the same grid.
+gt_elec <- continuous_truth_cells(
+    gt,
+    channels = sensors$channel,
+    times = target_times
+) %>%
+    rename(value = effect) %>%
+    left_join(sensors, by = "channel") %>%
+    mutate(layer = "0. Ground truth")
 
 # Empirical difference: observed participant-aggregated cond2 - cond1.
 emp_elec <- sim_model %>%

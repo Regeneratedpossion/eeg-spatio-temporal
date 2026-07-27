@@ -11,24 +11,8 @@ correlation_or_na <- function(x, y) {
     cor(x, y)
 }
 
-continuous_truth_map <- function(sim_model, ground_truth, times, channels) {
-    # Sensor coordinates in the same order as the reconstructed effect map.
-    sensors <- sim_model %>%
-        distinct(channel, xproj, yproj) %>%
-        filter(channel %in% channels) %>%
-        arrange(match(channel, channels))
-
-    # Spatial Gaussian weight centred on the true seed electrode.
-    seed_coord <- sensors %>% filter(channel == ground_truth$seed_electrode)
-    spatial_distance <- sqrt((sensors$xproj - seed_coord$xproj)^2 +
-                             (sensors$yproj - seed_coord$yproj)^2)
-    spatial_weight <- exp(-(spatial_distance^2) / (2 * ground_truth$sigma_space^2))
-
-    # Continuous truth = temporal bump x spatial Gaussian weight.
-    temporal_weight <- truth_temporal_bump(times, ground_truth)
-    truth_mat <- outer(temporal_weight, spatial_weight)
-    dimnames(truth_mat) <- list(as.character(times), channels)
-    truth_mat
+continuous_truth_map <- function(ground_truth, times, channels) {
+    continuous_truth_matrix(ground_truth, times, channels)
 }
 
 # Cosine similarity compares the direction/shape of two full maps.
@@ -62,8 +46,7 @@ run_continuous_diagnostics <- function() {
 
     # 2. Posterior mean estimate and continuous Gaussian truth.
     estimate_mat <- apply(rec$effect_array, c(2, 3), mean)
-    truth_mat <- continuous_truth_map(rec$sim_model, rec$gt,
-                                      rec$times, rec$channels)
+    truth_mat <- continuous_truth_map(rec$gt, rec$times, rec$channels)
 
     truth_vec <- as.vector(truth_mat)
     estimate_vec <- as.vector(estimate_mat)
@@ -71,9 +54,7 @@ run_continuous_diagnostics <- function() {
     truth_top25_idx <- truth_vec >= 0.25 * max(truth_vec)
 
     # 3. Peak-time spatial comparison.
-    peak_time <- pick_time((rec$gt$true_onset + rec$gt$true_offset) / 2,
-                           rec$times)
-    peak_idx <- match(peak_time, rec$times)
+    peak_idx <- which.max(apply(truth_mat, 1, max))
 
     # 4. Continuous-map recovery metrics.
     truth_weighted_recovery <- weighted_recovery(estimate_vec, truth_vec, active_idx)

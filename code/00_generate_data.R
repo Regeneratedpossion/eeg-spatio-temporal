@@ -5,12 +5,13 @@
 #
 # Main structure:
 #   1. define_simulation_parameters()
-#   2. load_electrode_layout()
-#   3. compute_spatial_weights()
-#   4. compute_noise_covariance()
-#   5. generate_one_dataset()
-#   6. downsample_dataset()
-#   7. build_ground_truth()
+#   2. draw_participant_parameters()
+#   3. load_electrode_layout()
+#   4. compute_spatial_weights()
+#   5. compute_noise_covariance()
+#   6. generate_one_dataset()
+#   7. downsample_dataset()
+#   8. build_ground_truth()
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
@@ -24,21 +25,38 @@ BRMS_MEEG <- brms_meeg_path()
 # 1. Simulation parameters
 # -------------------------------------------------------
 
-define_simulation_parameters <- function() {
+heterogeneity_scenarios <- function() {
+    list(
+        low = list(omega_A = 0.20, omega_sigma = 0.00),
+        medium = list(omega_A = 0.45, omega_sigma = 0.30),
+        high = list(omega_A = 0.70, omega_sigma = 0.60)
+    )
+}
+
+define_simulation_parameters <- function(scenario = "low") {
+    scenarios <- heterogeneity_scenarios()
+    if (!scenario %in% names(scenarios)) {
+        stop("Unknown heterogeneity scenario: ", scenario,
+             ". Choose one of: ", paste(names(scenarios), collapse = ", "))
+    }
+
+    dispersion <- scenarios[[scenario]]
     list(
         n_trials = 20,
-        n_ppt = 5,
+        n_ppt = 20,
         outvar = 0.5,
         srate = 500,
-        ronset_ms = seq(from = 150, to = 170, by = 2),
-        true_onset_sec = 0.160,
-        true_offset_sec = 0.342,
+        ronset_ms = seq(from = 140, to = 180, by = 2),
+        signal_duration_sec = 0.182,
         downsample_factor = 5,
         seed_electrode = "CZ",
         sigma_space = 0.5,
         bump_amplitude = 1.5,
         rho = 0.15,
-        signal_mode = "continuous_label"
+        signal_mode = "continuous_label",
+        scenario = scenario,
+        omega_A = dispersion$omega_A,
+        omega_sigma = dispersion$omega_sigma
     )
 }
 
@@ -48,17 +66,39 @@ simulation_parameters <- function(n_ppt = default_params$n_ppt,
                                   signal_mode = Sys.getenv(
                                       "MC_SIGNAL_MODE",
                                       default_params$signal_mode
+                                  ),
+                                  scenario = Sys.getenv(
+                                      "MC_SCENARIO",
+                                      default_params$scenario
                                   )) {
-    params <- default_params
+    params <- define_simulation_parameters(scenario)
     params$n_ppt <- n_ppt
     params$signal_mode <- signal_mode
     params$ronset <- params$ronset_ms
-    params$true_onset <- params$true_onset_sec
-    params$true_offset <- params$true_offset_sec
     params$ronset_ms <- NULL
-    params$true_onset_sec <- NULL
-    params$true_offset_sec <- NULL
     params
+}
+
+# Draw one latency, amplitude, and noise scale per participant. The log-normal
+# centring keeps E(A_p) = A and E(sigma_p^2) = 1 in every scenario.
+draw_participant_parameters <- function(params) {
+    participant <- paste0("participant_", sprintf("%02d", seq_len(params$n_ppt)))
+
+    data.frame(
+        participant = participant,
+        onset_ms = sample(params$ronset, params$n_ppt, replace = TRUE),
+        amplitude = rlnorm(
+            params$n_ppt,
+            meanlog = log(params$bump_amplitude) - 0.5 * params$omega_A^2,
+            sdlog = params$omega_A
+        ),
+        noise_scale = rlnorm(
+            params$n_ppt,
+            meanlog = -params$omega_sigma^2,
+            sdlog = params$omega_sigma
+        ),
+        stringsAsFactors = FALSE
+    )
 }
 
 # -------------------------------------------------------
@@ -136,9 +176,9 @@ compute_noise_covariance <- function(sensors, params) {
 # 4. Generate one dataset
 # -------------------------------------------------------
 
-build_temporal_signal <- function(params) {
-    participant_onset <- sample(x = params$ronset, size = 1)
-    onset_index <- which(Xf == participant_onset)
+build_temporal_signal <- function(params, onset_ms) {
+    stopifnot(length(onset_ms) == 1L, onset_ms %in% params$ronset)
+    onset_index <- which(Xf == onset_ms)
 
     c(
         rep(0, onset_index - 2),
@@ -166,10 +206,11 @@ generate_condition_noise <- function(n_elec, params, L) {
 }
 
 build_trial_rows <- function(participant_id, trial, sensors,
-                             temporal_signal, noise_c1, noise_c2, params) {
+                             temporal_signal, participant_amplitude,
+                             noise_c1, noise_c2, params) {
     rows <- lapply(seq_len(nrow(sensors)), function(e) {
         signal_c1 <- noise_c1[, e]
-        signal_c2 <- params$bump_amplitude *
+        signal_c2 <- participant_amplitude *
             sensors$spatial_weight[e] * temporal_signal +
             noise_c2[, e]
 
@@ -191,21 +232,27 @@ build_trial_rows <- function(participant_id, trial, sensors,
 generate_one_dataset <- function(params, sensors, L) {
     n_elec <- nrow(sensors)
     trial_data <- list()
+    participant_parameters <- draw_participant_parameters(params)
 
     for (P in seq_len(params$n_ppt)) {
-        participant_id <- paste0("participant_", sprintf("%02d", P))
-        # Each participant gets one onset; all trials from that participant share it.
-        temporal_signal <- build_temporal_signal(params)
+        participant <- participant_parameters[P, ]
+        participant_id <- participant$participant
+        temporal_signal <- build_temporal_signal(params, participant$onset_ms)
 
         for (trial in seq_len(params$n_trials)) {
-            noise_c1 <- generate_condition_noise(n_elec, params, L)
-            noise_c2 <- generate_condition_noise(n_elec, params, L)
+            # Scaling the complete process changes its magnitude but preserves
+            # the temporal and spatial correlation structure.
+            noise_c1 <- participant$noise_scale *
+                generate_condition_noise(n_elec, params, L)
+            noise_c2 <- participant$noise_scale *
+                generate_condition_noise(n_elec, params, L)
 
             trial_data[[length(trial_data) + 1]] <- build_trial_rows(
                 participant_id = participant_id,
                 trial = trial,
                 sensors = sensors,
                 temporal_signal = temporal_signal,
+                participant_amplitude = participant$amplitude,
                 noise_c1 = noise_c1,
                 noise_c2 = noise_c2,
                 params = params
@@ -213,11 +260,14 @@ generate_one_dataset <- function(params, sensors, L) {
         }
     }
 
-    bind_rows(trial_data) %>%
+    sim_data <- bind_rows(trial_data) %>%
         mutate(
             time = time / 1000,
             condition = factor(condition, levels = c("cond1", "cond2"))
         )
+
+    attr(sim_data, "participant_parameters") <- participant_parameters
+    sim_data
 }
 
 # -------------------------------------------------------
@@ -235,14 +285,45 @@ downsample_dataset <- function(sim_data, params) {
         mutate(across(where(is.numeric), ~round(.x, 4)))
 }
 
-# Save ground-truth values for evaluation.
-# Active-electrode threshold = mean(spatial_weight_raw) + sd(spatial_weight_raw).
-build_ground_truth <- function(params, sensors) {
+# Save population-level ground truth for evaluation. The temporal target is the
+# mean of the shifted individual waveforms over the fixed onset distribution.
+build_ground_truth <- function(params, sensors, participant_parameters = NULL) {
     active_threshold <- unique(sensors$active_threshold)
+    generation_waveforms <- vapply(
+        params$ronset,
+        function(onset_ms) build_temporal_signal(params, onset_ms),
+        numeric(length(Xf))
+    )
+    mean_waveform <- rowMeans(generation_waveforms)
+
+    keep_idx <- seq(1, length(Xf), by = params$downsample_factor)
+    analysis_time <- Xf[keep_idx] / 1000
+    analysis_waveform <- mean_waveform[keep_idx]
+    temporal_threshold <- mean(analysis_waveform) + sd(analysis_waveform)
+    temporal_active <- analysis_time[analysis_waveform >= temporal_threshold]
+
+    if (length(temporal_active) == 0L) {
+        stop("The temporal active-set threshold selected no analysis time points.")
+    }
+
+    continuous_ground_truth <- expand.grid(
+        channel = sensors$channel,
+        time = analysis_time,
+        KEEP.OUT.ATTRS = FALSE,
+        stringsAsFactors = FALSE
+    ) %>%
+        left_join(
+            sensors %>% select(channel, spatial_weight = spatial_weight_raw),
+            by = "channel"
+        ) %>%
+        mutate(
+            temporal_weight = analysis_waveform[match(time, analysis_time)],
+            effect = params$bump_amplitude * spatial_weight * temporal_weight
+        )
 
     list(
-        true_onset = params$true_onset,
-        true_offset = params$true_offset,
+        true_onset = min(temporal_active),
+        true_offset = max(temporal_active),
         seed_electrode = params$seed_electrode,
         sigma_space = params$sigma_space,
         bump_amplitude = params$bump_amplitude,
@@ -250,7 +331,27 @@ build_ground_truth <- function(params, sensors) {
         outvar = params$outvar,
         downsample_factor = params$downsample_factor,
         signal_mode = params$signal_mode,
+        scenario = params$scenario,
+        onset_support_ms = params$ronset,
+        omega_A = params$omega_A,
+        omega_sigma = params$omega_sigma,
         active_threshold = active_threshold,
+        temporal_threshold = temporal_threshold,
+        temporal_active_times = temporal_active,
+        population_mean_waveform = data.frame(
+            time = analysis_time,
+            temporal_weight = analysis_waveform
+        ),
+        continuous_effect = continuous_ground_truth,
+        active_cells = expand.grid(
+            channel = sensors %>%
+                filter(spatial_weight_raw >= active_threshold) %>%
+                pull(channel),
+            time = temporal_active,
+            KEEP.OUT.ATTRS = FALSE,
+            stringsAsFactors = FALSE
+        ),
+        participant_parameters = participant_parameters,
         all_channels = sensors$channel,
         active_electrodes = sensors %>%
             filter(spatial_weight_raw >= active_threshold) %>%
@@ -258,18 +359,34 @@ build_ground_truth <- function(params, sensors) {
     )
 }
 
-make_dataset <- function(seed = 42, n_ppt = default_params$n_ppt) {
+make_dataset <- function(seed = 42, n_ppt = default_params$n_ppt,
+                         scenario = Sys.getenv("MC_SCENARIO", "low"),
+                         signal_mode = Sys.getenv("MC_SIGNAL_MODE",
+                                                  "continuous_label")) {
     set.seed(seed)
 
-    params <- simulation_parameters(n_ppt = n_ppt)
+    params <- simulation_parameters(
+        n_ppt = n_ppt,
+        scenario = scenario,
+        signal_mode = signal_mode
+    )
     sensors <- compute_spatial_weights(load_electrode_layout(), params)
     noise_cov <- compute_noise_covariance(sensors, params)
 
     sim_data <- generate_one_dataset(params, sensors, noise_cov$L)
+    participant_parameters <- attr(sim_data, "participant_parameters")
     sim_data <- downsample_dataset(sim_data, params)
-    ground_truth <- build_ground_truth(params, sensors)
+    ground_truth <- build_ground_truth(
+        params,
+        sensors,
+        participant_parameters = participant_parameters
+    )
 
-    list(sim_data = sim_data, ground_truth = ground_truth)
+    list(
+        sim_data = sim_data,
+        ground_truth = ground_truth,
+        participant_parameters = participant_parameters
+    )
 }
 
 # Load noise and ERP template before generating data.

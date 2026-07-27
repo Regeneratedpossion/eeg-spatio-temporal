@@ -40,17 +40,23 @@ fit_path  <- function(...)   file.path(project_root(), "results/fits", ...)
 diag_path <- function(...)   file.path(project_root(), "results/diagnostics", ...)
 fig_path  <- function(...)   file.path(project_root(), "results/figures", ...)
 resource_path <- function(...) file.path(project_root(), "resources", ...)
-brms_meeg_path <- function(...) resource_path("brms_meeg/code", ...)
+brms_meeg_path <- function(...) {
+    external_path <- Sys.getenv("BRMS_MEEG", unset = "")
+    if (nzchar(external_path)) {
+        return(file.path(external_path, ...))
+    }
+    resource_path("brms_meeg/code", ...)
+}
 adjacency_path <- function(...) resource_path("adjacency", ...)
 
 resolve_path <- function(base, path) {
     if (grepl("^(/|[A-Za-z]:)", path)) path else file.path(base, path)
 }
 
-basis_settings <- function(default = 20L) {
+basis_settings <- function(default_xy = 16L, default_t = 12L) {
     list(
-        k_xy = as.integer(Sys.getenv("K_XY", default)),
-        k_t = as.integer(Sys.getenv("K_T", default)),
+        k_xy = as.integer(Sys.getenv("K_XY", default_xy)),
+        k_t = as.integer(Sys.getenv("K_T", default_t)),
         full = FALSE
     )
 }
@@ -74,17 +80,19 @@ slide_inputs <- function() {
 }
 
 mc_paths <- function() {
-    data_subdir <- Sys.getenv("MC_DATA_SUBDIR", unset = "montecarlo_n20_hard")
+    scenario <- Sys.getenv("MC_SCENARIO", unset = "low")
+    default_subdir <- paste0("montecarlo_p20_", scenario, "_heterogeneity")
+    data_subdir <- Sys.getenv("MC_DATA_SUBDIR", unset = default_subdir)
 
     list(
         prefix = Sys.getenv("MC_AGG_PREFIX", unset = data_subdir),
         data_dir = data_path(data_subdir),
         compare_dir = file.path(project_root(), "results/comparisons",
                                 Sys.getenv("MC_COMPARE_SUBDIR",
-                                           unset = "montecarlo_n20_hard_sem")),
+                                           unset = paste0(data_subdir, "_sem"))),
         summary_dir = file.path(project_root(), "results",
                                 Sys.getenv("MC_SUMMARY_SUBDIR",
-                                           unset = "montecarlo_n20_hard_sem")),
+                                           unset = paste0(data_subdir, "_sem"))),
         out_dir = file.path(project_root(), "results/comparisons")
     )
 }
@@ -110,7 +118,10 @@ ppc_inputs <- function() {
 }
 
 setup_cmdstan_cache <- function() {
-    cache_dir <- file.path(project_root(), "cmdstan_cache")
+    cache_dir <- Sys.getenv(
+        "CMDSTAN_CACHE_DIR",
+        unset = file.path(project_root(), "cmdstan_cache")
+    )
     dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
     options(cmdstanr_write_stan_file_dir = cache_dir)
     invisible(cache_dir)
@@ -128,6 +139,95 @@ aggregate_trials <- function(sim_data) {
                   eeg_sem  = sd(eeg) / sqrt(dplyr::n()),
                   .groups  = "drop") %>%
         mutate(condition = factor(condition, levels = c("cond1", "cond2")))
+}
+
+# Select the exact population-level truth saved by the data generator.
+# Diagnostics deliberately fail for legacy datasets rather than reconstructing
+# an approximate signal from generation parameters.
+continuous_truth_cells <- function(ground_truth, channels = NULL, times = NULL) {
+    truth <- ground_truth$continuous_effect
+    if (is.null(truth)) {
+        stop(
+            "Exact continuous ground truth is unavailable; regenerate the dataset ",
+            "with code/00_generate_montecarlo.R using the current data generator.",
+            call. = FALSE
+        )
+    }
+
+    required <- c("channel", "time", "effect")
+    missing_columns <- setdiff(required, names(truth))
+    if (length(missing_columns) > 0L) {
+        stop(
+            "continuous_effect is missing required columns: ",
+            paste(missing_columns, collapse = ", "),
+            call. = FALSE
+        )
+    }
+
+    truth <- truth[, required, drop = FALSE]
+    if (anyDuplicated(truth[c("channel", "time")])) {
+        stop("Duplicated continuous ground-truth cells", call. = FALSE)
+    }
+
+    requested_channels <- if (is.null(channels)) {
+        unique(as.character(truth$channel))
+    } else {
+        as.character(channels)
+    }
+    requested_times <- if (is.null(times)) unique(truth$time) else times
+
+    requested <- expand.grid(
+        channel = requested_channels,
+        time = requested_times,
+        KEEP.OUT.ATTRS = FALSE,
+        stringsAsFactors = FALSE
+    )
+    truth$channel <- as.character(truth$channel)
+    matched <- merge(
+        requested,
+        truth,
+        by = c("channel", "time"),
+        all.x = TRUE,
+        sort = FALSE
+    )
+    if (anyNA(matched$effect)) {
+        stop("Missing continuous ground-truth cells", call. = FALSE)
+    }
+
+    matched <- matched[order(
+        match(matched$channel, requested_channels),
+        match(matched$time, requested_times)
+    ), required, drop = FALSE]
+    rownames(matched) <- NULL
+    matched
+}
+
+continuous_truth_summary <- function(ground_truth, channel, peak_time,
+                                     window_times) {
+    cells <- continuous_truth_cells(
+        ground_truth,
+        channels = channel,
+        times = unique(c(peak_time, window_times))
+    )
+
+    list(
+        peak = cells$effect[cells$time == peak_time],
+        window_mean = mean(cells$effect[cells$time %in% window_times])
+    )
+}
+
+continuous_truth_matrix <- function(ground_truth, times, channels) {
+    cells <- continuous_truth_cells(
+        ground_truth,
+        channels = channels,
+        times = times
+    )
+    matrix(
+        cells$effect,
+        nrow = length(times),
+        ncol = length(channels),
+        dimnames = list(as.character(times), as.character(channels))
+    )
 }
 
 # Inverse-distance interpolation for topomaps.

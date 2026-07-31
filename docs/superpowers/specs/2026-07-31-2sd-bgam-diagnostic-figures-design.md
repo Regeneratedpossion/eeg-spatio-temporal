@@ -12,8 +12,9 @@ TFCE.
 - Data: `data/montecarlo_r2sd/sim_001.rds`.
 - Truth: reconstructed with `paired_radius_superpopulation_truth()`.
 - Display channels: `CZ`, `FCZ`, `CPZ`, `C2`, `PZ`, and `FP1`.
-- Diagnostic landmarks: 200, 250, and 300 ms, matching the saved temporal
-  active-window onset, peak, and offset.
+- Fit and posterior-probability landmarks: 200, 250, and 300 ms, matching the
+  saved temporal active-window onset, peak, and offset.
+- Topomap times: 160, 250, and 340 ms.
 - Practical-effect probability: `P(cond2 - cond1 > 0.1 uV | data)`.
 - Detection threshold: posterior odds greater than 10, equivalent to
   probability greater than `10 / 11 = 0.9091`.
@@ -41,18 +42,17 @@ at 0.5 and 0.9091. Shade contiguous periods exceeding 0.9091 in green. Mark
 
 ## Figure 3: Topomap Diagnostic
 
-Create one multi-panel figure with columns at 200, 250, and 300 ms and rows:
+Create one multi-panel figure with columns at 160, 250, and 340 ms and rows:
 
-1. superpopulation truth;
+1. ground truth (superpopulation);
 2. empirical condition difference;
-3. empirical minus superpopulation truth;
-4. BGAM posterior mean;
+3. noise residual: empirical minus ground truth;
+4. BGAM estimate;
 5. empirical minus BGAM.
 
-Use a shared symmetric colour scale for truth, empirical, and BGAM rows. Use a
-separate shared symmetric residual scale for the two residual rows so their
-spatial structure remains visible. Mark active and inactive electrode
-locations with different point shapes.
+Use one shared symmetric colour scale across all five rows and all three times,
+with limits set by the largest absolute interpolated value over all 15 panels.
+Mark active and inactive electrode locations with different point shapes.
 
 ## Outputs and Verification
 
@@ -64,5 +64,5 @@ Write PNG files under `results/paired_radius_bgam_pilot/2sd/figures/`:
 
 Also save the plotted numerical data as RDS files for reproducibility. Tests
 must verify the probability definition, 0.9091 threshold, superpopulation
-truth use, requested channels and times, non-empty output files, and valid PNG
-dimensions.
+truth use, requested channels, topomap times, unified colour limit, non-empty
+output files, and valid PNG dimensions.

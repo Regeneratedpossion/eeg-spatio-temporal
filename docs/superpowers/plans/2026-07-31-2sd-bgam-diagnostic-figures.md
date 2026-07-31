@@ -16,7 +16,9 @@
 - Define posterior probability as `P(cond2 - cond1 > 0.1 uV | data)`.
 - Use odds greater than 10, equivalent to probability greater than `10 / 11`.
 - Plot `CZ`, `FCZ`, `CPZ`, `C2`, `PZ`, and `FP1`.
-- Use 200, 250, and 300 ms as diagnostic landmarks.
+- Use 200, 250, and 300 ms for fit and posterior-probability landmarks.
+- Use 160, 250, and 340 ms for topomap columns.
+- Use one symmetric colour scale across every topomap row and column.
 
 ---
 
@@ -92,6 +94,8 @@ draws for fit and probability figures. Construct the topomap layers from the
 saved all-channel posterior mean, participant-aggregated empirical difference,
 and reconstructed superpopulation truth. Use `idw_interp()` and
 `scalp_decorations()` for the same scalp geometry as existing project plots.
+Select 160, 250, and 340 ms independently of the fit landmarks, and calculate
+one maximum absolute interpolated value for all five topomap layers.
 Save all plotted numerical data in one RDS list.
 
 - [ ] **Step 4: Run the plotting script**
@@ -106,9 +110,9 @@ Expected: exit 0 and four non-empty output files.
 - [ ] **Step 5: Verify files and data**
 
 Check all PNG files are readable, have nonzero dimensions, and exceed 10 KB.
-Read the RDS and assert six channels, three topomap times, SESOI `0.1`,
+Read the RDS and assert six channels, topomap times `0.16`, `0.25`, and `0.34`, SESOI `0.1`,
 probability threshold `10 / 11`, superpopulation CZ truth at 250 ms near
-`1.457449`, and no conventional-method objects.
+`1.457449`, one shared topomap colour limit, and no conventional-method objects.
 
 - [ ] **Step 6: Run the full R test suite**
 

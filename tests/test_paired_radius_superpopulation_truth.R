@@ -67,4 +67,33 @@ expect_error(
     "ground_truth is missing required fields: onset_support_ms"
 )
 
+diagnostic_source <- paste(
+    readLines(file.path(
+        test_project_root,
+        "code",
+        "35_diagnose_paired_radius_bgam_pilot.R"
+    )),
+    collapse = "\n"
+)
+stopifnot(grepl(
+    'source(file.path(project_root(), "code/paired_radius_superpopulation_truth.R"))',
+    diagnostic_source,
+    fixed = TRUE
+))
+stopifnot(grepl(
+    "paired_radius_superpopulation_truth(",
+    diagnostic_source,
+    fixed = TRUE
+))
+stopifnot(grepl(
+    'truth_estimand = "superpopulation"',
+    diagnostic_source,
+    fixed = TRUE
+))
+stopifnot(grepl(
+    "realized_truth_cz_250 = realized_truth_peak",
+    diagnostic_source,
+    fixed = TRUE
+))
+
 cat("paired-radius superpopulation truth tests passed\n")

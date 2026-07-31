@@ -106,23 +106,22 @@ Jiahui
 
 Full BGAM k = (12,12):
 
-- Code: `code/11_basis_screening.R`
+- Code: `code/sensitivity/11_basis_screening.R`
   - `SCREEN_SAVE_FIT=true`
-- Slurm: `slurm/run_basis_screening_full_ab.sh`
+- Historical Slurm launcher: removed from the active tree; recoverable from
+  Git history.
 - Diagnostics summary:
   - `results/tables/ssh_model_run_inventory.csv`
 
 Laplacian low-rank basis:
 
-- Single workflow code: `code/12_laplacian_basis_brms_fixed.R`
+- Single workflow code: `code/sensitivity/12_laplacian_basis_brms_fixed.R`
   - `LAPLACE_ACTION=fit`
   - `LAPLACE_ACTION=diagnose_hard`
   - `LAPLACE_ACTION=diagnose_continuous`
 - Main note: `notes/laplacian_k20_constant_result.md`
-- Slurm:
-  - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_long.sh`
-  - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_recovery.sh`
-  - `slurm/run_laplacian_p20_gaussian_hardlabel_k20_constant_continuous_diag.sh`
+- Historical Slurm launchers: removed from the active tree; recoverable from
+  Git history.
 - Diagnostics:
   - `results/diagnostics/laplacian_basis_fixed/summary_laplacian_k20_seed001_iter3000_warmup1000_adapt0p999_constant.csv`
   - `results/diagnostics/laplacian_continuous/summary_continuous_laplacian_k20_seed001_iter3000_warmup1000_adapt0p999_constant.csv`

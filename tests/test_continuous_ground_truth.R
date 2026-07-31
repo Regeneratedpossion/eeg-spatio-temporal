@@ -118,31 +118,46 @@ stopifnot(isTRUE(all.equal(
 )))
 
 generator_source <- paste(
-    readLines(file.path(test_project_root, "code", "00_generate_data.R")),
+    readLines(file.path(test_project_root, "code", "pipeline", "simulation.R")),
     collapse = "\n"
 )
 diagnostic_source <- paste(
-    readLines(file.path(test_project_root, "code", "02_diagnostics.R")),
+    readLines(file.path(
+        test_project_root, "code", "diagnostics", "02_diagnostics.R"
+    )),
     collapse = "\n"
 )
 topomap_source <- paste(
-    readLines(file.path(test_project_root, "code", "08_slide_topomap_n20.R")),
+    readLines(file.path(
+        test_project_root, "code", "reporting", "08_slide_topomap_n20.R"
+    )),
     collapse = "\n"
 )
 laplace_config_source <- paste(
-    readLines(file.path(test_project_root, "code", "laplacian", "00_config.R")),
+    readLines(file.path(
+        test_project_root, "code", "sensitivity", "laplacian", "00_config.R"
+    )),
     collapse = "\n"
 )
 laplace_hard_source <- paste(
-    readLines(file.path(test_project_root, "code", "laplacian", "03_diagnose_hard.R")),
+    readLines(file.path(
+        test_project_root, "code", "sensitivity", "laplacian",
+        "03_diagnose_hard.R"
+    )),
     collapse = "\n"
 )
 laplace_continuous_source <- paste(
-    readLines(file.path(test_project_root, "code", "laplacian", "04_diagnose_continuous.R")),
+    readLines(file.path(
+        test_project_root, "code", "sensitivity", "laplacian",
+        "04_diagnose_continuous.R"
+    )),
     collapse = "\n"
 )
 sesoi_plot_source <- paste(
-    readLines(file.path(test_project_root, "code", "31_plot_all_electrode_sesoi_posterior.R")),
+    readLines(file.path(
+        test_project_root, "code", "reporting",
+        "31_plot_all_electrode_sesoi_posterior.R"
+    )),
     collapse = "\n"
 )
 

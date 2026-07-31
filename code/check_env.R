@@ -53,9 +53,9 @@ if (requireNamespace("reticulate", quietly = TRUE)) {
 cat("\n--- Project resources ---\n")
 required_files <- c(
     "code/utils.R",
-    "code/00_generate_data.R",
-    "code/01_fit_bgam.R",
-    "code/03_compare_methods.R",
+    "code/pipeline/simulation.R",
+    "code/pipeline/fit_bgam.R",
+    "code/pipeline/compare_methods.R",
     "resources/adjacency/adjacency_xproj_yproj_61ch.rds",
     "resources/brms_meeg/code/eeg_noise.R",
     "resources/brms_meeg/code/erp_template.R",

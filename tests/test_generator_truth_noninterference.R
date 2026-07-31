@@ -1,8 +1,10 @@
 script_arg <- grep("^--file=", commandArgs(FALSE), value = TRUE)
 script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
-generator_path <- file.path(project_root, "code", "00_generate_data.R")
-montecarlo_path <- file.path(project_root, "code", "00_generate_montecarlo.R")
+generator_path <- file.path(project_root, "code", "pipeline", "simulation.R")
+montecarlo_path <- file.path(
+    project_root, "code", "pipeline", "generate_montecarlo.R"
+)
 
 generator_source <- paste(readLines(generator_path), collapse = "\n")
 montecarlo_source <- paste(readLines(montecarlo_path), collapse = "\n")

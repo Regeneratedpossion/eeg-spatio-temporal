@@ -3,13 +3,18 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 test_project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = test_project_root)
 
-source(file.path(test_project_root, "code", "34_fit_paired_radius_bgam_pilot.R"))
-source(file.path(test_project_root, "code", "35_diagnose_paired_radius_bgam_pilot.R"))
+source(file.path(test_project_root, "code", "pipeline", "fit_paired_radius.R"))
+source(file.path(
+    test_project_root, "code", "diagnostics",
+    "35_diagnose_paired_radius_bgam_pilot.R"
+))
 
 config <- paired_radius_bgam_config()
 fit_arguments <- names(formals(fit_bgam))
+paired_fit_arguments <- names(formals(run_paired_radius_bgam_fit))
 stopifnot(all(c("chains", "cores", "iter", "warmup", "threads") %in%
               fit_arguments))
+stopifnot(identical(paired_fit_arguments, c("radius_rule", "seed")))
 stopifnot(config$k_xy == 16L)
 stopifnot(config$k_t == 12L)
 stopifnot(identical(config$bs_space, "ps"))

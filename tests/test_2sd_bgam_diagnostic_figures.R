@@ -57,4 +57,60 @@ stopifnot(
     ))
 )
 
+plot_source <- paste(
+    readLines(file.path(
+        test_project_root, "code", "37_plot_2sd_bgam_diagnostics.R"
+    )),
+    collapse = "\n"
+)
+for (required_text in c(
+    "posterior_epred(",
+    "re_formula = NA",
+    "ROPE_UV",
+    "paired_radius_superpopulation_truth(",
+    '"bgam_fit_superpopulation.png"',
+    '"posterior_probability_sesoi.png"',
+    '"topomap_diagnostics_superpopulation.png"',
+    '"diagnostic_plot_data.rds"'
+)) {
+    stopifnot(grepl(required_text, plot_source, fixed = TRUE))
+}
+
+suppressPackageStartupMessages({
+    library(dplyr)
+    library(tidyr)
+})
+sim_model_fixture <- expand.grid(
+    channel = c("A", "B"),
+    condition = factor(c("cond1", "cond2"), levels = c("cond1", "cond2")),
+    time = 0.25,
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+) %>%
+    mutate(
+        xproj = if_else(channel == "A", 0, 1),
+        yproj = 0,
+        eeg_mean = if_else(condition == "cond2", 1, 0)
+    )
+posterior_map_fixture <- data.frame(
+    channel = c("A", "B"), time = 0.25,
+    xproj = c(0, 1), yproj = c(0, 0),
+    mean_diff = c(0.9, 0.1), p_sig = c(1, 0), odds = c(8000, 0.000125)
+)
+population_truth_fixture <- data.frame(
+    channel = c("A", "B"), time = 0.25, effect = c(1, 0)
+)
+topomap_fixture <- prepare_topomap_data(
+    sim_model_fixture,
+    posterior_map_fixture,
+    population_truth_fixture,
+    list(active_electrodes = "A"),
+    landmarks = 0.25
+)
+stopifnot(
+    nrow(topomap_fixture) == 10L,
+    all(c("xproj", "yproj") %in% names(topomap_fixture)),
+    !any(grepl("\\.[xy]$", names(topomap_fixture)))
+)
+
 cat("2sd BGAM diagnostic figure tests passed\n")

@@ -154,6 +154,28 @@ paired_radius_posterior_map <- function(fit, sim_model) {
         )
 }
 
+paired_radius_method_masks <- function(
+        posterior_map, channels, times, adjacency, bgam_only = FALSE,
+        arr = NULL, mne = NULL) {
+    if (isTRUE(bgam_only)) {
+        odds_matrix <- .bgam_full_to_odds(posterior_map, channels, times)
+        return(list(
+            BGAM_2D = .filter_components(
+                odds_mask(odds_matrix),
+                adjacency,
+                min_size = MIN_CLUSTER_SIZE
+            )
+        ))
+    }
+    if (is.null(arr)) {
+        stop("arr is required unless bgam_only is TRUE", call. = FALSE)
+    }
+    build_method_masks(
+        arr, channels, times, adjacency, posterior_map,
+        mne = mne, alpha = ALPHA
+    )
+}
+
 plot_empirical_minus_bgam <- function(sim_model, posterior_map, radius_rule,
                                       out_file) {
     target_time <- pick_time(0.25, sort(unique(sim_model$time)))
@@ -202,7 +224,8 @@ plot_empirical_minus_bgam <- function(sim_model, posterior_map, radius_rule,
     invisible(residual)
 }
 
-run_paired_radius_bgam_diagnostics <- function(radius_rule) {
+run_paired_radius_bgam_diagnostics <- function(radius_rule,
+                                               bgam_only = FALSE) {
     config <- paired_radius_bgam_config()
     specs <- paired_radius_bgam_specs()
     spec <- specs[specs$radius_rule == radius_rule, , drop = FALSE]
@@ -229,10 +252,15 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule) {
 
     adjacency <- readRDS(adjacency_path("adjacency_xproj_yproj_61ch.rds"))
     adjacency <- adjacency[channels, channels]
-    bundle <- build_diff_array(sim_model)
-    method_masks <- build_method_masks(
-        bundle$arr, channels, times, adjacency, posterior_map,
-        mne = mne, alpha = ALPHA
+    bundle <- if (isTRUE(bgam_only)) NULL else build_diff_array(sim_model)
+    method_masks <- paired_radius_method_masks(
+        posterior_map = posterior_map,
+        channels = channels,
+        times = times,
+        adjacency = adjacency,
+        bgam_only = bgam_only,
+        arr = if (is.null(bundle)) NULL else bundle$arr,
+        mne = mne
     )
     time_index <- match(target_time, times)
     truth_at_peak <- paired_radius_superpopulation_truth(
@@ -249,8 +277,11 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule) {
     ) %>% arrange(match(channel, channels))
     active_channels <- ground_truth$active_electrodes
 
-    selected_methods <- c(BGAM = "BGAM_2D", cluster_mass = "cluster",
-                          TFCE = "tfce")
+    selected_methods <- if (isTRUE(bgam_only)) {
+        c(BGAM = "BGAM_2D")
+    } else {
+        c(BGAM = "BGAM_2D", cluster_mass = "cluster", TFCE = "tfce")
+    }
     method_rows <- list()
     fp_rows <- list()
     for (method in names(selected_methods)) {
@@ -324,6 +355,7 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule) {
     bgam_metrics <- method_metrics %>% filter(method == "BGAM")
     summary <- data.frame(
         truth_estimand = "superpopulation",
+        diagnostic_scope = if (isTRUE(bgam_only)) "BGAM_only" else "all_methods",
         radius_rule = radius_rule,
         jump_weight = spec$jump_weight,
         n_active = length(active_channels),
@@ -369,5 +401,12 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule) {
 if (!interactive() && sys.nframe() == 0) {
     args <- commandArgs(trailingOnly = TRUE)
     radius_rule <- if (length(args)) args[[1]] else "1sd"
-    run_paired_radius_bgam_diagnostics(radius_rule)
+    mode <- if (length(args) >= 2L) args[[2]] else "all-methods"
+    if (!mode %in% c("all-methods", "bgam-only")) {
+        stop("Mode must be all-methods or bgam-only", call. = FALSE)
+    }
+    run_paired_radius_bgam_diagnostics(
+        radius_rule,
+        bgam_only = identical(mode, "bgam-only")
+    )
 }

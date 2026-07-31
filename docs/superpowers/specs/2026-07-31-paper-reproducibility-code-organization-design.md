@@ -94,6 +94,7 @@ code/
 |-- reporting/
 |-- diagnostics/
 |-- sensitivity/
+|-- pilot/
 |-- exploratory/
 `-- archive/
 ```
@@ -113,6 +114,8 @@ Current supporting scripts are classified by purpose instead of deletion:
 - figures and thesis tables go under `reporting/`;
 - sampler, residual, and fit investigations go under `diagnostics/`;
 - threshold, alpha, basis, and SESOI probes go under `sensitivity/`;
+- reduced-scope data generation and one-replicate orchestration go under
+  `pilot/`;
 - one-off research probes go under `exploratory/`;
 - superseded single-radius workflows go under `archive/`.
 

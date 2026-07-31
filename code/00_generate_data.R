@@ -14,6 +14,10 @@
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
+source(file.path(
+    Sys.getenv("PROJECT_ROOT", unset = getwd()),
+    "code/config/paper_config.R"
+))
 
 library(dplyr)
 
@@ -66,7 +70,7 @@ define_simulation_parameters <- function(scenario = "legacy") {
         sigma_space = 0.5,
         bump_amplitude = 1.5,
         rho = 0.15,
-        signal_mode = "continuous_label",
+        signal_mode = "hard_signal",
         scenario = scenario,
         omega_A = dispersion$omega_A,
         omega_sigma = dispersion$omega_sigma
@@ -85,6 +89,9 @@ simulation_parameters <- function(n_ppt = default_params$n_ppt,
                                       "legacy"
                                   )) {
     params <- define_simulation_parameters(scenario)
+    if (!identical(signal_mode, "hard_signal")) {
+        stop("signal_mode is fixed to hard_signal", call. = FALSE)
+    }
     params$n_ppt <- n_ppt
     params$signal_mode <- signal_mode
     params$ronset <- params$ronset_ms
@@ -139,36 +146,51 @@ load_noise_and_erp_assets <- function() {
 # 3. Spatial weights and noise covariance
 # -------------------------------------------------------
 
-# Part A: spatial weights for the true signal.
-# `continuous_label`: continuous Gaussian signal; threshold only labels active electrodes.
-# `hard_signal`: thresholded Gaussian signal; outside-threshold weights are set to 0.
+# Part A: raw Gaussian weights and deterministic hard-radius truncation.
+radius_specifications <- function(sigma_space) {
+    config <- paper_analysis_config()$radii
+    data.frame(
+        radius_rule = config$radius_rule,
+        active_radius = sigma_space * config$active_radius_multiplier,
+        data_subdir = config$data_subdir,
+        expected_active = config$expected_active,
+        stringsAsFactors = FALSE
+    )
+}
 
-compute_spatial_weights <- function(sensors, params) {
-    stopifnot(params$signal_mode %in% c("continuous_label", "hard_signal"))
-
+compute_spatial_weight_base <- function(sensors, params) {
     seed_coord <- sensors %>%
         filter(channel == params$seed_electrode)
+    if (nrow(seed_coord) != 1L) {
+        stop("Expected exactly one seed electrode", call. = FALSE)
+    }
 
-    sensors <- sensors %>%
+    sensors %>%
         mutate(
             spatial_distance = sqrt((xproj - seed_coord$xproj)^2 +
                                     (yproj - seed_coord$yproj)^2),
             spatial_weight_raw = exp(-(spatial_distance^2) /
                                      (2 * params$sigma_space^2))
         )
+}
 
-    active_threshold <- mean(sensors$spatial_weight_raw) +
-        sd(sensors$spatial_weight_raw)
+apply_active_radius <- function(sensors, r_active, radius_rule) {
+    valid_rules <- c("1sd", "half-max", "2sd")
+    if (length(r_active) != 1L || !is.finite(r_active) || r_active <= 0) {
+        stop("r_active must be one finite positive number", call. = FALSE)
+    }
+    if (length(radius_rule) != 1L || !radius_rule %in% valid_rules) {
+        stop("Unknown radius_rule: ", radius_rule, call. = FALSE)
+    }
 
     sensors %>%
         mutate(
-            active_threshold = active_threshold,
-            signal_mode = params$signal_mode,
+            active_radius = r_active,
+            radius_rule = radius_rule,
             spatial_weight = if_else(
-                params$signal_mode == "hard_signal" &
-                    spatial_weight_raw < active_threshold,
-                0,
-                spatial_weight_raw
+                spatial_distance <= r_active,
+                spatial_weight_raw,
+                0
             )
         )
 }
@@ -230,15 +252,10 @@ generate_condition_noise <- function(n_elec, params, L) {
     temporal_noise + spatial_noise
 }
 
-build_trial_rows <- function(participant_id, trial, sensors,
-                             temporal_signal, participant_amplitude,
-                             noise_c1, noise_c2, params) {
+build_trial_base_rows <- function(participant_id, trial, sensors,
+                                  temporal_signal, participant_amplitude,
+                                  noise_c1, noise_c2) {
     rows <- lapply(seq_len(nrow(sensors)), function(e) {
-        signal_c1 <- noise_c1[, e]
-        signal_c2 <- participant_amplitude *
-            sensors$spatial_weight[e] * temporal_signal +
-            noise_c2[, e]
-
         data.frame(
             participant = participant_id,
             channel = sensors$channel[e],
@@ -247,14 +264,18 @@ build_trial_rows <- function(participant_id, trial, sensors,
             condition = rep(c("cond1", "cond2"), each = Nf),
             trial = trial,
             time = rep(Xf, 2),
-            eeg = c(signal_c1, signal_c2)
+            eeg_noise = c(noise_c1[, e], noise_c2[, e]),
+            signal_unit = c(
+                rep(0, Nf),
+                participant_amplitude * temporal_signal
+            )
         )
     })
 
     bind_rows(rows)
 }
 
-generate_one_dataset <- function(params, sensors, L) {
+generate_dataset_base <- function(params, sensors, L) {
     n_elec <- nrow(sensors)
     trial_data <- list()
     participant_onsets_ms <- numeric(params$n_ppt)
@@ -295,28 +316,29 @@ generate_one_dataset <- function(params, sensors, L) {
                     generate_condition_noise(n_elec, params, L)
             }
 
-            trial_data[[length(trial_data) + 1]] <- build_trial_rows(
+            trial_data[[length(trial_data) + 1]] <- build_trial_base_rows(
                 participant_id = participant_id,
                 trial = trial,
                 sensors = sensors,
                 temporal_signal = temporal_signal,
                 participant_amplitude = participant$amplitude,
                 noise_c1 = noise_c1,
-                noise_c2 = noise_c2,
-                params = params
+                noise_c2 = noise_c2
             )
         }
     }
 
-    sim_data <- bind_rows(trial_data) %>%
+    base_data <- bind_rows(trial_data) %>%
         mutate(
             time = time / 1000,
             condition = factor(condition, levels = c("cond1", "cond2"))
         )
+    base_data <- downsample_base_dataset(base_data, params)
 
-    attr(sim_data, "participant_onsets_ms") <- participant_onsets_ms
-    attr(sim_data, "participant_parameters") <- participant_parameters
-    sim_data
+    list(
+        base_data = base_data,
+        participant_parameters = participant_parameters
+    )
 }
 
 # -------------------------------------------------------
@@ -334,10 +356,26 @@ downsample_dataset <- function(sim_data, params) {
         mutate(across(where(is.numeric), ~round(.x, 4)))
 }
 
+# Preserve the exact temporal signal used to construct continuous ground truth.
+# Noise and public coordinates retain the historical four-decimal storage.
+downsample_base_dataset <- function(base_data, params) {
+    all_times <- sort(unique(base_data$time))
+    keep_times <- all_times[seq(1, length(all_times),
+                                by = params$downsample_factor)]
+    numeric_columns <- names(base_data)[vapply(base_data, is.numeric, logical(1))]
+    rounded_columns <- setdiff(numeric_columns, "signal_unit")
+
+    base_data %>%
+        filter(time %in% keep_times) %>%
+        mutate(across(all_of(rounded_columns), ~round(.x, 4)))
+}
+
 # Save ground-truth values for evaluation. The continuous field is the exact
 # average of the participant waveforms injected into this generated dataset.
 build_ground_truth <- function(params, sensors, participant_parameters) {
-    active_threshold <- unique(sensors$active_threshold)
+    active_radius <- unique(sensors$active_radius)
+    radius_rule <- unique(sensors$radius_rule)
+    stopifnot(length(active_radius) == 1L, length(radius_rule) == 1L)
     generation_waveforms <- vapply(
         seq_len(nrow(participant_parameters)),
         function(i) {
@@ -351,21 +389,12 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
     )
     mean_effect_waveform <- rowMeans(generation_waveforms)
 
-    reference_waveforms <- vapply(
-        params$ronset,
-        function(onset_ms) temporal_signal_at_onset(params, onset_ms),
-        numeric(length(Xf))
-    )
-    reference_waveform <- rowMeans(reference_waveforms)
-
     keep_idx <- seq(1, length(Xf), by = params$downsample_factor)
     analysis_time <- Xf[keep_idx] / 1000
     analysis_effect_waveform <- mean_effect_waveform[keep_idx]
-    analysis_reference_waveform <- reference_waveform[keep_idx]
-    temporal_threshold <- mean(analysis_reference_waveform) +
-        sd(analysis_reference_waveform)
     temporal_active <- analysis_time[
-        analysis_reference_waveform >= temporal_threshold
+        analysis_time >= params$true_onset &
+            analysis_time <= params$true_offset
     ]
     continuous_ground_truth <- expand.grid(
         channel = sensors$channel,
@@ -374,7 +403,9 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
         stringsAsFactors = FALSE
     ) %>%
         left_join(
-            sensors %>% select(channel, spatial_weight),
+            sensors %>% select(
+                channel, spatial_distance, spatial_weight_raw, spatial_weight
+            ),
             by = "channel"
         ) %>%
         mutate(
@@ -388,30 +419,22 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
 
     participant_onsets_ms <- participant_parameters$onset_ms
     list(
-        true_onset = if (params$scenario == "legacy") {
-            params$true_onset
-        } else {
-            min(temporal_active)
-        },
-        true_offset = if (params$scenario == "legacy") {
-            params$true_offset
-        } else {
-            max(temporal_active)
-        },
+        true_onset = params$true_onset,
+        true_offset = params$true_offset,
         seed_electrode = params$seed_electrode,
         sigma_space = params$sigma_space,
         bump_amplitude = params$bump_amplitude,
         rho = params$rho,
         outvar = params$outvar,
         downsample_factor = params$downsample_factor,
-        signal_mode = params$signal_mode,
+        signal_mode = "hard_signal",
+        active_radius = active_radius,
+        radius_rule = radius_rule,
         scenario = params$scenario,
         onset_support_ms = params$ronset,
         omega_A = params$omega_A,
         omega_sigma = params$omega_sigma,
-        active_threshold = active_threshold,
         participant_onsets_ms = participant_onsets_ms,
-        temporal_threshold = temporal_threshold,
         temporal_active_times = temporal_active,
         population_mean_waveform = data.frame(
             time = analysis_time,
@@ -421,7 +444,7 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
         continuous_effect = continuous_ground_truth,
         active_cells = expand.grid(
             channel = sensors %>%
-                filter(spatial_weight_raw >= active_threshold) %>%
+                filter(spatial_weight > 0) %>%
                 pull(channel),
             time = temporal_active,
             KEEP.OUT.ATTRS = FALSE,
@@ -430,38 +453,65 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
         participant_parameters = participant_parameters,
         all_channels = sensors$channel,
         active_electrodes = sensors %>%
-            filter(spatial_weight_raw >= active_threshold) %>%
+            filter(spatial_weight > 0) %>%
             pull(channel)
     )
+}
+
+materialize_dataset <- function(base, params, sensors, r_active, radius_rule) {
+    radius_sensors <- apply_active_radius(sensors, r_active, radius_rule)
+    weights <- radius_sensors$spatial_weight[
+        match(base$base_data$channel, radius_sensors$channel)
+    ]
+    sim_data <- base$base_data %>%
+        mutate(eeg = eeg_noise + weights * signal_unit) %>%
+        select(
+            participant, channel, xproj, yproj,
+            condition, trial, time, eeg
+        )
+    ground_truth <- build_ground_truth(
+        params,
+        radius_sensors,
+        participant_parameters = base$participant_parameters
+    )
+
+    list(sim_data = sim_data, ground_truth = ground_truth)
+}
+
+make_paired_datasets <- function(seed = 1L, n_ppt = 20L,
+                                 scenario = "high") {
+    set.seed(seed)
+    params <- simulation_parameters(
+        n_ppt = n_ppt, scenario = scenario, signal_mode = "hard_signal"
+    )
+    sensors <- compute_spatial_weight_base(load_electrode_layout(), params)
+    noise_cov <- compute_noise_covariance(sensors, params)
+    base <- generate_dataset_base(params, sensors, noise_cov$L)
+    specs <- radius_specifications(params$sigma_space)
+
+    results <- lapply(seq_len(nrow(specs)), function(i) {
+        materialize_dataset(
+            base, params, sensors,
+            specs$active_radius[i], specs$radius_rule[i]
+        )
+    })
+    names(results) <- specs$radius_rule
+    results
 }
 
 make_dataset <- function(seed = 42, n_ppt = default_params$n_ppt,
                          scenario = Sys.getenv("MC_SCENARIO", "legacy"),
                          signal_mode = Sys.getenv("MC_SIGNAL_MODE",
-                                                  "continuous_label")) {
-    set.seed(seed)
-
-    params <- simulation_parameters(
-        n_ppt = n_ppt,
-        scenario = scenario,
-        signal_mode = signal_mode
-    )
-    sensors <- compute_spatial_weights(load_electrode_layout(), params)
-    noise_cov <- compute_noise_covariance(sensors, params)
-
-    sim_data <- generate_one_dataset(params, sensors, noise_cov$L)
-    participant_parameters <- attr(sim_data, "participant_parameters")
-    sim_data <- downsample_dataset(sim_data, params)
-    ground_truth <- build_ground_truth(
-        params,
-        sensors,
-        participant_parameters = participant_parameters
-    )
-
-    list(
-        sim_data = sim_data,
-        ground_truth = ground_truth
-    )
+                                                  "hard_signal"),
+                         radius_rule = "1sd") {
+    if (!identical(signal_mode, "hard_signal")) {
+        stop("signal_mode is fixed to hard_signal", call. = FALSE)
+    }
+    paired <- make_paired_datasets(seed, n_ppt, scenario)
+    if (!radius_rule %in% names(paired)) {
+        stop("Unknown radius_rule: ", radius_rule, call. = FALSE)
+    }
+    paired[[radius_rule]]
 }
 
 # Load noise and ERP template before generating data.

@@ -1,145 +1,139 @@
 # Project Guide
 
-This file is the compact guide to the current hard-threshold + SEM BGAM
-pipeline. It replaces the older inventory, reading guide, structure note, and
-data index files.
+## Formal analysis contract
 
-## Main Question
+The thesis analysis uses one configuration defined by
+`code/config/paper_config.R`:
 
-Can a spatio-temporal BGAM recover a known simulated EEG effect over the full
-channel x time grid?
+- scenario: `high`;
+- participants: 20;
+- trials per participant and condition: 20;
+- paired replicates: 20;
+- signal mode: `hard_signal`;
+- radius rules: `1sd`, `half-max`, and `2sd`;
+- active electrodes: 5, 9, and 21;
+- reference onset and offset: 0.160 and 0.342 s;
+- BGAM margins: P-splines;
+- basis dimensions: `k_xy = 16`, `k_t = 12`;
+- measurement error: `se(eeg_sem, sigma = TRUE)`;
+- four chains, 3,000 iterations, and 1,000 warmup iterations.
 
-The current simulation injects a condition effect around electrode `CZ` during
-the true signal window `160-342 ms`.
+Radius changes do not change noise, participant draws, temporal envelopes, or
+untruncated spatial weights within a replicate.
 
-## Read The Code In This Order
+## Read the formal code in this order
 
-1. `code/utils.R`
-   Shared paths, thresholds, resources, trial aggregation, topomap helpers.
+1. `code/config/paper_config.R`
+   Defines the paper settings without source-time side effects.
 
-2. `code/00_generate_data.R`
-   Defines one simulated dataset and the hard-threshold spatial ground truth.
+2. `code/utils.R`
+   Provides project paths, resources, thresholds, trial aggregation, and
+   shared evaluation helpers.
 
-3. `code/00_generate_montecarlo.R`
-   Generates 30 Monte Carlo datasets with `P = 20`, `R = 20`.
+3. `code/pipeline/simulation.R`
+   Generates a common stochastic base and applies hard spatial radii. Spatial
+   weights outside a radius are exactly zero.
 
-4. `code/01_fit_bgam.R`
-   Fits the current BGAM:
+4. `code/pipeline/generate_montecarlo.R`
+   Generates all three radius datasets from one base for each seed.
 
-   ```r
-   eeg_mean | se(eeg_sem) ~
-       condition +
-       (1 + condition | participant) +
-       t2(xproj, yproj, time,
-          by = condition,
-          bs = c("tp", "tp"),
-          k = c(k_xy, k_t),
-          d = c(2, 1),
-          full = full)
-   ```
+5. `code/truth/ground_truth.R`
+   Provides population-level ground-truth reconstruction used by paired-radius
+   diagnostics.
 
-5. `code/09_run_montecarlo_sem.R`
-   Runs one Monte Carlo simulation: load data, fit BGAM, save posterior summary,
-   compare methods, write one CSV.
+6. `code/pipeline/fit_bgam.R`
+   Defines the common BGAM fitting function.
 
-6. `code/03_compare_methods.R`
-   Builds time x channel masks for raw p, BH, Holm, cluster, TFCE, and BGAM.
-   The largest connected blob gives onset and offset for one simulation.
+7. `code/pipeline/fit_paired_radius.R`
+   Applies the same model configuration to a selected radius and replicate.
 
-7. `code/04_aggregate_results.R`
-   Aggregates all simulations into Bias, MAE, RMSE, SD, F1_ST, and FP/FN
-   summaries.
+8. `code/pipeline/compare_methods.R`
+   Implements BGAM, pointwise, multiple-testing, cluster-mass, and TFCE
+   comparison helpers.
 
-8. `code/05_slide_simulated_eeg_n20.R` to `code/08_slide_topomap_n20.R`
-   Generate slide figures for simulated data, model fit, posterior probability,
-   and topomaps.
+9. `code/pipeline/aggregate_results.R`
+   Aggregates completed per-replicate method results.
 
-9. `slides/thesis_progress_slides.tex`
-   Compact slide deck for the current thesis-progress story. Extra details are
-   kept in the appendix instead of the main sequence.
+## Truth interpretation
 
-10. `code/10_prior_predictive_check.R`
-   Prior predictive check using the current SEM BGAM formula.
+Spatial support is exact: outside the selected radius, injected signal is zero.
+The active spatial set is derived from positive truncated spatial weights.
 
-## Current Data Story
+Temporal support is participant-specific. Each participant receives a finite,
+zero-padded temporal waveform shifted by that participant's onset. There is no
+common 160--342 ms clipping operation after shifting. The population mean can
+therefore have small tails outside the fixed timing-scoring interval.
 
-The active Monte Carlo data are generated, not stored in GitHub.
+The fixed reference interval is represented at 100 Hz by times 0.16 through
+0.34 s. It is a scoring definition, not a claim that population truth is
+exactly zero at every other time.
 
-```text
-data/montecarlo_n20_hard/
-├── sim_001.rds ... sim_030.rds
-└── gt_001.rds  ... gt_030.rds
-```
+The project distinguishes:
 
-Main settings:
+- theoretical population truth for cross-replicate recovery and map targets;
+- realised finite-sample truth for conditional residual diagnostics.
 
-- participants: `P = 20`;
-- trials per participant per condition: `R = 20`;
-- electrodes: 61;
-- time grid: downsampled to 100 Hz;
-- true signal window: `0.160-0.342 s`;
-- seed electrode: `CZ`;
-- spatial truth: Gaussian around `CZ`, set to zero outside one `sigma_space`.
+## Supporting directories
 
-Ground truth active electrodes are:
+- `code/reporting/`: thesis figures, slides, posterior maps, and topomaps.
+- `code/diagnostics/`: fit diagnostics, residual checks, and methodological
+  investigations.
+- `code/sensitivity/`: prior, basis, threshold, alpha, SESOI, and Laplacian
+  analyses.
+- `code/pilot/`: reduced-scope paired generation, validation, and aggregation.
+- `code/archive/`: superseded single-radius and one-off historical scripts.
 
-```text
-spatial_distance <= sigma_space
-```
+Supporting scripts do not define the formal paper configuration.
 
-## Current Result Folders
-
-Generated results are local or cluster outputs and are ignored by Git.
+## Slurm entry points
 
 ```text
-results/fits/         # fitted brms models
-results/montecarlo/   # BGAM posterior summaries
-results/comparisons/  # per-simulation CSVs and final tables
-results/figures/      # slide and diagnostic figures
-cmdstan_cache/        # compiled Stan code
+slurm/formal/generate_paired_radius.sh
+slurm/formal/fit_paired_radius_hpc2n.sh
+slurm/formal/fit_paired_radius_dortmund.sh
+slurm/formal/aggregate_paired_radius.sh
+slurm/pilot/run_paired_radius_pilot.sh
 ```
 
-## Current Slurm Files
+The formal fitting scripts map their 60 array tasks to three radius rules and
+20 replicate seeds. Umea and Dortmund launchers differ only in scheduler,
+module, memory, and filesystem configuration.
 
-Main scripts:
+## Local-only outputs
 
 ```text
-slurm/gen_montecarlo_n20_hard.sh
-slurm/run_montecarlo_n20_hard_sem.sh
-slurm/run_montecarlo_n20_hard_sem_k1212_test.sh
+data/montecarlo_r1sd/
+data/montecarlo_rhalfmax/
+data/montecarlo_r2sd/
+results/
+logs/
+cmdstan_cache/
 ```
 
-The main run uses:
+These directories are not part of the GitHub source tree. Repository cleanup
+must never delete or rewrite their contents.
 
-```text
-MC_DATA_SUBDIR=montecarlo_n20_hard
-MC_COMPARE_SUBDIR=montecarlo_n20_hard_sem
-MC_SUMMARY_SUBDIR=montecarlo_n20_hard_sem
-K_XY=20
-K_T=20
+## Verification commands
+
+Parse all R scripts:
+
+```bash
+find code -name '*.R' -print0 | \
+  xargs -0 -n1 Rscript -e 'parse(file=commandArgs(TRUE)[1])'
 ```
 
-The smaller basis test uses:
+Check Slurm syntax:
 
-```text
-K_XY=12
-K_T=12
+```bash
+for script in slurm/formal/*.sh slurm/pilot/*.sh; do
+  bash -n "$script" || exit 1
+done
 ```
 
-## Files Kept For Support
+Run regression tests:
 
-- `code/02_diagnostics.R`: detailed single-fit diagnostics.
-- `code/check_env.R`: checks R/Python packages and project resources.
-- `code/compute_trial_effective_sample_size.R`: trial-correlation check.
-
-## Files Not Uploaded
-
-The GitHub repository intentionally excludes:
-
-- generated data;
-- fitted models;
-- figures;
-- logs;
-- CmdStan cache;
-- old archive folders;
-- large reference PDFs.
+```bash
+for test_file in tests/test_*.R; do
+  PROJECT_ROOT="$PWD" Rscript --vanilla "$test_file" || exit 1
+done
+```

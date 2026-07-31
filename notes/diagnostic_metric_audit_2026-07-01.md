@@ -2,7 +2,7 @@
 
 ## Question 1: Do F1 and onset/offset diagnostics use model output?
 
-The main diagnostic script is `code/02_diagnostics.R`.
+The main diagnostic script is `code/diagnostics/02_diagnostics.R`.
 
 - `posterior_condition_diff()` calls `add_epred_draws(fit, re_formula = NA)` and computes `cond2 - cond1` from posterior expected values.
 - `onset_bias_ms` and `offset_bias_ms` are computed from clusters in posterior odds at the seed electrode.

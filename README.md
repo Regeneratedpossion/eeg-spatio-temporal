@@ -1,364 +1,135 @@
 # BGAM Spatio-Temporal EEG Inference
 
-Bayesian generalised additive modelling for detecting simulated EEG effects
-over electrode space and time. The current main pipeline uses a continuous
-Gaussian spatial signal, hard-thresholded active-electrode labels, trial-mean
-SEM measurement error, and a 2D spatio-temporal BGAM.
+Reproducible simulation and Bayesian generalised additive modelling for a
+known EEG effect over electrode space and time.
 
-The repository is intentionally lightweight. Generated `.rds` data, fitted
-models, figures, logs, and CmdStan cache files are not uploaded to GitHub.
+The formal thesis analysis compares three hard spatial truncation radii using
+the same stochastic base in every replicate:
 
----
+| Radius rule | Radius | Active electrodes |
+|---|---:|---:|
+| `1sd` | `sigma_space` | 5 |
+| `half-max` | `sigma_space * sqrt(2 * log(2))` | 9 |
+| `2sd` | `2 * sigma_space` | 21 |
 
-## Repository Layout
+All three datasets use high participant heterogeneity, 20 participants, 20
+trials per participant and condition, and 20 paired replicates. The formal
+BGAM uses P-spline margins, `k = c(16, 12)`, four chains, 3,000 iterations,
+1,000 warmup iterations, and `eeg_mean | se(eeg_sem, sigma = TRUE)`.
 
-```text
-bgam_eeg_project/
-├── PROJECT_GUIDE.md                    # compact guide to the current pipeline
-│
-├── code/
-│   ├── 00_generate_data.R              # one simulated EEG dataset
-│   ├── 00_generate_montecarlo.R        # Monte Carlo datasets
-│   ├── 01_fit_bgam.R                   # SEM BGAM model
-│   ├── 02_diagnostics.R                # single-fit diagnostics
-│   ├── 03_compare_methods.R            # single-simulation method comparison
-│   ├── 04_aggregate_results.R          # final Monte Carlo aggregation
-│   ├── 05_slide_simulated_eeg_n20.R    # slide figure: simulated data
-│   ├── 06_slide_bgam_fit_n20.R         # slide figure: fitted curves
-│   ├── 07_slide_posterior_probability_n20.R
-│   ├── 08_slide_topomap_n20.R
-│   ├── 09_run_montecarlo_sem.R         # one Slurm array task
-│   ├── 10_prior_predictive_check.R
-│   ├── 11_basis_screening.R            # formal full-BGAM k=(12,12) tp/ps baseline
-│   └── utils.R                         # paths, thresholds, shared helpers
-│
-├── resources/
-│   ├── adjacency/                      # 61-channel adjacency matrix
-│   └── brms_meeg/code/                 # noise generator and ERP template
-│
-├── slides/
-│   └── thesis_progress_slides.tex      # compact current thesis-progress slides
-│
-├── slurm/                              # cluster submission scripts
-└── refs.bib
-```
+Generated data, fitted models, figures, logs, and CmdStan caches are not stored
+in GitHub.
 
-Generated folders are local only:
+## Repository structure
 
 ```text
-data/                 # generated simulations and ground truth
-results/fits/         # fitted brms models
-results/montecarlo/   # BGAM posterior summaries
-results/comparisons/  # per-simulation and aggregated method results
-results/figures/      # slide and diagnostic figures
-cmdstan_cache/        # compiled Stan files
+code/
+|-- config/          formal paper settings
+|-- pipeline/        simulation, fitting, comparison, aggregation
+|-- truth/           ground-truth construction and migration
+|-- reporting/       figures and thesis-facing output
+|-- diagnostics/     sampler, residual, and fit investigations
+|-- sensitivity/     prior, basis, threshold, alpha, and Laplacian checks
+|-- pilot/           reduced-scale paired-radius workflows
+|-- archive/         superseded or one-off historical implementations
+|-- utils.R          shared paths and analysis helpers
+`-- check_env.R      environment and resource checks
+
+slurm/
+|-- formal/          paired generation, fitting, and aggregation
+`-- pilot/           one-replicate paired-radius run
 ```
 
----
+See [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the responsibility of each module.
 
-## Main Pipeline
+## Formal workflow
 
-Run commands from the project root. `PROJECT_ROOT` is optional because scripts
-fall back to the current working directory.
+Run commands from the repository root.
+
+Generate 20 paired replicates. Each seed is set once before the common base is
+created; only the hard spatial radius differs across the three saved datasets.
 
 ```bash
-# 1. Generate 30 Monte Carlo datasets, P=20 and R=20.
-MC_N_PPT=20 MC_DATA_SUBDIR=montecarlo_n20_hard \
-Rscript code/00_generate_montecarlo.R 30
-
-# 2. Run one simulation locally, or submit the Slurm array version.
-MC_DATA_SUBDIR=montecarlo_n20_hard \
-MC_COMPARE_SUBDIR=montecarlo_n20_hard_sem \
-MC_SUMMARY_SUBDIR=montecarlo_n20_hard_sem \
-Rscript code/09_run_montecarlo_sem.R 1
-
-# 3. Aggregate all finished simulations.
-MC_DATA_SUBDIR=montecarlo_n20_hard \
-MC_COMPARE_SUBDIR=montecarlo_n20_hard_sem \
-MC_SUMMARY_SUBDIR=montecarlo_n20_hard_sem \
-MC_AGG_PREFIX=montecarlo_n20_hard_sem \
-Rscript code/04_aggregate_results.R
+MC_N_PPT=20 \
+MC_SCENARIO=high \
+MC_SIGNAL_MODE=hard_signal \
+Rscript code/pipeline/generate_montecarlo.R 20
 ```
 
-On the cluster, use:
+This writes:
+
+```text
+data/montecarlo_r1sd/
+data/montecarlo_rhalfmax/
+data/montecarlo_r2sd/
+```
+
+Fit one radius and replicate locally:
 
 ```bash
-sbatch slurm/gen_montecarlo_n20_hard.sh
-sbatch slurm/run_montecarlo_n20_hard_sem.sh
+Rscript code/pipeline/fit_paired_radius.R 1sd 1
+Rscript code/pipeline/fit_paired_radius.R half-max 1
+Rscript code/pipeline/fit_paired_radius.R 2sd 1
 ```
 
-For a smaller basis-function test, use:
+The second argument is the replicate seed. Omitting it preserves the pilot
+default of seed 1.
+
+Cluster entry points are:
 
 ```bash
-K_XY=12 K_T=12 Rscript code/09_run_montecarlo_sem.R 1
+sbatch slurm/formal/generate_paired_radius.sh
+sbatch slurm/formal/fit_paired_radius_hpc2n.sh
+sbatch slurm/formal/fit_paired_radius_dortmund.sh
+sbatch slurm/formal/aggregate_paired_radius.sh
 ```
 
----
+Both fit arrays contain 60 tasks: three radius rules times 20 replicates. The
+model settings are identical across radii and clusters.
 
-## Simulation
+## Ground truth
 
-`code/00_generate_data.R` creates two-condition EEG data with:
+The spatial Gaussian is hard-truncated. Electrodes outside the selected radius
+have exactly zero weight and zero injected effect. Active electrodes are
+derived as those whose truncated spatial weight is greater than zero.
 
-- participants: `P = 20` by default in the Monte Carlo generator;
-- trials per participant: `R = 20`;
-- sampling rate: 500 Hz, downsampled to 100 Hz;
-- true signal window: 160-342 ms;
-- seed electrode: `CZ`;
-- spatial signal: continuous Gaussian around `CZ`;
-- active-electrode labels: electrodes within one spatial SD of `CZ`;
-- noise: temporal EEG-like noise plus spatially correlated sensor noise.
+Participant temporal waveforms are finite, zero-padded templates shifted by
+participant onset. They are not clipped a second time to a common temporal
+window. The fixed 160 and 342 ms values are reference timing estimands; on the
+100 Hz grid the scoring times are 0.16 through 0.34 s.
 
-Ground truth stores the true onset, offset, seed electrode, active electrodes,
-signal amplitude, and simulation settings used for evaluation.
+Two continuous truth fields are distinguished:
 
----
+- theoretical population truth, fixed across replicates;
+- realised finite-sample truth, determined by participants in one dataset.
 
-## Model Specification
+Spatial FP/FPR at 250 ms is an exact-zero metric. A full-grid detection outside
+the timing-scoring window is a label-based false positive and may occur where
+the population temporal tail is small but non-zero.
 
-The current BGAM in `code/01_fit_bgam.R` is:
+## Supporting analyses
 
-```r
-bgam_fit <- brm(
-    formula = eeg_mean | se(eeg_sem) ~
-        condition +
-        (1 + condition | participant) +
-        t2(xproj, yproj, time,
-           by = condition,
-           bs = c("tp", "tp"),
-           k = c(k_xy, k_t),
-           d = c(2, 1),
-           full = full),
-    data = sim_data_model,
-    family = gaussian(),
-    chains = 4,
-    cores = 4,
-    iter = 3000,
-    warmup = 1000,
-    seed = seed,
-    threads = threading(threads = 4),
-    backend = "cmdstanr",
-    control = list(adapt_delta = 0.99, max_treedepth = 13)
-)
+Supporting scripts are retained for audit but are not part of the formal
+execution sequence:
+
+- `code/reporting/` contains figures and topomaps;
+- `code/diagnostics/` contains fit and residual investigations;
+- `code/sensitivity/` contains basis, prior, threshold, alpha, SESOI, and
+  Laplacian investigations;
+- `code/pilot/` contains reduced-scope paired workflows;
+- `code/archive/` contains superseded single-radius or one-off scripts.
+
+Obsolete P=5/P=10, single-radius, `k = c(12, 12)`, basis-rescue, and Laplacian
+Slurm launchers were removed. Their history remains available through Git.
+
+## Verification
+
+```bash
+for test_file in tests/test_*.R; do
+  PROJECT_ROOT="$PWD" Rscript --vanilla "$test_file" || exit 1
+done
 ```
 
-Important current choices:
-
-- The response is the trial-aggregated mean `eeg_mean`.
-- Measurement error uses `se(eeg_sem)`, not `se(eeg_sd)`.
-- There is no separate `s(time)` term in the current main model.
-- The spatio-temporal smooth is a tensor product over `(xproj, yproj, time)`.
-- Default basis size is `k = c(20, 20)`.
-- `K_XY` and `K_T` can change the basis size without editing the script.
-
----
-
-## Method Comparison
-
-`code/03_compare_methods.R` compares six methods for each single simulation:
-
-1. raw pointwise t-test;
-2. Benjamini-Hochberg FDR;
-3. Holm correction;
-4. MNE spatio-temporal cluster permutation;
-5. MNE TFCE;
-6. BGAM posterior odds on the full channel x time grid.
-
-Each method produces a time x channel detection mask. Small isolated blobs are
-removed, then the largest connected component gives the estimated onset and
-offset.
-
-`code/04_aggregate_results.R` then summarises across simulations:
-
-- onset/offset bias;
-- MAE;
-- RMSE;
-- SD;
-- spatio-temporal F1;
-- TP/FP/FN diagnostics.
-
----
-
-## Key Results
-
-The completed slide-level results currently come from the smaller pilot
-setting: `P = 5` participants and `R = 20` trials per condition. The full
-`P = 20` hard-threshold SEM Monte Carlo runs are still running on the cluster.
-
-### Pilot Model Comparison
-
-The first pilot analysis compared measurement-error choices (`se(eeg_sd)` vs
-`se(eeg_sem)`) and several basis-function settings. The best pilot fit was the
-SEM model:
-
-```text
-k=(20,20), full=FALSE, se(eeg_sem)
-onset bias  = +0.010 s
-offset bias = -0.012 s
-peak recovery = 89%
-mean-window recovery = 106.1%
-spatial F1 = 0.962
-wall clock = 67 h
-```
-
-The SD-based fits were useful diagnostics, but they had larger onset/offset
-bias and lower spatial F1. This is why the current main pipeline uses
-`se(eeg_sem)`.
-
-### Pilot Method Comparison
-
-Using the selected BGAM specification, the pilot Monte Carlo comparison ran 30
-independent `P = 5` simulations. BGAM_2D had the best offset recovery and the
-best full spatio-temporal F1:
-
-```text
-BGAM_2D onset:  bias -0.011 s, MAE 0.011 s, RMSE 0.012 s, SD 0.005 s
-BGAM_2D offset: bias +0.012 s, MAE 0.012 s, RMSE 0.014 s, SD 0.006 s
-BGAM_2D F1_ST:  0.799 +/- 0.007
-```
-
-Raw pointwise p-values had competitive onset MAE, but produced many false
-positives across the full time x channel mask:
-
-```text
-Raw p:   FP rate 0.102, FN rate 0.530, F1_ST 0.462, mean FP cells 268.9
-Cluster: FP rate 0.003, FN rate 0.648, F1_ST 0.514, mean FP cells 8.0
-TFCE:    FP rate 0.007, FN rate 0.608, F1_ST 0.539, mean FP cells 18.4
-BGAM_2D: FP rate 0.042, FN rate 0.179, F1_ST 0.799, mean FP cells 111.3
-```
-
-Interpretation: BGAM_2D recovers most true signal cells with substantially
-fewer false negatives than cluster/TFCE, but it also smooths beyond the strict
-ground-truth mask, creating moderate false-positive spillover.
-
-### Pilot Appendix Figures
-
-The appendix pilot figures show the earlier SD-based diagnostic fit:
-
-```text
-P = 5, R = 20
-k = (20,20), full = FALSE
-measurement error = se(eeg_sd)
-```
-
-These figures show simulated EEG data and fitted BGAM curves against raw
-participant means. They are kept for pilot diagnostics; the current main model
-uses `se(eeg_sem)`.
-
-### Alpha Threshold Note
-
-The completed `P = 5` pilot FP/FN diagnosis used `alpha = 0.10`. With only five
-participants, the permutation p-value resolution is coarse, so `0.05` is too
-strict for a useful pilot comparison.
-
-The current `P = 20` cluster runs use `alpha = 0.05`, which is appropriate once
-the participant count is larger.
-
-### Cluster Status Snapshot
-
-Checked on `gw01` at `2026-06-23 15:23 CEST`. The old hard-injection jobs are
-no longer the main target. The current tracked runs use the corrected
-simulation definition: a continuous Gaussian spatial signal is injected, and
-hard thresholding is used only to define the ground-truth active-electrode
-labels.
-
-```text
-bgam_mc_p5_gauss_hl_sem
-  corrected P=5 continuous Gaussian signal + hard-threshold labels,
-  SEM, k=(20,20), full=FALSE
-  job 39883478_1
-  state: COMPLETED
-  runtime: 4-18:24:10
-  output: results/montecarlo_p5_gaussian_hardlabel_sem_test/bgam_summary_001.rds
-  comparison: results/comparisons/montecarlo_p5_gaussian_hardlabel_sem_test/sim_001.csv
-  temporal recovery: onset +10 ms, offset -12 ms
-
-basis_screen_full_ab_default_control
-  corrected P=5 basis screen, se(eeg_sem), adapt_delta=0.80, max_treedepth=10
-  job 39961266
-  A_k1212_tp: COMPLETED by Slurm but model status=error
-    elapsed 67216.3 sec; read failed on data.table.rdb
-  B_k1212_ps: COMPLETED
-    elapsed 26710.4 sec = 7.42 h
-    divergent 2; treedepth hits 23
-    max Rhat 1.0053; min ESS bulk 1201.1
-  C/D tasks are still RUNNING:
-    39961266_3 and 39961266_4, runtime about 1-01:47
-
-basis_screen_full_ab_sigma_true_default_control
-  corrected P=5 basis screen, se(eeg_sem, sigma=TRUE),
-  adapt_delta=0.80, max_treedepth=10
-  job 39962984 plus rerun 39963463_2
-  A_k1212_tp: COMPLETED
-    elapsed 74462.0 sec = 20.68 h
-    divergent 1; treedepth hits 4285
-    max Rhat 1.0046; min ESS bulk 1324.9
-  B_k1212_ps first attempt 39962984_2:
-    Slurm COMPLETED but model status=error due processx permission problem
-  B_k1212_ps rerun 39963463_2: COMPLETED
-    elapsed 20027.9 sec = 5.56 h
-    divergent 2; treedepth hits 0
-    max Rhat 1.0053; min ESS bulk 1045.6
-    diagnostic 39964940 completed in 00:01:16
-    temporal pass TRUE; onset +10 ms; offset -12 ms
-    spatial top pass TRUE; top channel CZ
-    spatial F1 0.192; spatiotemporal F1 0.326
-    peak recovery 81.61%; mean recovery 98.13%
-  C/D tasks are still RUNNING:
-    39962984_3 and 39962984_4, runtime about 21:42
-
-bgam_signal_p5
-  corrected P=5 signal jobs
-  jobs 39900896_1 and 39900896_2
-  state: RUNNING on ultralong
-  runtime: about 4-23:28; time limit: 10 days
-
-laplacian constant-basis diagnostics
-  P=20, constant + non-constant graph-Laplacian basis variants
-  recent diagnostic jobs 39963478, 39963479, 39963482, 39963483 completed
-  latest hard-threshold summary files are in
-    results/diagnostics/laplacian_basis_fixed/
-  latest continuous-reconstruction summary files are in
-    results/diagnostics/laplacian_continuous/
-```
-
-The run inventory and convergence-diagnostic summary are tracked in
-`results/tables/ssh_model_run_inventory.csv`. The SSH logs for the currently
-running Monte Carlo jobs show `alpha = 0.050`. The pilot FP/FN slide above
-reports the completed pilot diagnosis at `alpha = 0.10`.
-
----
-
-## Dependencies
-
-Cluster environment used for the main Monte Carlo runs:
-
-- TU Dortmund LIDO cluster;
-- Slurm array jobs;
-- `module load R/4.4.2-gcc141-base`;
-- CmdStan backend through `cmdstanr`;
-- 16 CPU threads and 128 GB memory in the current Slurm scripts.
-
-R packages:
-
-- `brms`
-- `cmdstanr`
-- `dplyr`
-- `tidyr`
-- `tidybayes`
-- `posterior`
-- `ggplot2`
-- `patchwork`
-- `reticulate`
-- `igraph`
-
-Python package:
-
-- `mne` for cluster permutation and TFCE methods.
-
----
-
-## References
-
-- Nalborczyk, L. & Bürkner, P.-C. (2025). *Precise temporal localisation
-  of M/EEG effects with Bayesian generalised additive multilevel models*.
-  bioRxiv. doi:10.1101/2025.08.29.672336
+The regression suite checks the formal configuration, paired random base,
+5/9/21 active-electrode counts, exact spatial zeros, truth semantics, code
+inventory, diagnostic helpers, and sensitivity calculations.

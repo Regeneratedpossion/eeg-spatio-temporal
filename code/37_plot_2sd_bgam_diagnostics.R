@@ -31,6 +31,53 @@ diagnostic_landmarks <- function(ground_truth, available_times) {
     ))
 }
 
+topomap_diagnostic_times <- function(available_times) {
+    targets <- c(0.16, 0.25, 0.34)
+    unname(vapply(
+        targets,
+        function(target) {
+            available_times[which.min(abs(available_times - target))]
+        },
+        numeric(1)
+    ))
+}
+
+topomap_colour_limit <- function(interpolated_data) {
+    if (!"value" %in% names(interpolated_data)) {
+        stop("interpolated_data must contain value", call. = FALSE)
+    }
+    limit <- max(abs(interpolated_data$value), na.rm = TRUE)
+    if (!is.finite(limit) || limit <= 0) {
+        stop("Topomap colour limit must be positive and finite",
+             call. = FALSE)
+    }
+    limit
+}
+
+variable_contour_data <- function(grid_data, breaks = NULL) {
+    if (!all(c("time_label", "value") %in% names(grid_data))) {
+        stop("grid_data must contain time_label and value", call. = FALSE)
+    }
+    groups <- split(grid_data, grid_data$time_label, drop = TRUE)
+    keep <- vapply(groups, function(group) {
+        values <- group$value[is.finite(group$value)]
+        if (length(values) <= 1L) {
+            return(FALSE)
+        }
+        value_range <- range(values)
+        if (is.null(breaks)) {
+            return(diff(value_range) > 0)
+        }
+        any(breaks > value_range[1] & breaks < value_range[2])
+    }, logical(1))
+    if (!any(keep)) {
+        return(grid_data[FALSE, , drop = FALSE])
+    }
+    output <- do.call(rbind, groups[keep])
+    rownames(output) <- NULL
+    output
+}
+
 summarise_difference_draws <- function(
         diff_draws, grid, sesoi = 0.10, odds_threshold = 10) {
     diff_draws <- as.matrix(diff_draws)
@@ -238,7 +285,7 @@ prepare_topomap_data <- function(sim_model, posterior_map, population_truth,
         filter(time %in% landmarks) %>%
         left_join(sensors, by = "channel") %>%
         transmute(channel, time, xproj, yproj, value = effect,
-                  layer = "1. Superpopulation truth")
+                  layer = "1. Ground truth (superpopulation)")
     empirical <- sim_model %>%
         filter(time %in% landmarks) %>%
         group_by(channel, time, xproj, yproj, condition) %>%
@@ -249,7 +296,7 @@ prepare_topomap_data <- function(sim_model, posterior_map, population_truth,
     model <- posterior_map %>%
         filter(time %in% landmarks) %>%
         transmute(channel, time, xproj, yproj, value = mean_diff,
-                  layer = "4. BGAM posterior mean")
+                  layer = "4. BGAM estimate")
     empirical_minus_truth <- empirical %>%
         select(channel, time, xproj, yproj, empirical = value) %>%
         left_join(
@@ -259,7 +306,7 @@ prepare_topomap_data <- function(sim_model, posterior_map, population_truth,
         transmute(
             channel, time, xproj, yproj,
             value = empirical - truth,
-            layer = "3. Empirical - truth"
+            layer = "3. Noise residual (Empirical - Ground truth)"
         )
     empirical_minus_bgam <- empirical %>%
         select(channel, time, xproj, yproj, empirical = value) %>%
@@ -313,35 +360,23 @@ plot_topomap_diagnostics <- function(electrode_data, landmarks) {
     ) %>%
         filter(sqrt(xproj^2 + yproj^2) <= head_radius)
     interpolated <- interpolate_topomap_layers(electrode_data, base_grid)
-    signal_layers <- c(
-        "1. Superpopulation truth", "2. Empirical difference",
-        "4. BGAM posterior mean"
-    )
-    residual_layers <- c(
-        "3. Empirical - truth", "5. Empirical - BGAM"
-    )
-    signal_limit <- max(
-        abs(interpolated$value[interpolated$layer %in% signal_layers]),
-        na.rm = TRUE
-    )
-    residual_limit <- max(
-        abs(interpolated$value[interpolated$layer %in% residual_layers]),
-        na.rm = TRUE
-    )
+    shared_limit <- topomap_colour_limit(interpolated)
+    contour_breaks <- seq(
+        -shared_limit, shared_limit, length.out = 9
+    )[2:8]
     decorations <- scalp_decorations(head_radius)
 
     plot_layer <- function(layer_name) {
-        limit <- if (layer_name %in% residual_layers) {
-            residual_limit
-        } else {
-            signal_limit
-        }
         grid_layer <- interpolated %>% filter(layer == layer_name)
+        contour_layer <- variable_contour_data(
+            grid_layer, breaks = contour_breaks
+        )
         electrode_layer <- electrode_data %>% filter(layer == layer_name)
         ggplot(grid_layer, aes(xproj, yproj)) +
             geom_raster(aes(fill = value), interpolate = TRUE) +
             geom_contour(
-                aes(z = value), bins = 7, color = "grey25",
+                data = contour_layer,
+                aes(z = value), breaks = contour_breaks, color = "grey25",
                 linewidth = 0.18, alpha = 0.65
             ) +
             geom_path(
@@ -374,7 +409,8 @@ plot_topomap_diagnostics <- function(electrode_data, landmarks) {
             ) +
             scale_fill_gradient2(
                 low = "#2166ac", mid = "white", high = "#b2182b",
-                midpoint = 0, limits = c(-limit, limit), name = "uV"
+                midpoint = 0, limits = c(-shared_limit, shared_limit),
+                name = "uV"
             ) +
             scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 21)) +
             guides(shape = "none") +
@@ -387,22 +423,24 @@ plot_topomap_diagnostics <- function(electrode_data, landmarks) {
             )
     }
 
-    plot_layer("1. Superpopulation truth") /
+    combined_plot <- plot_layer("1. Ground truth (superpopulation)") /
         plot_layer("2. Empirical difference") /
-        plot_layer("3. Empirical - truth") /
-        plot_layer("4. BGAM posterior mean") /
+        plot_layer("3. Noise residual (Empirical - Ground truth)") /
+        plot_layer("4. BGAM estimate") /
         plot_layer("5. Empirical - BGAM") +
         plot_annotation(
             title = "2 SD spatial diagnostics",
             subtitle = paste(
-                "Columns: 200 / 250 / 300 ms.",
-                "Residual rows use a separate symmetric colour scale."
+                "Columns: 160 / 250 / 340 ms.",
+                "All panels use one symmetric colour scale."
             ),
             theme = theme(
                 plot.title = element_text(face = "bold", size = 13),
                 plot.subtitle = element_text(size = 9)
             )
         )
+    attr(combined_plot, "topomap_colour_limit") <- shared_limit
+    combined_plot
 }
 
 run_2sd_bgam_diagnostic_figures <- function() {
@@ -419,6 +457,7 @@ run_2sd_bgam_diagnostic_figures <- function() {
     channels <- diagnostic_channels(unique(as.character(sim_model$channel)))
     times <- sort(unique(sim_model$time))
     landmarks <- diagnostic_landmarks(ground_truth, times)
+    topomap_times <- topomap_diagnostic_times(times)
 
     population_truth <- paired_radius_superpopulation_truth(
         ground_truth,
@@ -449,9 +488,10 @@ run_2sd_bgam_diagnostic_figures <- function() {
         posterior_summary, channels, landmarks, probability_threshold
     )
     topomap_electrodes <- prepare_topomap_data(
-        sim_model, posterior_map, population_truth, ground_truth, landmarks
+        sim_model, posterior_map, population_truth, ground_truth, topomap_times
     )
-    topomap_plot <- plot_topomap_diagnostics(topomap_electrodes, landmarks)
+    topomap_plot <- plot_topomap_diagnostics(topomap_electrodes, topomap_times)
+    shared_limit <- attr(topomap_plot, "topomap_colour_limit")
 
     fit_path <- file.path(output_dir, "bgam_fit_superpopulation.png")
     probability_path <- file.path(
@@ -471,6 +511,8 @@ run_2sd_bgam_diagnostic_figures <- function() {
         list(
             channels = channels,
             landmarks = landmarks,
+            topomap_times = topomap_times,
+            topomap_colour_limit = shared_limit,
             sesoi = ROPE_UV,
             odds_threshold = ODDS_THRESHOLD,
             probability_threshold = probability_threshold,

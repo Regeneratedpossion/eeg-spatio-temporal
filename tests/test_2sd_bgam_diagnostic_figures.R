@@ -16,6 +16,20 @@ stopifnot(identical(
     diagnostic_landmarks(ground_truth_fixture, available_times),
     c(0.20, 0.25, 0.30)
 ))
+stopifnot(identical(
+    topomap_diagnostic_times(available_times),
+    c(0.16, 0.25, 0.34)
+))
+stopifnot(topomap_colour_limit(data.frame(value = c(-2, 0.5, 1.5))) == 2)
+contour_fixture <- data.frame(
+    time_label = rep(c("narrow", "variable"), each = 2),
+    value = c(0, 0.1, 0, 1)
+)
+contour_filtered <- variable_contour_data(
+    contour_fixture,
+    breaks = c(-1, -0.5, 0, 0.5, 1)
+)
+stopifnot(identical(unique(contour_filtered$time_label), "variable"))
 
 grid_fixture <- data.frame(
     channel = c("CZ", "PZ"),
@@ -74,6 +88,19 @@ for (required_text in c(
     '"diagnostic_plot_data.rds"'
 )) {
     stopifnot(grepl(required_text, plot_source, fixed = TRUE))
+}
+for (required_topomap_text in c(
+    "topomap_times <- topomap_diagnostic_times(times)",
+    "shared_limit <- topomap_colour_limit(interpolated)",
+    '"1. Ground truth (superpopulation)"',
+    '"2. Empirical difference"',
+    '"3. Noise residual (Empirical - Ground truth)"',
+    '"4. BGAM estimate"',
+    '"5. Empirical - BGAM"',
+    "topomap_times = topomap_times",
+    "topomap_colour_limit = shared_limit"
+)) {
+    stopifnot(grepl(required_topomap_text, plot_source, fixed = TRUE))
 }
 
 suppressPackageStartupMessages({

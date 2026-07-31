@@ -15,6 +15,7 @@
 - Do not use realised participant amplitudes or onset draws in population truth.
 - Keep active labels, SESOI, posterior odds, cluster-mass, TFCE, FPR, leakage, EDF, convergence checks, and the residual topomap unchanged.
 - Rerun only the 2 SD fitted model; do not refit BGAM.
+- For this rerun, compute BGAM diagnostics only; do not execute cluster-mass or TFCE permutations.
 
 ---
 
@@ -132,11 +133,12 @@ Expected: all three commands exit 0.
 ```bash
 LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 PYTHONIOENCODING=UTF-8 \
 PROJECT_ROOT="$PWD" Rscript --vanilla \
-  code/35_diagnose_paired_radius_bgam_pilot.R 2sd \
-  2>&1 | tee logs/diagnose_paired_radius_2sd_superpopulation_20260731.log
+  code/35_diagnose_paired_radius_bgam_pilot.R 2sd bgam-only \
+  2>&1 | tee logs/diagnose_paired_radius_2sd_bgam_only_superpopulation_20260731.log
 ```
 
-Expected: exit 0 with one printed 2 SD summary and method table.
+Expected: exit 0 with one printed 2 SD summary and a one-row BGAM method table,
+with no cluster-mass or TFCE permutation output.
 
 - [ ] **Step 2: Verify outputs and invariant metrics**
 

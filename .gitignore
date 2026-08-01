@@ -39,4 +39,5 @@ archive/
 !code/archive/*.R
 share/
 tmp_remote_diagnostics/
+.worktrees/
 !resources/**/*.rds

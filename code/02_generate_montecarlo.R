@@ -9,7 +9,6 @@
 # Optional settings:
 #   MC_N_PPT=20          participant count
 #   MC_SCENARIO=high     legacy, low, medium, or high
-#   MC_SIGNAL_MODE=hard_signal
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
@@ -70,11 +69,7 @@ write_or_validate_manifest <- function(out_dir, manifest) {
 
 run_paired_radius_simulation <- function(seeds, n_ppt = 20L,
                                          scenario = "high") {
-    params <- simulation_parameters(
-        n_ppt = n_ppt,
-        scenario = scenario,
-        signal_mode = "hard_signal"
-    )
+    params <- simulation_parameters(n_ppt = n_ppt, scenario = scenario)
     specs <- radius_specifications(params$sigma_space)
     output_dirs <- setNames(
         vapply(specs$data_subdir, data_path, character(1)),
@@ -107,10 +102,6 @@ main <- function() {
     n_sim <- as.integer(c(commandArgs(trailingOnly = TRUE), 30L)[1])
     n_ppt <- as.integer(Sys.getenv("MC_N_PPT", unset = "20"))
     scenario <- Sys.getenv("MC_SCENARIO", unset = "high")
-    signal_mode <- Sys.getenv("MC_SIGNAL_MODE", unset = "hard_signal")
-    if (!identical(signal_mode, "hard_signal")) {
-        stop("MC_SIGNAL_MODE must be hard_signal", call. = FALSE)
-    }
     run_paired_radius_simulation(seq_len(n_sim), n_ppt, scenario)
 }
 

@@ -49,7 +49,6 @@ created; only the hard spatial radius differs across the three saved datasets.
 ```bash
 MC_N_PPT=20 \
 MC_SCENARIO=high \
-MC_SIGNAL_MODE=hard_signal \
 Rscript code/02_generate_montecarlo.R 20
 ```
 

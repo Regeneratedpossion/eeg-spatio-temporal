@@ -31,9 +31,9 @@ truth <- build_ground_truth(params, sensors, participants)
 keep_idx <- seq(1, length(Xf), by = params$downsample_factor)
 expected_seed_effect <- (
     participants$amplitude[1] *
-        temporal_signal_at_onset(params, participants$onset_ms[1]) +
+        temporal_signal_at_onset(participants$onset_ms[1]) +
     participants$amplitude[2] *
-        temporal_signal_at_onset(params, participants$onset_ms[2])
+        temporal_signal_at_onset(participants$onset_ms[2])
 ) / nrow(participants)
 expected_seed_effect <- expected_seed_effect[keep_idx]
 

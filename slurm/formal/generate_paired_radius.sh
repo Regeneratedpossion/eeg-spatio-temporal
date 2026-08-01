@@ -20,7 +20,6 @@ export PROJECT_ROOT=/work/smjifan1/bgam_eeg_project
 export BRMS_MEEG=$PROJECT_ROOT/external_brms_meeg/code
 export MC_N_PPT=20
 export MC_SCENARIO=high
-export MC_SIGNAL_MODE=hard_signal
 
 N_SIM="${N_SIM:-20}"
 

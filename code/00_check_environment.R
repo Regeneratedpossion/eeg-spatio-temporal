@@ -77,8 +77,8 @@ required_files <- c(
     "code/04_compare_methods.R",
     "code/07_fit_paired_radius_bgam.R",
     "code/ground_truth.R",
-    "data/sim_data_pilot.rds",
     "resources/adjacency/adjacency_xproj_yproj_61ch.rds",
+    "resources/electrodes/electrode_layout_61ch.csv",
     "resources/brms_meeg/code/eeg_noise.R",
     "resources/brms_meeg/code/erp_template.R",
     "resources/brms_meeg/code/meanpower.txt"

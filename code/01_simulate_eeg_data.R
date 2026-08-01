@@ -3,13 +3,17 @@
 #
 # Generate one simulated two-condition EEG dataset.
 #
-# Main structure:
-#   1. simulation_parameters()
-#   2. load_electrode_layout()
-#   3. compute_spatial_weight_base() and apply_active_radius()
-#   4. compute_noise_cholesky()
-#   5. generate_dataset_base()
-#   6. build_ground_truth() and materialize_dataset()
+# Logical structure:
+#   1. Configuration and fixed resources
+#   2. Data-generating process
+#   3. Estimands and finite-sample ground truth
+#   4. Radius conditions and paired materialisation
+#   5. Local pilot entry point
+#
+# Population-level theoretical truth is defined in code/ground_truth.R.
+# Evaluation is implemented separately in code/04_compare_methods.R,
+# code/08_diagnose_paired_radius_bgam.R, and
+# code/09_aggregate_paired_radius_bgam.R.
 ###########################################################
 
 project_root_path <- Sys.getenv("PROJECT_ROOT", unset = getwd())
@@ -22,7 +26,7 @@ library(dplyr)
 BRMS_MEEG <- brms_meeg_path()
 
 # -------------------------------------------------------
-# 1. Simulation parameters
+# 1. Configuration and fixed resources
 # -------------------------------------------------------
 
 heterogeneity_scenarios <- function() {
@@ -77,6 +81,27 @@ simulation_parameters <- function(n_ppt = 5L,
     )
 }
 
+# Read the fixed 61-channel layout without depending on generated data.
+load_electrode_layout <- function() {
+    read.csv(
+        resource_path("electrodes", "electrode_layout_61ch.csv"),
+        stringsAsFactors = FALSE
+    )
+}
+
+# Load the external noise generator, ERP template, and frequency-power profile.
+load_noise_and_erp_assets <- function() {
+    source(file.path(BRMS_MEEG, "eeg_noise.R"))
+    source(file.path(BRMS_MEEG, "erp_template.R"))
+    meanpower <<- unlist(read.table(file.path(BRMS_MEEG, "meanpower.txt")))
+    invisible(meanpower)
+}
+
+# -------------------------------------------------------
+# 2. Data-generating process
+# -------------------------------------------------------
+
+# Participant-specific onset, amplitude, and noise scale.
 draw_participant_parameters <- function(params) {
     data.frame(
         participant = paste0(
@@ -97,42 +122,18 @@ draw_participant_parameters <- function(params) {
     )
 }
 
-# -------------------------------------------------------
-# 2. Electrode layout and simulation assets
-# -------------------------------------------------------
+# Shift the common ERP template to a participant-specific onset.
+temporal_signal_at_onset <- function(onset_ms) {
+    onset_index <- which(Xf == onset_ms)
 
-# Read the fixed 61-channel layout without depending on generated data.
-load_electrode_layout <- function() {
-    read.csv(
-        resource_path("electrodes", "electrode_layout_61ch.csv"),
-        stringsAsFactors = FALSE
+    c(
+        rep(0, onset_index - 2),
+        erp,
+        rep(0, Nf - onset_index - length(erp) + 2)
     )
 }
 
-# Load the external noise generator, ERP template, and frequency-power profile.
-load_noise_and_erp_assets <- function() {
-    source(file.path(BRMS_MEEG, "eeg_noise.R"))
-    source(file.path(BRMS_MEEG, "erp_template.R"))
-    meanpower <<- unlist(read.table(file.path(BRMS_MEEG, "meanpower.txt")))
-    invisible(meanpower)
-}
-
-# -------------------------------------------------------
-# 3. Spatial weights and noise covariance
-# -------------------------------------------------------
-
-# Part A: raw Gaussian weights and deterministic hard-radius truncation.
-radius_specifications <- function(sigma_space) {
-    config <- paper_analysis_config()$radii
-    data.frame(
-        radius_rule = config$radius_rule,
-        active_radius = sigma_space * config$active_radius_multiplier,
-        data_subdir = config$data_subdir,
-        expected_active = config$expected_active,
-        stringsAsFactors = FALSE
-    )
-}
-
+# Raw Gaussian spatial field centred on the seed electrode.
 compute_spatial_weight_base <- function(sensors, params) {
     seed_coord <- sensors %>%
         filter(channel == params$seed_electrode)
@@ -170,27 +171,13 @@ apply_active_radius <- function(sensors, r_active, radius_rule) {
         )
 }
 
-# Part B: spatial covariance for the noise.
+# Spatial covariance for the noise.
 # rho controls how similar the noise is between nearby electrodes.
 # L is used later to generate spatially correlated noise.
 compute_noise_cholesky <- function(sensors, params) {
     distance_matrix <- as.matrix(dist(sensors %>% select(xproj, yproj)))
     sigma <- exp(-distance_matrix^2 / (2 * params$rho^2))
     t(chol(sigma))
-}
-
-# -------------------------------------------------------
-# 4. Generate one dataset
-# -------------------------------------------------------
-
-temporal_signal_at_onset <- function(onset_ms) {
-    onset_index <- which(Xf == onset_ms)
-
-    c(
-        rep(0, onset_index - 2),
-        erp,
-        rep(0, Nf - onset_index - length(erp) + 2)
-    )
 }
 
 generate_condition_noise <- function(n_elec, params, L) {
@@ -295,10 +282,6 @@ generate_dataset_base <- function(params, sensors, L) {
     )
 }
 
-# -------------------------------------------------------
-# 5. Ground truth
-# -------------------------------------------------------
-
 # Preserve the exact temporal signal used to construct continuous ground truth.
 # Noise and public coordinates retain the historical four-decimal storage.
 downsample_base_dataset <- function(base_data, params) {
@@ -313,8 +296,13 @@ downsample_base_dataset <- function(base_data, params) {
         mutate(across(all_of(rounded_columns), ~round(.x, 4)))
 }
 
+# -------------------------------------------------------
+# 3. Estimands and finite-sample ground truth
+# -------------------------------------------------------
+
 # Save ground-truth values for evaluation. The continuous field is the exact
 # average of the participant waveforms injected into this generated dataset.
+# The population-level theoretical field is defined in code/ground_truth.R.
 build_ground_truth <- function(params, sensors, participant_parameters) {
     active_radius <- sensors$active_radius[1]
     radius_rule <- sensors$radius_rule[1]
@@ -397,6 +385,22 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
     )
 }
 
+# -------------------------------------------------------
+# 4. Radius conditions and paired materialisation
+# -------------------------------------------------------
+
+radius_specifications <- function(sigma_space) {
+    config <- paper_analysis_config()$radii
+    data.frame(
+        radius_rule = config$radius_rule,
+        active_radius = sigma_space * config$active_radius_multiplier,
+        data_subdir = config$data_subdir,
+        expected_active = config$expected_active,
+        stringsAsFactors = FALSE
+    )
+}
+
+# Apply one radius to the common stochastic base and construct its truth object.
 materialize_dataset <- function(base, params, sensors, r_active, radius_rule) {
     radius_sensors <- apply_active_radius(sensors, r_active, radius_rule)
     weights <- radius_sensors$spatial_weight[
@@ -417,6 +421,7 @@ materialize_dataset <- function(base, params, sensors, r_active, radius_rule) {
     list(sim_data = sim_data, ground_truth = ground_truth)
 }
 
+# Set the seed once, generate one common base, and materialise all three radii.
 make_paired_datasets <- function(seed = 1L, n_ppt = 20L,
                                  scenario = "high") {
     set.seed(seed)
@@ -445,6 +450,10 @@ make_dataset <- function(seed = 42, n_ppt = 5L,
     }
     paired[[radius_rule]]
 }
+
+# -------------------------------------------------------
+# 5. Local pilot entry point
+# -------------------------------------------------------
 
 # Load noise and ERP template before generating data.
 load_noise_and_erp_assets()

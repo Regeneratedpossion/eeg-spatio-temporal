@@ -32,11 +32,11 @@ expected_r <- c(
     "code/archive/compute_trial_effective_sample_size.R",
     "code/archive/migrate_ground_truth.R",
     "code/ground_truth.R",
-    "code/laplacian_config.R",
-    "code/laplacian_diagnose_continuous.R",
-    "code/laplacian_diagnose_hard.R",
-    "code/laplacian_fit_basis_scores.R",
-    "code/laplacian_reconstruct_effect.R",
+    "code/laplacian/config.R",
+    "code/laplacian/diagnose_continuous.R",
+    "code/laplacian/diagnose_hard.R",
+    "code/laplacian/fit_basis_scores.R",
+    "code/laplacian/reconstruct_effect.R",
     "code/paper_config.R",
     "code/utils.R"
 )

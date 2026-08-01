@@ -30,11 +30,12 @@ For each participant x condition x time cell:
 The workflow is split into:
 
 ```text
-code/laplacian_config.R                 fixed K=20 configuration
-code/laplacian_fit_basis_scores.R       fit temporal GAMMs to basis scores
-code/laplacian_reconstruct_effect.R     reconstruct sensor x time effects
-code/laplacian_diagnose_hard.R          hard-threshold diagnostics
-code/laplacian_diagnose_continuous.R    continuous-field diagnostics
+code/20_laplacian_sensitivity.R         numbered workflow entry point
+code/laplacian/config.R                 fixed K=20 configuration
+code/laplacian/fit_basis_scores.R       fit temporal GAMMs to basis scores
+code/laplacian/reconstruct_effect.R     reconstruct sensor x time effects
+code/laplacian/diagnose_hard.R          hard-threshold diagnostics
+code/laplacian/diagnose_continuous.R    continuous-field diagnostics
 ```
 
 ## Current configuration

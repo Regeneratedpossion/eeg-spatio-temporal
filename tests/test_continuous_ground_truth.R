@@ -135,19 +135,19 @@ topomap_source <- paste(
 )
 laplace_config_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "laplacian_config.R"
+        test_project_root, "code", "laplacian", "config.R"
     )),
     collapse = "\n"
 )
 laplace_hard_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "laplacian_diagnose_hard.R"
+        test_project_root, "code", "laplacian", "diagnose_hard.R"
     )),
     collapse = "\n"
 )
 laplace_continuous_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "laplacian_diagnose_continuous.R"
+        test_project_root, "code", "laplacian", "diagnose_continuous.R"
     )),
     collapse = "\n"
 )

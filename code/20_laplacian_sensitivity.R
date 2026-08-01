@@ -10,11 +10,11 @@
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
-source(file.path(project_root(), "code/laplacian_config.R"))
-source(file.path(project_root(), "code/laplacian_fit_basis_scores.R"))
-source(file.path(project_root(), "code/laplacian_reconstruct_effect.R"))
-source(file.path(project_root(), "code/laplacian_diagnose_hard.R"))
-source(file.path(project_root(), "code/laplacian_diagnose_continuous.R"))
+source(file.path(project_root(), "code/laplacian/config.R"))
+source(file.path(project_root(), "code/laplacian/fit_basis_scores.R"))
+source(file.path(project_root(), "code/laplacian/reconstruct_effect.R"))
+source(file.path(project_root(), "code/laplacian/diagnose_hard.R"))
+source(file.path(project_root(), "code/laplacian/diagnose_continuous.R"))
 
 setup_cmdstan_cache()
 

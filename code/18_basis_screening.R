@@ -1,5 +1,5 @@
 ###########################################################
-# 23_basis_screening.R
+# 18_basis_screening.R
 #
 # Full-BGAM k=(12,12) baseline models:
 #   A_k1212_tp = tensor-product thin-plate basis

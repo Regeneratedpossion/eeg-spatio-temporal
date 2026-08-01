@@ -71,7 +71,7 @@ diagnostic_source <- paste(
     readLines(file.path(
         test_project_root,
         "code",
-        "09_diagnose_paired_radius_bgam.R"
+        "08_diagnose_paired_radius_bgam.R"
     )),
     collapse = "\n"
 )

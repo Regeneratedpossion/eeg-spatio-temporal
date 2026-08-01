@@ -28,5 +28,5 @@ RADIUS_RULES=(1sd half-max 2sd)
 RADIUS_RULE="${RADIUS_RULES[$SLURM_ARRAY_TASK_ID]}"
 
 cd "$PROJECT_ROOT"
-Rscript code/08_fit_paired_radius_bgam.R "$RADIUS_RULE" 1
-Rscript code/09_diagnose_paired_radius_bgam.R "$RADIUS_RULE"
+Rscript code/07_fit_paired_radius_bgam.R "$RADIUS_RULE" 1
+Rscript code/08_diagnose_paired_radius_bgam.R "$RADIUS_RULE"

@@ -1,5 +1,5 @@
 ###########################################################
-# 25_laplacian_sensitivity.R
+# 20_laplacian_sensitivity.R
 #
 # Entrypoint for the fixed K=20 + constant Laplacian workflow.
 #

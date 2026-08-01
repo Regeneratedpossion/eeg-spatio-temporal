@@ -1,5 +1,5 @@
 ###########################################################
-# 21_plot_topomaps.R
+# 16_plot_topomaps.R
 #
 # Slide figure:
 #   Topomaps over the signal window, P = 20, R = 20

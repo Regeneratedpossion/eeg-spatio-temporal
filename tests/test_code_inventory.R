@@ -1,23 +1,18 @@
 project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
 
 expected_r <- c(
-    sprintf("code/%02d_%s.R", 0:27, c(
+    sprintf("code/%02d_%s.R", 0:22, c(
         "check_environment",
         "simulate_eeg_data",
         "generate_montecarlo",
         "fit_bgam",
         "compare_methods",
         "aggregate_results",
-        "generate_paired_radius_pilot",
         "validate_paired_radius_pilot",
         "fit_paired_radius_bgam",
         "diagnose_paired_radius_bgam",
         "aggregate_paired_radius_bgam",
-        "run_bgam_diagnostics",
-        "validate_heterogeneity_bgam",
         "compute_delta_sesoi",
-        "plot_sesoi_posterior",
-        "diagnose_practical_null_fpr",
         "plot_paired_radius_truth",
         "plot_2sd_bgam_diagnostics",
         "plot_simulated_eeg",
@@ -32,6 +27,8 @@ expected_r <- c(
         "significance_alpha_sensitivity"
     )),
     "code/archive/09_run_montecarlo_sem.R",
+    "code/archive/11_run_bgam_diagnostics.R",
+    "code/archive/12_validate_heterogeneity_bgam.R",
     "code/archive/compute_trial_effective_sample_size.R",
     "code/archive/migrate_ground_truth.R",
     "code/ground_truth.R",
@@ -59,7 +56,7 @@ numbered_r <- list.files(
     full.names = FALSE
 )
 observed_numbers <- as.integer(sub("^([0-9]{2})_.*$", "\\1", numbered_r))
-stopifnot(identical(sort(observed_numbers), 0:27))
+stopifnot(identical(sort(observed_numbers), 0:22))
 
 removed_dirs <- file.path(
     project_root,

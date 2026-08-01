@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
 
 project_dir <- Sys.getenv("PROJECT_ROOT", unset = getwd())
 source(file.path(
-    project_dir, "code", "26_posterior_odds_sensitivity.R"
+    project_dir, "code", "21_posterior_odds_sensitivity.R"
 ))
 
 compute_alpha_sensitivity <- function(

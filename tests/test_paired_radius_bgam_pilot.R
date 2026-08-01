@@ -3,9 +3,9 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 test_project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = test_project_root)
 
-source(file.path(test_project_root, "code", "08_fit_paired_radius_bgam.R"))
+source(file.path(test_project_root, "code", "07_fit_paired_radius_bgam.R"))
 source(file.path(
-    test_project_root, "code", "09_diagnose_paired_radius_bgam.R"
+    test_project_root, "code", "08_diagnose_paired_radius_bgam.R"
 ))
 
 config <- paired_radius_bgam_config()

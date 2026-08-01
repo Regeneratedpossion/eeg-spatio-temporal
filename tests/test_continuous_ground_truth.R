@@ -123,13 +123,13 @@ generator_source <- paste(
 )
 diagnostic_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "11_run_bgam_diagnostics.R"
+        test_project_root, "code", "archive", "11_run_bgam_diagnostics.R"
     )),
     collapse = "\n"
 )
 topomap_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "21_plot_topomaps.R"
+        test_project_root, "code", "16_plot_topomaps.R"
     )),
     collapse = "\n"
 )
@@ -153,7 +153,7 @@ laplace_continuous_source <- paste(
 )
 sesoi_plot_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "14_plot_sesoi_posterior.R"
+        test_project_root, "code", "10_compute_delta_sesoi.R"
     )),
     collapse = "\n"
 )

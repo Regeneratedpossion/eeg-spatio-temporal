@@ -1,7 +1,7 @@
 test_project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
 
 source(file.path(
-    test_project_root, "code", "17_plot_2sd_bgam_diagnostics.R"
+    test_project_root, "code", "12_plot_2sd_bgam_diagnostics.R"
 ))
 
 available_channels <- c("AF1", "C2", "CPZ", "CZ", "FCZ", "FP1", "PZ")
@@ -73,7 +73,7 @@ stopifnot(
 
 plot_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "17_plot_2sd_bgam_diagnostics.R"
+        test_project_root, "code", "12_plot_2sd_bgam_diagnostics.R"
     )),
     collapse = "\n"
 )

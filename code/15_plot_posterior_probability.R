@@ -1,5 +1,5 @@
 ###########################################################
-# 20_plot_posterior_probability.R
+# 15_plot_posterior_probability.R
 #
 # Slide figure:
 #   Posterior probability per electrode, P = 20, k = (20,20)

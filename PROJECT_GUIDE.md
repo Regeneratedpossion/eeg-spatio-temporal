@@ -44,7 +44,7 @@ untruncated spatial weights within a replicate.
 6. `code/03_fit_bgam.R`
    Defines the common BGAM fitting function.
 
-7. `code/08_fit_paired_radius_bgam.R`
+7. `code/07_fit_paired_radius_bgam.R`
    Applies the same model configuration to a selected radius and replicate.
 
 8. `code/04_compare_methods.R`

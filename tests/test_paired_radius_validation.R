@@ -4,7 +4,7 @@ project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
 source(file.path(
-    project_root, "code", "07_validate_paired_radius_pilot.R"
+    project_root, "code", "06_validate_paired_radius_pilot.R"
 ))
 
 sim <- expand.grid(

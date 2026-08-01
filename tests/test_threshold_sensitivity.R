@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "26_posterior_odds_sensitivity.R"))
+source(file.path(project_root, "code", "21_posterior_odds_sensitivity.R"))
 
 channels <- c("A", "B", "C")
 times <- c(0, 1)

@@ -13,7 +13,7 @@ if (!file.exists(comparison_dependency)) {
     comparison_dependency <- file.path(project_root(), "code/04_compare_methods.R")
 }
 source(comparison_dependency)
-source(file.path(project_root(), "code/08_fit_paired_radius_bgam.R"))
+source(file.path(project_root(), "code/07_fit_paired_radius_bgam.R"))
 source(file.path(project_root(), "code/ground_truth.R"))
 
 projection_recovery <- function(theta_hat, theta) {

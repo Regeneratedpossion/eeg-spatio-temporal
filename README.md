@@ -64,9 +64,9 @@ data/montecarlo_r2sd/
 Fit one radius and replicate locally:
 
 ```bash
-Rscript code/08_fit_paired_radius_bgam.R 1sd 1
-Rscript code/08_fit_paired_radius_bgam.R half-max 1
-Rscript code/08_fit_paired_radius_bgam.R 2sd 1
+Rscript code/07_fit_paired_radius_bgam.R 1sd 1
+Rscript code/07_fit_paired_radius_bgam.R half-max 1
+Rscript code/07_fit_paired_radius_bgam.R 2sd 1
 ```
 
 The second argument is the replicate seed. Omitting it preserves the pilot

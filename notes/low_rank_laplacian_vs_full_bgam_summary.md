@@ -106,7 +106,7 @@ Jiahui
 
 Full BGAM k = (12,12):
 
-- Code: `code/23_basis_screening.R`
+- Code: `code/18_basis_screening.R`
   - `SCREEN_SAVE_FIT=true`
 - Historical Slurm launcher: removed from the active tree; recoverable from
   Git history.
@@ -115,7 +115,7 @@ Full BGAM k = (12,12):
 
 Laplacian low-rank basis:
 
-- Single workflow code: `code/25_laplacian_sensitivity.R`
+- Single workflow code: `code/20_laplacian_sensitivity.R`
   - `LAPLACE_ACTION=fit`
   - `LAPLACE_ACTION=diagnose_hard`
   - `LAPLACE_ACTION=diagnose_continuous`

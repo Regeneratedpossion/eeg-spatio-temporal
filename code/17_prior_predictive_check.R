@@ -1,5 +1,5 @@
 ###############################################################
-# 22_prior_predictive_check.R
+# 17_prior_predictive_check.R
 #
 # Prior predictive check for hard-threshold + SEM BGAM.
 ###############################################################

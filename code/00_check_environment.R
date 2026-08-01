@@ -9,11 +9,21 @@
 #   Rscript code/00_check_environment.R
 ###########################################################
 
-cat("=========================================\n")
-cat(" Environment check\n")
-cat("=========================================\n\n")
-
+RULE <- strrep("=", 41)
 project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
+
+# Print one OK/MISSING line per item; return the items that failed.
+check_items <- function(items, ok_fn) {
+    width <- max(nchar(items))
+    ok <- vapply(items, function(item) {
+        isTRUE(tryCatch(ok_fn(item), error = function(e) FALSE))
+    }, logical(1))
+    cat(sprintf("  %-*s %s\n", width, items,
+                ifelse(ok, "OK", "MISSING")), sep = "")
+    items[!ok]
+}
+
+cat(RULE, "\n Environment check\n", RULE, "\n\n", sep = "")
 
 # ---- R packages ----
 required_r <- c(
@@ -22,64 +32,88 @@ required_r <- c(
 )
 
 cat("--- R packages ---\n")
-missing_r <- character(0)
-for (pkg in required_r) {
-    ok <- requireNamespace(pkg, quietly = TRUE)
-    cat(sprintf("  %-12s %s\n", pkg, if (ok) "OK" else "MISSING"))
-    if (!ok) missing_r <- c(missing_r, pkg)
-}
+missing_r <- check_items(
+    required_r,
+    function(package) requireNamespace(package, quietly = TRUE)
+)
 
 # ---- CmdStan ----
-cat("\n--- CmdStan ---\n")
-if (requireNamespace("cmdstanr", quietly = TRUE)) {
-    cmdstan_path <- tryCatch(cmdstanr::cmdstan_path(), error = function(e) NA)
-    cat(sprintf("  cmdstan path: %s\n",
-                if (is.na(cmdstan_path)) "NOT FOUND" else cmdstan_path))
+missing_cmdstan <- character(0)
+if (!("cmdstanr" %in% missing_r)) {
+    cat("\n--- CmdStan ---\n")
+    cmdstan_path <- tryCatch(
+        cmdstanr::cmdstan_path(),
+        error = function(e) ""
+    )
+    cmdstan_ok <- length(cmdstan_path) == 1L && nzchar(cmdstan_path)
+    cat("  cmdstan:",
+        if (cmdstan_ok) cmdstan_path else "NOT FOUND", "\n")
+    if (!cmdstan_ok) missing_cmdstan <- "CmdStan"
 }
 
 # ---- Python modules ----
-cat("\n--- Python modules ---\n")
-if (requireNamespace("reticulate", quietly = TRUE)) {
-    suppressPackageStartupMessages(library(reticulate))
-    cat(sprintf("  Python: %s\n",
-                tryCatch(py_config()$python, error = function(e) "NONE")))
-    for (mod in c("mne", "scipy", "numpy")) {
-        ok <- py_module_available(mod)
-        cat(sprintf("  %-12s %s\n", mod, if (ok) "OK" else "MISSING"))
-    }
+missing_python <- character(0)
+if (!("reticulate" %in% missing_r)) {
+    cat("\n--- Python modules ---\n")
+    cat("  Python:",
+        tryCatch(
+            reticulate::py_config()$python,
+            error = function(e) "NONE"
+        ),
+        "\n")
+    missing_python <- check_items(
+        c("mne", "scipy", "numpy"),
+        reticulate::py_module_available
+    )
 }
 
 # ---- Project resources ----
-cat("\n--- Project resources ---\n")
 required_files <- c(
     "code/utils.R",
+    "code/paper_config.R",
     "code/01_simulate_eeg_data.R",
+    "code/02_generate_montecarlo.R",
     "code/03_fit_bgam.R",
     "code/04_compare_methods.R",
+    "code/08_fit_paired_radius_bgam.R",
+    "code/ground_truth.R",
+    "data/sim_data_pilot.rds",
     "resources/adjacency/adjacency_xproj_yproj_61ch.rds",
     "resources/brms_meeg/code/eeg_noise.R",
     "resources/brms_meeg/code/erp_template.R",
     "resources/brms_meeg/code/meanpower.txt"
 )
+cat("\n--- Project resources ---\n")
+missing_files <- check_items(
+    required_files,
+    function(file) file.exists(file.path(project_root, file))
+)
 
-missing_files <- character(0)
-for (file in required_files) {
-    ok <- file.exists(file.path(project_root, file))
-    cat(sprintf("  %-55s %s\n", file, if (ok) "OK" else "MISSING"))
-    if (!ok) missing_files <- c(missing_files, file)
+# ---- Summary ----
+cat("\n", RULE, "\n", sep = "")
+if (length(missing_r)) {
+    cat(" Missing R packages:\n",
+        paste0("   - ", missing_r, "\n"), sep = "")
+}
+if (length(missing_cmdstan)) {
+    cat(" Missing CmdStan installation.\n")
+}
+if (length(missing_python)) {
+    cat(" Missing Python modules:\n",
+        paste0("   - ", missing_python, "\n"), sep = "")
+}
+if (length(missing_files)) {
+    cat(" Missing project files:\n",
+        paste0("   - ", missing_files, "\n"), sep = "")
 }
 
-cat("\n=========================================\n")
-if (length(missing_r) == 0 && length(missing_files) == 0) {
-    cat(" Environment looks ready.\n")
-} else {
-    if (length(missing_r) > 0) {
-        cat(" Missing R packages:\n")
-        cat(paste0("   - ", missing_r, "\n"))
-    }
-    if (length(missing_files) > 0) {
-        cat(" Missing project files:\n")
-        cat(paste0("   - ", missing_files, "\n"))
-    }
-}
-cat("=========================================\n")
+ready <- !length(c(
+    missing_r,
+    missing_cmdstan,
+    missing_python,
+    missing_files
+))
+if (ready) cat(" Environment looks ready.\n")
+cat(RULE, "\n", sep = "")
+
+if (!ready) quit(status = 1)

@@ -1,5 +1,5 @@
 ###########################################################
-# 06_slide_bgam_fit_n20.R
+# 19_plot_bgam_fit.R
 #
 # Slide figure:
 #   BGAM fit to the data, P = 20, k = (20,20)

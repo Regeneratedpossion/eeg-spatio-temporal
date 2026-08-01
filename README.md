@@ -24,23 +24,20 @@ in GitHub.
 
 ```text
 code/
-|-- config/          formal paper settings
-|-- pipeline/        simulation, fitting, comparison, aggregation
-|-- truth/           ground-truth construction and migration
-|-- reporting/       figures and thesis-facing output
-|-- diagnostics/     sampler, residual, and fit investigations
-|-- sensitivity/     prior, basis, threshold, alpha, and Laplacian checks
-|-- pilot/           reduced-scale paired-radius workflows
-|-- archive/         superseded or one-off historical implementations
-|-- utils.R          shared paths and analysis helpers
-`-- check_env.R      environment and resource checks
+|-- 00_...R to 05_...R   main Monte Carlo pipeline
+|-- 06_...R to 10_...R   paired-radius pilot
+|-- 11_...R to 15_...R   BGAM and SESOI diagnostics
+|-- 16_...R to 21_...R   figures and topomaps
+|-- 22_...R to 27_...R   sensitivity analyses
+|-- *.R                  sourced helper modules
+`-- archive/              superseded or one-off scripts
 
 slurm/
 |-- formal/          paired generation, fitting, and aggregation
 `-- pilot/           one-replicate paired-radius run
 ```
 
-See [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the responsibility of each module.
+See [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the numbered execution order.
 
 ## Formal workflow
 
@@ -53,7 +50,7 @@ created; only the hard spatial radius differs across the three saved datasets.
 MC_N_PPT=20 \
 MC_SCENARIO=high \
 MC_SIGNAL_MODE=hard_signal \
-Rscript code/pipeline/generate_montecarlo.R 20
+Rscript code/02_generate_montecarlo.R 20
 ```
 
 This writes:
@@ -67,9 +64,9 @@ data/montecarlo_r2sd/
 Fit one radius and replicate locally:
 
 ```bash
-Rscript code/pipeline/fit_paired_radius.R 1sd 1
-Rscript code/pipeline/fit_paired_radius.R half-max 1
-Rscript code/pipeline/fit_paired_radius.R 2sd 1
+Rscript code/08_fit_paired_radius_bgam.R 1sd 1
+Rscript code/08_fit_paired_radius_bgam.R half-max 1
+Rscript code/08_fit_paired_radius_bgam.R 2sd 1
 ```
 
 The second argument is the replicate seed. Omitting it preserves the pilot
@@ -112,11 +109,12 @@ the population temporal tail is small but non-zero.
 Supporting scripts are retained for audit but are not part of the formal
 execution sequence:
 
-- `code/reporting/` contains figures and topomaps;
-- `code/diagnostics/` contains fit and residual investigations;
-- `code/sensitivity/` contains basis, prior, threshold, alpha, SESOI, and
-  Laplacian investigations;
-- `code/pilot/` contains reduced-scope paired workflows;
+- `00`--`05` contain the main Monte Carlo pipeline;
+- `06`--`10` contain the paired-radius pilot;
+- `11`--`15` contain BGAM and SESOI diagnostics;
+- `16`--`21` contain figures and topomaps;
+- `22`--`27` contain prior, basis, Laplacian, and threshold sensitivity work;
+- unnumbered files in `code/` are sourced helper modules;
 - `code/archive/` contains superseded single-radius or one-off scripts.
 
 Obsolete P=5/P=10, single-radius, `k = c(12, 12)`, basis-rescue, and Laplacian

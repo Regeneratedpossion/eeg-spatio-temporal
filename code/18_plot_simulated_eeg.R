@@ -1,5 +1,5 @@
 ###########################################################
-# 05_slide_simulated_eeg_n20.R
+# 18_plot_simulated_eeg.R
 #
 # Slide figure:
 #   Participant-level simulated condition differences at CZ

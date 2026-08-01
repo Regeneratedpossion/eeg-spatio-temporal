@@ -25,4 +25,4 @@ export MC_SIGNAL_MODE=hard_signal
 N_SIM="${N_SIM:-20}"
 
 cd "$PROJECT_ROOT"
-Rscript code/pipeline/generate_montecarlo.R "$N_SIM"
+Rscript code/02_generate_montecarlo.R "$N_SIM"

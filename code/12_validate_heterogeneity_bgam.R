@@ -27,8 +27,8 @@ Sys.setenv(
 )
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
-source(file.path(project_root(), "code/pipeline/fit_bgam.R"))
-source(file.path(project_root(), "code/pipeline/compare_methods.R"))
+source(file.path(project_root(), "code/03_fit_bgam.R"))
+source(file.path(project_root(), "code/04_compare_methods.R"))
 
 library(ggplot2)
 

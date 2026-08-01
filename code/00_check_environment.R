@@ -1,12 +1,12 @@
 ###########################################################
-# check_env.R
+# 00_check_environment.R
 #
 # Check the R/Python packages and resource files needed by
 # the hard-threshold + SEM BGAM pipeline.
 #
 # LIDO:
 #   module load R/4.4.2-gcc141-base
-#   Rscript code/check_env.R
+#   Rscript code/00_check_environment.R
 ###########################################################
 
 cat("=========================================\n")
@@ -53,9 +53,9 @@ if (requireNamespace("reticulate", quietly = TRUE)) {
 cat("\n--- Project resources ---\n")
 required_files <- c(
     "code/utils.R",
-    "code/pipeline/simulation.R",
-    "code/pipeline/fit_bgam.R",
-    "code/pipeline/compare_methods.R",
+    "code/01_simulate_eeg_data.R",
+    "code/03_fit_bgam.R",
+    "code/04_compare_methods.R",
     "resources/adjacency/adjacency_xproj_yproj_61ch.rds",
     "resources/brms_meeg/code/eeg_noise.R",
     "resources/brms_meeg/code/erp_template.R",

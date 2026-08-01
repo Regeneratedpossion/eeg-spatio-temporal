@@ -3,7 +3,7 @@
 ## Formal analysis contract
 
 The thesis analysis uses one configuration defined by
-`code/config/paper_config.R`:
+`code/paper_config.R`:
 
 - scenario: `high`;
 - participants: 20;
@@ -23,35 +23,35 @@ untruncated spatial weights within a replicate.
 
 ## Read the formal code in this order
 
-1. `code/config/paper_config.R`
+1. `code/paper_config.R`
    Defines the paper settings without source-time side effects.
 
 2. `code/utils.R`
    Provides project paths, resources, thresholds, trial aggregation, and
    shared evaluation helpers.
 
-3. `code/pipeline/simulation.R`
+3. `code/01_simulate_eeg_data.R`
    Generates a common stochastic base and applies hard spatial radii. Spatial
    weights outside a radius are exactly zero.
 
-4. `code/pipeline/generate_montecarlo.R`
+4. `code/02_generate_montecarlo.R`
    Generates all three radius datasets from one base for each seed.
 
-5. `code/truth/ground_truth.R`
+5. `code/ground_truth.R`
    Provides population-level ground-truth reconstruction used by paired-radius
    diagnostics.
 
-6. `code/pipeline/fit_bgam.R`
+6. `code/03_fit_bgam.R`
    Defines the common BGAM fitting function.
 
-7. `code/pipeline/fit_paired_radius.R`
+7. `code/08_fit_paired_radius_bgam.R`
    Applies the same model configuration to a selected radius and replicate.
 
-8. `code/pipeline/compare_methods.R`
+8. `code/04_compare_methods.R`
    Implements BGAM, pointwise, multiple-testing, cluster-mass, and TFCE
    comparison helpers.
 
-9. `code/pipeline/aggregate_results.R`
+9. `code/05_aggregate_results.R`
    Aggregates completed per-replicate method results.
 
 ## Truth interpretation
@@ -73,14 +73,14 @@ The project distinguishes:
 - theoretical population truth for cross-replicate recovery and map targets;
 - realised finite-sample truth for conditional residual diagnostics.
 
-## Supporting directories
+## Numbered code layout
 
-- `code/reporting/`: thesis figures, slides, posterior maps, and topomaps.
-- `code/diagnostics/`: fit diagnostics, residual checks, and methodological
-  investigations.
-- `code/sensitivity/`: prior, basis, threshold, alpha, SESOI, and Laplacian
-  analyses.
-- `code/pilot/`: reduced-scope paired generation, validation, and aggregation.
+- `00`--`05`: main Monte Carlo pipeline.
+- `06`--`10`: paired-radius pilot.
+- `11`--`15`: BGAM and SESOI diagnostics.
+- `16`--`21`: thesis figures, slides, posterior maps, and topomaps.
+- `22`--`27`: prior, basis, threshold, alpha, SESOI, and Laplacian analyses.
+- unnumbered files in `code/`: sourced helper modules.
 - `code/archive/`: superseded single-radius and one-off historical scripts.
 
 Supporting scripts do not define the formal paper configuration.

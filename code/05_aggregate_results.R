@@ -1,5 +1,5 @@
 ###########################################################
-# 04_aggregate_results.R
+# 05_aggregate_results.R
 #
 # Final aggregation after Monte Carlo jobs finish.
 #
@@ -16,7 +16,7 @@
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
-source(file.path(project_root(), "code/pipeline/compare_methods.R"))
+source(file.path(project_root(), "code/04_compare_methods.R"))
 
 paths <- mc_paths()
 dir.create(paths$out_dir, showWarnings = FALSE, recursive = TRUE)

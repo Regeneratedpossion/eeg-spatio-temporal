@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "sensitivity", "33_alpha_sensitivity.R"))
+source(file.path(project_root, "code", "27_significance_alpha_sensitivity.R"))
 
 channels <- c("A", "B", "C")
 pvalue_cells <- data.frame(

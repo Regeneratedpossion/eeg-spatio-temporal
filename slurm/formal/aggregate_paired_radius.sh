@@ -17,4 +17,4 @@ module load R/4.4.2-gcc141-base
 export PROJECT_ROOT=/work/smjifan1/bgam_eeg_project
 export R_LIBS_USER=/work/smjifan1/R/4.4.2:/home/smjifan1/R/x86_64-pc-linux-gnu-library/4.4
 cd "$PROJECT_ROOT"
-Rscript code/pilot/36_aggregate_paired_radius_bgam_pilot.R
+Rscript code/10_aggregate_paired_radius_bgam.R

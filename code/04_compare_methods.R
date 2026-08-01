@@ -1,5 +1,5 @@
 ###########################################################
-# 03_compare_methods.R
+# 04_compare_methods.R
 #
 # Compare methods on the full time x channel grid.
 # Each method creates a TRUE/FALSE mask; connected blobs give onset/offset.
@@ -299,7 +299,7 @@ build_method_masks <- function(arr, channels, times, adj_chan, bgam_full,
 #     method, onset, offset, bias_onset_ms, bias_offset_ms
 #
 # Next aggregation step:
-#   04_aggregate_results.R summarises Bias/MAE/RMSE/SD, F1_ST,
+#   05_aggregate_results.R summarises Bias/MAE/RMSE/SD, F1_ST,
 #   and TP/FP/FN diagnostics across simulations.
 # ===============================================================
 

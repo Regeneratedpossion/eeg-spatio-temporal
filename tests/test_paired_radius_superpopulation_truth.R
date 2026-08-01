@@ -1,7 +1,7 @@
 test_project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
 
 source(file.path(
-    test_project_root, "code", "truth", "ground_truth.R"
+    test_project_root, "code", "ground_truth.R"
 ))
 
 template_path <- file.path(
@@ -71,13 +71,12 @@ diagnostic_source <- paste(
     readLines(file.path(
         test_project_root,
         "code",
-        "diagnostics",
-        "35_diagnose_paired_radius_bgam_pilot.R"
+        "09_diagnose_paired_radius_bgam.R"
     )),
     collapse = "\n"
 )
 stopifnot(grepl(
-    'source(file.path(project_root(), "code/truth/ground_truth.R"))',
+    'source(file.path(project_root(), "code/ground_truth.R"))',
     diagnostic_source,
     fixed = TRUE
 ))

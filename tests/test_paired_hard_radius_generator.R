@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "pipeline", "simulation.R"))
+source(file.path(project_root, "code", "01_simulate_eeg_data.R"))
 
 params <- simulation_parameters(n_ppt = 2L, scenario = "high")
 stopifnot(identical(params$signal_mode, "hard_signal"))

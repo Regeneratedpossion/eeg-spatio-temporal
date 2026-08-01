@@ -1,13 +1,13 @@
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 source(file.path(
     Sys.getenv("PROJECT_ROOT", unset = getwd()),
-    "code/config/paper_config.R"
+    "code/paper_config.R"
 ))
 fit_dependency <- file.path(
     project_root(), "code", "paired_radius_fit_bgam_dependency.R"
 )
 if (!file.exists(fit_dependency)) {
-    fit_dependency <- file.path(project_root(), "code/pipeline/fit_bgam.R")
+    fit_dependency <- file.path(project_root(), "code/03_fit_bgam.R")
 }
 source(fit_dependency)
 

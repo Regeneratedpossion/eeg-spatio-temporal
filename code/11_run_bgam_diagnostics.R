@@ -1,5 +1,5 @@
 ###########################################################
-# 02_diagnostics.R
+# 11_run_bgam_diagnostics.R
 #
 # Full diagnostics for the k=(12,12) full-BGAM baseline models.
 #

@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "pipeline", "generate_montecarlo.R"))
+source(file.path(project_root, "code", "02_generate_montecarlo.R"))
 
 params <- simulation_parameters(n_ppt = 20L, scenario = "high")
 specs <- radius_specifications(params$sigma_space)

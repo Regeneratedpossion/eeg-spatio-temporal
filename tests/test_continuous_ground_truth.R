@@ -118,45 +118,42 @@ stopifnot(isTRUE(all.equal(
 )))
 
 generator_source <- paste(
-    readLines(file.path(test_project_root, "code", "pipeline", "simulation.R")),
+    readLines(file.path(test_project_root, "code", "01_simulate_eeg_data.R")),
     collapse = "\n"
 )
 diagnostic_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "diagnostics", "02_diagnostics.R"
+        test_project_root, "code", "11_run_bgam_diagnostics.R"
     )),
     collapse = "\n"
 )
 topomap_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "reporting", "08_slide_topomap_n20.R"
+        test_project_root, "code", "21_plot_topomaps.R"
     )),
     collapse = "\n"
 )
 laplace_config_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "sensitivity", "laplacian", "00_config.R"
+        test_project_root, "code", "laplacian_config.R"
     )),
     collapse = "\n"
 )
 laplace_hard_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "sensitivity", "laplacian",
-        "03_diagnose_hard.R"
+        test_project_root, "code", "laplacian_diagnose_hard.R"
     )),
     collapse = "\n"
 )
 laplace_continuous_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "sensitivity", "laplacian",
-        "04_diagnose_continuous.R"
+        test_project_root, "code", "laplacian_diagnose_continuous.R"
     )),
     collapse = "\n"
 )
 sesoi_plot_source <- paste(
     readLines(file.path(
-        test_project_root, "code", "reporting",
-        "31_plot_all_electrode_sesoi_posterior.R"
+        test_project_root, "code", "14_plot_sesoi_posterior.R"
     )),
     collapse = "\n"
 )

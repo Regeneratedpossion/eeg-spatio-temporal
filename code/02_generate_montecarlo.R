@@ -1,10 +1,10 @@
 ###########################################################
-# 00_generate_montecarlo.R
+# 02_generate_montecarlo.R
 #
 # Generate paired hard-radius Monte Carlo datasets.
 #
 # Run:
-#   Rscript code/pipeline/generate_montecarlo.R
+#   Rscript code/02_generate_montecarlo.R
 #
 # Optional settings:
 #   MC_N_PPT=20          participant count
@@ -15,7 +15,7 @@
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 # Load the paired data generator.
-source(file.path(project_root(), "code/pipeline/simulation.R"))
+source(file.path(project_root(), "code/01_simulate_eeg_data.R"))
 
 paired_scenario_manifest <- function(params, spec, seeds) {
     list(

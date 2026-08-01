@@ -1,6 +1,6 @@
 source(file.path(
     Sys.getenv("PROJECT_ROOT", unset = getwd()),
-    "code/pipeline/generate_montecarlo.R"
+    "code/02_generate_montecarlo.R"
 ))
 
 run_paired_radius_simulation(

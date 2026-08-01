@@ -32,4 +32,4 @@ REPLICATE_SEED=$((SLURM_ARRAY_TASK_ID % 20 + 1))
 RADIUS_RULE="${RADIUS_RULES[$RADIUS_INDEX]}"
 
 cd "$PROJECT_ROOT"
-Rscript code/pipeline/fit_paired_radius.R "$RADIUS_RULE" "$REPLICATE_SEED"
+Rscript code/08_fit_paired_radius_bgam.R "$RADIUS_RULE" "$REPLICATE_SEED"

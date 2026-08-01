@@ -1,5 +1,5 @@
 ###########################################################
-# 00_generate_data.R
+# 01_simulate_eeg_data.R
 #
 # Generate one simulated two-condition EEG dataset.
 #
@@ -16,7 +16,7 @@
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 source(file.path(
     Sys.getenv("PROJECT_ROOT", unset = getwd()),
-    "code/config/paper_config.R"
+    "code/paper_config.R"
 ))
 
 library(dplyr)

@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "config", "paper_config.R"))
+source(file.path(project_root, "code", "paper_config.R"))
 
 cfg <- paper_analysis_config()
 stopifnot(

@@ -1,5 +1,5 @@
 ###########################################################
-# 12_laplacian_basis_brms_fixed.R
+# 25_laplacian_sensitivity.R
 #
 # Entrypoint for the fixed K=20 + constant Laplacian workflow.
 #
@@ -10,11 +10,11 @@
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
-source(file.path(project_root(), "code/sensitivity/laplacian/00_config.R"))
-source(file.path(project_root(), "code/sensitivity/laplacian/01_fit_basis_scores.R"))
-source(file.path(project_root(), "code/sensitivity/laplacian/02_reconstruct_effect.R"))
-source(file.path(project_root(), "code/sensitivity/laplacian/03_diagnose_hard.R"))
-source(file.path(project_root(), "code/sensitivity/laplacian/04_diagnose_continuous.R"))
+source(file.path(project_root(), "code/laplacian_config.R"))
+source(file.path(project_root(), "code/laplacian_fit_basis_scores.R"))
+source(file.path(project_root(), "code/laplacian_reconstruct_effect.R"))
+source(file.path(project_root(), "code/laplacian_diagnose_hard.R"))
+source(file.path(project_root(), "code/laplacian_diagnose_continuous.R"))
 
 setup_cmdstan_cache()
 

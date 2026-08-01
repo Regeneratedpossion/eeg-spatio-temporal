@@ -1,5 +1,5 @@
 ###########################################################
-# 18_basis_screening_full_ab_control.R
+# 24_basis_screening_full.R
 #
 # Full A/B basis screening with configurable sampler control and sigma=TRUE.
 # Used for sensitivity checks requested by Paul:

@@ -1,44 +1,46 @@
 project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
 
 expected_r <- c(
+    sprintf("code/%02d_%s.R", 0:27, c(
+        "check_environment",
+        "simulate_eeg_data",
+        "generate_montecarlo",
+        "fit_bgam",
+        "compare_methods",
+        "aggregate_results",
+        "generate_paired_radius_pilot",
+        "validate_paired_radius_pilot",
+        "fit_paired_radius_bgam",
+        "diagnose_paired_radius_bgam",
+        "aggregate_paired_radius_bgam",
+        "run_bgam_diagnostics",
+        "validate_heterogeneity_bgam",
+        "compute_delta_sesoi",
+        "plot_sesoi_posterior",
+        "diagnose_practical_null_fpr",
+        "plot_paired_radius_truth",
+        "plot_2sd_bgam_diagnostics",
+        "plot_simulated_eeg",
+        "plot_bgam_fit",
+        "plot_posterior_probability",
+        "plot_topomaps",
+        "prior_predictive_check",
+        "basis_screening",
+        "basis_screening_full",
+        "laplacian_sensitivity",
+        "posterior_odds_sensitivity",
+        "significance_alpha_sensitivity"
+    )),
     "code/archive/09_run_montecarlo_sem.R",
     "code/archive/compute_trial_effective_sample_size.R",
-    "code/check_env.R",
-    "code/config/paper_config.R",
-    "code/diagnostics/02_diagnostics.R",
-    "code/diagnostics/19_practical_null_fpr_rebound.R",
-    "code/diagnostics/28_delta_sesoi_probe.R",
-    "code/diagnostics/29_validate_heterogeneity_bgam.R",
-    "code/diagnostics/35_diagnose_paired_radius_bgam_pilot.R",
-    "code/pilot/00_generate_paired_radius_pilot.R",
-    "code/pilot/00_validate_paired_radius_pilot.R",
-    "code/pilot/36_aggregate_paired_radius_bgam_pilot.R",
-    "code/pipeline/aggregate_results.R",
-    "code/pipeline/compare_methods.R",
-    "code/pipeline/fit_bgam.R",
-    "code/pipeline/fit_paired_radius.R",
-    "code/pipeline/generate_montecarlo.R",
-    "code/pipeline/simulation.R",
-    "code/reporting/05_slide_simulated_eeg_n20.R",
-    "code/reporting/06_slide_bgam_fit_n20.R",
-    "code/reporting/07_plot_paired_radius_truth_pilot.R",
-    "code/reporting/07_slide_posterior_probability_n20.R",
-    "code/reporting/08_slide_topomap_n20.R",
-    "code/reporting/31_plot_all_electrode_sesoi_posterior.R",
-    "code/reporting/37_plot_2sd_bgam_diagnostics.R",
-    "code/sensitivity/10_prior_predictive_check.R",
-    "code/sensitivity/11_basis_screening.R",
-    "code/sensitivity/12_laplacian_basis_brms_fixed.R",
-    "code/sensitivity/18_basis_screening_full_ab_sigma_true_control.R",
-    "code/sensitivity/32_threshold_sensitivity.R",
-    "code/sensitivity/33_alpha_sensitivity.R",
-    "code/sensitivity/laplacian/00_config.R",
-    "code/sensitivity/laplacian/01_fit_basis_scores.R",
-    "code/sensitivity/laplacian/02_reconstruct_effect.R",
-    "code/sensitivity/laplacian/03_diagnose_hard.R",
-    "code/sensitivity/laplacian/04_diagnose_continuous.R",
-    "code/truth/ground_truth.R",
-    "code/truth/migrate_ground_truth.R",
+    "code/archive/migrate_ground_truth.R",
+    "code/ground_truth.R",
+    "code/laplacian_config.R",
+    "code/laplacian_diagnose_continuous.R",
+    "code/laplacian_diagnose_hard.R",
+    "code/laplacian_fit_basis_scores.R",
+    "code/laplacian_reconstruct_effect.R",
+    "code/paper_config.R",
     "code/utils.R"
 )
 
@@ -50,6 +52,22 @@ actual_r <- list.files(
 )
 actual_r <- sort(file.path("code", actual_r))
 stopifnot(identical(actual_r, sort(expected_r)))
+
+numbered_r <- list.files(
+    file.path(project_root, "code"),
+    pattern = "^[0-9]{2}_.+[.]R$",
+    full.names = FALSE
+)
+observed_numbers <- as.integer(sub("^([0-9]{2})_.*$", "\\1", numbered_r))
+stopifnot(identical(sort(observed_numbers), 0:27))
+
+removed_dirs <- file.path(
+    project_root,
+    "code",
+    c("pipeline", "pilot", "diagnostics", "reporting",
+      "sensitivity", "truth", "config")
+)
+stopifnot(!any(dir.exists(removed_dirs)))
 
 expected_slurm <- sort(c(
     "slurm/formal/aggregate_paired_radius.sh",

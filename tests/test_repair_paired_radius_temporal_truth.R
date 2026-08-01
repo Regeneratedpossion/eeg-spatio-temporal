@@ -2,7 +2,7 @@ script_arg <- grep("^--file=", commandArgs(FALSE), value = TRUE)
 script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 source(file.path(
-    project_root, "code", "truth", "migrate_ground_truth.R"
+    project_root, "code", "archive", "migrate_ground_truth.R"
 ))
 
 analysis_times <- seq(0, 0.5, by = 0.01)

@@ -539,7 +539,7 @@ if (!interactive() && sys.nframe() == 0) {
         Sys.getenv("PROJECT_ROOT", unset = getwd()), "code", "utils.R"
     ))
     source(file.path(
-        project_root(), "code/truth/ground_truth.R"
+        project_root(), "code/ground_truth.R"
     ))
     run_2sd_bgam_diagnostic_figures()
 }

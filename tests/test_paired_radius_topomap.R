@@ -4,7 +4,7 @@ project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
 source(file.path(
-    project_root, "code", "reporting", "07_plot_paired_radius_truth_pilot.R"
+    project_root, "code", "16_plot_paired_radius_truth.R"
 ))
 
 sensors <- data.frame(

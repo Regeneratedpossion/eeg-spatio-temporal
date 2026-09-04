@@ -9,15 +9,14 @@
 #   Rscript code/00_check_environment.R
 ###########################################################
 
+# A 41-character "=" divider line, printed before/after each report section.
 RULE <- strrep("=", 41)
-project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
+project_root <- Sys.getenv("PROJECT_ROOT", getwd())
 
-# Print one OK/MISSING line per item; return the items that failed.
+# Print OK/MISSING per item and return the ones that failed.
 check_items <- function(items, ok_fn) {
     width <- max(nchar(items))
-    ok <- vapply(items, function(item) {
-        isTRUE(tryCatch(ok_fn(item), error = function(e) FALSE))
-    }, logical(1))
+    ok <- vapply(items, ok_fn, logical(1))
     cat(sprintf("  %-*s %s\n", width, items,
                 ifelse(ok, "OK", "MISSING")), sep = "")
     items[!ok]
@@ -25,49 +24,18 @@ check_items <- function(items, ok_fn) {
 
 cat(RULE, "\n Environment check\n", RULE, "\n\n", sep = "")
 
-# ---- R packages ----
+# ---- R packages (checked first; other categories may depend on them) ----
+
 required_r <- c(
     "brms", "cmdstanr", "dplyr", "tidyr", "tidybayes", "posterior",
     "ggplot2", "patchwork", "reticulate", "igraph"
 )
-
 cat("--- R packages ---\n")
 missing_r <- check_items(
     required_r,
     function(package) requireNamespace(package, quietly = TRUE)
 )
 
-# ---- CmdStan ----
-missing_cmdstan <- character(0)
-if (!("cmdstanr" %in% missing_r)) {
-    cat("\n--- CmdStan ---\n")
-    cmdstan_path <- tryCatch(
-        cmdstanr::cmdstan_path(),
-        error = function(e) ""
-    )
-    cmdstan_ok <- length(cmdstan_path) == 1L && nzchar(cmdstan_path)
-    cat("  cmdstan:",
-        if (cmdstan_ok) cmdstan_path else "NOT FOUND", "\n")
-    if (!cmdstan_ok) missing_cmdstan <- "CmdStan"
-}
-
-# ---- Python modules ----
-missing_python <- character(0)
-if (!("reticulate" %in% missing_r)) {
-    cat("\n--- Python modules ---\n")
-    cat("  Python:",
-        tryCatch(
-            reticulate::py_config()$python,
-            error = function(e) "NONE"
-        ),
-        "\n")
-    missing_python <- check_items(
-        c("mne", "scipy", "numpy"),
-        reticulate::py_module_available
-    )
-}
-
-# ---- Project resources ----
 required_files <- c(
     "code/utils.R",
     "code/paper_config.R",
@@ -82,37 +50,51 @@ required_files <- c(
     "resources/brms_meeg/code/erp_template.R",
     "resources/brms_meeg/code/meanpower.txt"
 )
-cat("\n--- Project resources ---\n")
-missing_files <- check_items(
-    required_files,
-    function(file) file.exists(file.path(project_root, file))
+
+# ---- Everything else: one table, one loop ----
+# `requires` gates a category on an R package checked above (skipped if
+# that package is missing, since its own check would error).
+
+resource_categories <- list(
+    list(
+        label = "CmdStan", requires = "cmdstanr",
+        items = "CmdStan",
+        ok_fn = function(item) {
+            # cmdstan_path() errors if CmdStan isn't installed.
+            path <- tryCatch(cmdstanr::cmdstan_path(), error = function(e) "")
+            nzchar(path)
+        }
+    ),
+    list(
+        label = "Python modules", requires = "reticulate",
+        items = c("mne", "scipy", "numpy"),
+        ok_fn = reticulate::py_module_available
+    ),
+    list(
+        label = "project files", requires = NULL,
+        items = required_files,
+        ok_fn = function(file) file.exists(file.path(project_root, file))
+    )
 )
 
-# ---- Summary ----
-cat("\n", RULE, "\n", sep = "")
-if (length(missing_r)) {
-    cat(" Missing R packages:\n",
-        paste0("   - ", missing_r, "\n"), sep = "")
-}
-if (length(missing_cmdstan)) {
-    cat(" Missing CmdStan installation.\n")
-}
-if (length(missing_python)) {
-    cat(" Missing Python modules:\n",
-        paste0("   - ", missing_python, "\n"), sep = "")
-}
-if (length(missing_files)) {
-    cat(" Missing project files:\n",
-        paste0("   - ", missing_files, "\n"), sep = "")
+missing_groups <- list("R packages" = missing_r)
+for (rc in resource_categories) {
+    if (!is.null(rc$requires) && rc$requires %in% missing_r) next
+    cat(sprintf("\n--- %s ---\n", rc$label))
+    missing_groups[[rc$label]] <- check_items(rc$items, rc$ok_fn)
 }
 
-ready <- !length(c(
-    missing_r,
-    missing_cmdstan,
-    missing_python,
-    missing_files
-))
-if (ready) cat(" Environment looks ready.\n")
+# ---- Summary ----
+# Item-level detail was already printed above; just say which categories
+# still have problems.
+
+cat("\n", RULE, "\n", sep = "")
+problem_categories <- names(missing_groups)[lengths(missing_groups) > 0]
+if (length(problem_categories)) {
+    cat(" Problems found in:", paste(problem_categories, collapse = ", "), "\n")
+} else {
+    cat(" Environment looks ready.\n")
+}
 cat(RULE, "\n", sep = "")
 
-if (!ready) quit(status = 1)
+if (length(problem_categories)) quit(status = 1)

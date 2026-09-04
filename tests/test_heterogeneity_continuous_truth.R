@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "01_simulate_eeg_data.R"))
+source(file.path(project_root, "code", "01_generate_data.R"))
 
 stopifnot(exists("heterogeneity_scenarios", mode = "function"))
 scenarios <- heterogeneity_scenarios()

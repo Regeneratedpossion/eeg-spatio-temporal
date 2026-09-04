@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 repository_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = repository_root)
 
-source(file.path(repository_root, "code", "01_simulate_eeg_data.R"))
+source(file.path(repository_root, "code", "01_generate_data.R"))
 
 # The generator must obtain coordinates from a formal resource and remain
 # usable when no previously generated pilot dataset exists.

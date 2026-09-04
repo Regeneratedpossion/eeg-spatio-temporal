@@ -24,4 +24,4 @@ export MC_SCENARIO=high
 N_SIM="${N_SIM:-20}"
 
 cd "$PROJECT_ROOT"
-Rscript code/02_generate_montecarlo.R "$N_SIM"
+Rscript code/01_generate_data.R "$N_SIM"

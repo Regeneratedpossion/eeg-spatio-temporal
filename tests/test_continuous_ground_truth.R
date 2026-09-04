@@ -118,7 +118,7 @@ stopifnot(isTRUE(all.equal(
 )))
 
 generator_source <- paste(
-    readLines(file.path(test_project_root, "code", "01_simulate_eeg_data.R")),
+    readLines(file.path(test_project_root, "code", "01_generate_data.R")),
     collapse = "\n"
 )
 diagnostic_source <- paste(

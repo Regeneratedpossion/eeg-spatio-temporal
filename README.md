@@ -49,7 +49,7 @@ created; only the hard spatial radius differs across the three saved datasets.
 ```bash
 MC_N_PPT=20 \
 MC_SCENARIO=high \
-Rscript code/02_generate_montecarlo.R 20
+Rscript code/01_generate_data.R 20
 ```
 
 This writes:

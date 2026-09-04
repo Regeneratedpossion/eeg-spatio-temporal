@@ -30,12 +30,10 @@ untruncated spatial weights within a replicate.
    Provides project paths, resources, thresholds, trial aggregation, and
    shared evaluation helpers.
 
-3. `code/01_simulate_eeg_data.R`
-   Generates a common stochastic base and applies hard spatial radii. Spatial
-   weights outside a radius are exactly zero.
-
-4. `code/02_generate_montecarlo.R`
-   Generates all three radius datasets from one base for each seed.
+3. `code/01_generate_data.R`
+   Generates a common stochastic base, applies hard spatial radii (spatial
+   weights outside a radius are exactly zero), and generates all three
+   radius datasets from one base for each seed.
 
 5. `code/ground_truth.R`
    Provides population-level ground-truth reconstruction used by paired-radius

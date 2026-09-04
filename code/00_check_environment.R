@@ -71,8 +71,7 @@ if (!("reticulate" %in% missing_r)) {
 required_files <- c(
     "code/utils.R",
     "code/paper_config.R",
-    "code/01_simulate_eeg_data.R",
-    "code/02_generate_montecarlo.R",
+    "code/01_generate_data.R",
     "code/03_fit_bgam.R",
     "code/04_compare_methods.R",
     "code/07_fit_paired_radius_bgam.R",

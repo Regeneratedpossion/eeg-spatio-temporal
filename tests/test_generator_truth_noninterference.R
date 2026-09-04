@@ -1,9 +1,9 @@
 script_arg <- grep("^--file=", commandArgs(FALSE), value = TRUE)
 script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
-generator_path <- file.path(project_root, "code", "01_simulate_eeg_data.R")
+generator_path <- file.path(project_root, "code", "01_generate_data.R")
 montecarlo_path <- file.path(
-    project_root, "code", "02_generate_montecarlo.R"
+    project_root, "code", "01_generate_data.R"
 )
 
 generator_source <- paste(readLines(generator_path), collapse = "\n")

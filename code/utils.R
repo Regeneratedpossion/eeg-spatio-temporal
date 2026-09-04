@@ -149,7 +149,7 @@ continuous_truth_cells <- function(ground_truth, channels = NULL, times = NULL) 
     if (is.null(truth)) {
         stop(
             "Exact continuous ground truth is unavailable; regenerate the dataset ",
-            "with code/02_generate_montecarlo.R using the current data generator.",
+            "with code/01_generate_data.R using the current data generator.",
             call. = FALSE
         )
     }

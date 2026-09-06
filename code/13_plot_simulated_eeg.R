@@ -3,14 +3,14 @@
 #
 # Slide figure:
 #   Participant-level simulated condition differences at CZ
-#   under low, medium, and high heterogeneity.
+#   under low and high heterogeneity.
 ###########################################################
 
 library(dplyr)
 library(ggplot2)
 
 project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
-scenarios <- c("low", "medium", "high")
+scenarios <- c("low", "high")
 channels <- c("CZ", "FCZ", "CPZ", "C2", "PZ", "FP1")
 
 read_scenario <- function(scenario) {
@@ -81,7 +81,6 @@ electrode_truth <- bind_rows(lapply(scenario_data, `[[`, "electrode_truth"))
 
 scenario_labels <- c(
     low = "Low",
-    medium = "Medium",
     high = "High"
 )
 participant_diff$scenario <- factor(

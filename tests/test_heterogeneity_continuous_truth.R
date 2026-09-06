@@ -3,15 +3,15 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "01_generate_data.R"))
+source(file.path(project_root, "code", "01_simulate_eeg_data.R"))
 
 stopifnot(exists("heterogeneity_scenarios", mode = "function"))
 scenarios <- heterogeneity_scenarios()
-stopifnot(identical(names(scenarios), c("legacy", "low", "medium", "high")))
-stopifnot(scenarios$medium$omega_A == 0.45)
-stopifnot(scenarios$medium$omega_sigma == 0.30)
+stopifnot(identical(names(scenarios), c("low", "high")))
+stopifnot(scenarios$high$omega_A == 0.70)
+stopifnot(scenarios$high$omega_sigma == 0.60)
 
-params <- simulation_parameters(n_ppt = 2L, scenario = "medium")
+params <- simulation_parameters(n_ppt = 2L, scenario = "high")
 sensors <- data.frame(
     channel = c("CZ", "PZ"),
     spatial_distance = c(0, 1),

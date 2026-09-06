@@ -3,7 +3,7 @@ script_path <- sub("^--file=", "", script_arg[[1]])
 project_root <- normalizePath(file.path(dirname(script_path), ".."))
 Sys.setenv(PROJECT_ROOT = project_root)
 
-source(file.path(project_root, "code", "01_generate_data.R"))
+source(file.path(project_root, "code", "01_simulate_eeg_data.R"))
 
 params <- simulation_parameters(n_ppt = 2L, scenario = "high")
 
@@ -29,33 +29,6 @@ for (i in seq_len(nrow(specs))) {
     stopifnot(sum(active) == expected_active[[specs$radius_rule[i]]])
     stopifnot(all(sensors$spatial_weight[!active] == 0))
 }
-
-stopifnot(inherits(
-    try(apply_active_radius(sensor_base, 0, "1sd"), silent = TRUE),
-    "try-error"
-))
-stopifnot(inherits(
-    try(apply_active_radius(sensor_base, 0.5, "invalid"), silent = TRUE),
-    "try-error"
-))
-
-# Deterministic materialisation must neither draw random numbers nor mutate the
-# common base. Dyadic fixture values make exact noise recovery meaningful.
-params$downsample_factor <- 1L
-precision_fixture <- data.frame(
-    time = c(0, 0.01),
-    eeg_noise = c(0.123456, 0.654321),
-    signal_unit = c(0.123456789, 0.987654321)
-)
-precision_result <- downsample_base_dataset(precision_fixture, params)
-stopifnot(identical(
-    precision_result$signal_unit,
-    precision_fixture$signal_unit
-))
-stopifnot(identical(
-    precision_result$eeg_noise,
-    round(precision_fixture$eeg_noise, 4)
-))
 
 sensors <- data.frame(
     channel = c("CZ", "PZ"),

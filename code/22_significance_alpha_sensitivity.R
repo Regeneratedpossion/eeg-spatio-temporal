@@ -123,7 +123,7 @@ compute_alpha_sensitivity <- function(
 
 run_heterogeneity_alpha_sensitivity <- function(
         project_root = project_dir,
-        scenarios = c("low", "medium", "high"),
+        scenarios = c("low", "high"),
         alphas = c(0.05, 0.01, 0.005, 0.001),
         permutations = 1024L) {
     adjacency <- readRDS(file.path(

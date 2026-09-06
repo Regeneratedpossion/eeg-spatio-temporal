@@ -1,31 +1,15 @@
 ###########################################################
 # 01_generate_data.R
 #
-# Data generation: simulate two-condition EEG datasets and batch-generate
-# paired hard-radius Monte Carlo replicates.
+# Simulate two-condition EEG datasets and batch-generate paired
+# hard-radius Monte Carlo replicates.
 #
-# Merged from the former 01_simulate_eeg_data.R (single-dataset generator)
-# and 02_generate_montecarlo.R (batch driver). See PROJECT_GUIDE.md for the
-# formal execution order this file replaces (steps 3-4).
-#
-# Logical structure:
-#   1. Configuration and fixed resources
-#   2. Data-generating process
-#   3. Estimands and finite-sample ground truth
-#   4. Radius conditions and paired materialisation
-#   5. Batch Monte Carlo generation (formal entry point)
-#   6. Local pilot generator (callable, not auto-run)
-#
-# Population-level theoretical truth is defined in code/ground_truth.R.
-# Evaluation is implemented separately in code/09_compare_methods.R and
-# code/05_diagnose_paired_radius.R.
-#
-# Run (formal batch generation):
+# Run:
 #   Rscript code/01_generate_data.R
 #
 # Optional settings:
 #   MC_N_PPT=20          participant count
-#   MC_SCENARIO=high     legacy, low, medium, or high
+#   MC_SCENARIO=high or low
 ###########################################################
 
 project_root_path <- Sys.getenv("PROJECT_ROOT", unset = getwd())
@@ -43,16 +27,8 @@ BRMS_MEEG <- brms_meeg_path()
 
 heterogeneity_scenarios <- function() {
     list(
-        legacy = list(
-            omega_A = 0.00, omega_sigma = 0.00,
-            ronset_ms = seq(from = 150, to = 170, by = 2)
-        ),
         low = list(
             omega_A = 0.20, omega_sigma = 0.00,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        medium = list(
-            omega_A = 0.45, omega_sigma = 0.30,
             ronset_ms = seq(from = 140, to = 180, by = 2)
         ),
         high = list(
@@ -62,10 +38,10 @@ heterogeneity_scenarios <- function() {
     )
 }
 
-simulation_parameters <- function(n_ppt = 5L,
+simulation_parameters <- function(n_ppt = 20L,
                                   scenario = Sys.getenv(
                                       "MC_SCENARIO",
-                                      "legacy"
+                                      "high"
                                   )) {
     scenarios <- heterogeneity_scenarios()
     if (!scenario %in% names(scenarios)) {
@@ -110,8 +86,9 @@ load_noise_and_erp_assets <- function() {
 }
 
 # -------------------------------------------------------
-# 2. Data-generating process
+# 2. Generate one paired replicate
 # -------------------------------------------------------
+# 2a. Data-generating process
 
 # Participant-specific onset, amplitude, and noise scale.
 draw_participant_parameters <- function(params) {
@@ -127,7 +104,7 @@ draw_participant_parameters <- function(params) {
         ),
         noise_scale = rlnorm(
             params$n_ppt,
-            meanlog = -params$omega_sigma^2,
+            meanlog = -0.5 * params$omega_sigma^2,
             sdlog = params$omega_sigma
         ),
         stringsAsFactors = FALSE
@@ -163,14 +140,6 @@ compute_spatial_weight_base <- function(sensors, params) {
 }
 
 apply_active_radius <- function(sensors, r_active, radius_rule) {
-    valid_rules <- paper_analysis_config()$radii$radius_rule
-    if (length(r_active) != 1L || !is.finite(r_active) || r_active <= 0) {
-        stop("r_active must be one finite positive number", call. = FALSE)
-    }
-    if (length(radius_rule) != 1L || !radius_rule %in% valid_rules) {
-        stop("Unknown radius_rule: ", radius_rule, call. = FALSE)
-    }
-
     sensors %>%
         mutate(
             active_radius = r_active,
@@ -237,31 +206,12 @@ build_trial_base_rows <- function(participant_id, trial, sensors,
 generate_dataset_base <- function(params, sensors, L) {
     n_elec <- nrow(sensors)
     trial_data <- list()
-    participant_parameters <- if (params$scenario == "legacy") {
-        data.frame(
-            participant = paste0(
-                "participant_", sprintf("%02d", seq_len(params$n_ppt))
-            ),
-            onset_ms = NA_real_,
-            amplitude = params$bump_amplitude,
-            noise_scale = 1,
-            stringsAsFactors = FALSE
-        )
-    } else {
-        draw_participant_parameters(params)
-    }
+    participant_parameters <- draw_participant_parameters(params)
 
     for (P in seq_len(params$n_ppt)) {
         participant <- participant_parameters[P, ]
         participant_id <- participant$participant
-        # The legacy branch samples here, preserving the historical RNG order.
-        onset_ms <- if (params$scenario == "legacy") {
-            sample(x = params$ronset, size = 1)
-        } else {
-            participant$onset_ms
-        }
-        participant_parameters$onset_ms[P] <- onset_ms
-        temporal_signal <- temporal_signal_at_onset(onset_ms)
+        temporal_signal <- temporal_signal_at_onset(participant$onset_ms)
 
         for (trial in seq_len(params$n_trials)) {
             noise_c1 <- participant$noise_scale *
@@ -294,30 +244,27 @@ generate_dataset_base <- function(params, sensors, L) {
     )
 }
 
-# Preserve the exact temporal signal used to construct continuous ground truth.
-# Noise and public coordinates retain the historical four-decimal storage.
-downsample_base_dataset <- function(base_data, params) {
-    all_times <- sort(unique(base_data$time))
-    keep_times <- all_times[seq(1, length(all_times),
-                                by = params$downsample_factor)]
-    numeric_columns <- names(base_data)[vapply(base_data, is.numeric, logical(1))]
-    rounded_columns <- setdiff(numeric_columns, "signal_unit")
-
-    base_data %>%
-        filter(time %in% keep_times) %>%
-        mutate(across(all_of(rounded_columns), ~round(.x, 4)))
+# Indices into Xf kept after downsampling.
+# Both the simulated data and the ground truth must use this same grid.
+analysis_time_indices <- function(downsample_factor) {
+    seq(1, length(Xf), by = downsample_factor)
 }
 
-# -------------------------------------------------------
-# 3. Estimands and finite-sample ground truth
-# -------------------------------------------------------
+# Preserve the exact temporal signal used to construct continuous ground truth.
+downsample_base_dataset <- function(base_data, params) {
+    keep_times <- Xf[analysis_time_indices(params$downsample_factor)] / 1000
+    base_data %>% filter(time %in% keep_times)
+}
 
-# Save ground-truth values for evaluation. The continuous field is the exact
-# average of the participant waveforms injected into this generated dataset.
-# The population-level theoretical field is defined in code/ground_truth.R.
+# 2b. Estimands and finite-sample ground truth
+
+# Save the ground truth.
+# Two fields are returned: a continuous effect field, and a boolean active mask.
 build_ground_truth <- function(params, sensors, participant_parameters) {
     active_radius <- sensors$active_radius[1]
     radius_rule <- sensors$radius_rule[1]
+
+    # Step 1: average the participant waveforms into one population waveform.
     generation_waveforms <- vapply(
         seq_len(nrow(participant_parameters)),
         function(i) {
@@ -328,15 +275,20 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
     )
     mean_effect_waveform <- rowMeans(generation_waveforms)
 
-    keep_idx <- seq(1, length(Xf), by = params$downsample_factor)
+    # Step 2: downsample to the same time grid as the simulated data.
+    keep_idx <- analysis_time_indices(params$downsample_factor)
     analysis_time <- Xf[keep_idx] / 1000
     analysis_effect_waveform <- mean_effect_waveform[keep_idx]
+
+    # Step 3: define the active time window.
     # This fixed reference window is used for evaluation. It is not the exact
     # non-zero temporal support of every realised population field.
     temporal_active <- analysis_time[
         analysis_time >= params$true_onset &
             analysis_time <= params$true_offset
     ]
+
+    # Step 4: build the continuous effect field.
     continuous_ground_truth <- expand.grid(
         channel = sensors$channel,
         time = analysis_time,
@@ -358,9 +310,12 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
         ) %>%
         select(-effect_waveform)
 
+    # Step 5: find the active electrodes.
     active_electrodes <- sensors %>%
         filter(spatial_weight > 0) %>%
         pull(channel)
+
+    # Step 6: pack the result.
     list(
         true_onset = params$true_onset,
         true_offset = params$true_offset,
@@ -397,16 +352,25 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
     )
 }
 
-# -------------------------------------------------------
-# 4. Radius conditions and paired materialisation
-# -------------------------------------------------------
+# 2c. Radius conditions and paired materialisation
 
-radius_specifications <- function(sigma_space) {
+# Three radii test whether BGAM's spatial smoothing is robust to how
+# localized the true effect is. half-max (FWHM) is the primary radius;
+# 1sd and 2sd are kept as robustness checks, not the main focus.
+# The "high" scenario keeps the original directory names, so existing high
+# data and results are untouched. Every other scenario gets its own
+# suffixed directory, so it can never collide with high's data.
+radius_specifications <- function(sigma_space, scenario = "high") {
     config <- paper_analysis_config()$radii
+    data_subdir <- if (scenario == "high") {
+        config$data_subdir
+    } else {
+        paste0(config$data_subdir, "_", scenario)
+    }
     data.frame(
         radius_rule = config$radius_rule,
         active_radius = sigma_space * config$active_radius_multiplier,
-        data_subdir = config$data_subdir,
+        data_subdir = data_subdir,
         expected_active = config$expected_active,
         stringsAsFactors = FALSE
     )
@@ -453,18 +417,8 @@ make_paired_datasets <- function(seed = 1L, n_ppt = 20L,
     results
 }
 
-make_dataset <- function(seed = 42, n_ppt = 5L,
-                         scenario = Sys.getenv("MC_SCENARIO", "legacy"),
-                         radius_rule = "1sd") {
-    paired <- make_paired_datasets(seed, n_ppt, scenario)
-    if (!radius_rule %in% names(paired)) {
-        stop("Unknown radius_rule: ", radius_rule, call. = FALSE)
-    }
-    paired[[radius_rule]]
-}
-
 # -------------------------------------------------------
-# 5. Batch Monte Carlo generation (formal entry point)
+# 3. Batch Monte Carlo generation (formal entry point)
 # -------------------------------------------------------
 
 paired_scenario_manifest <- function(params, spec, seeds) {
@@ -521,7 +475,7 @@ write_or_validate_manifest <- function(out_dir, manifest) {
 run_paired_radius_simulation <- function(seeds, n_ppt = 20L,
                                          scenario = "high") {
     params <- simulation_parameters(n_ppt = n_ppt, scenario = scenario)
-    specs <- radius_specifications(params$sigma_space)
+    specs <- radius_specifications(params$sigma_space, scenario)
     output_dirs <- setNames(
         vapply(specs$data_subdir, data_path, character(1)),
         specs$radius_rule
@@ -554,21 +508,6 @@ main <- function() {
     n_ppt <- as.integer(Sys.getenv("MC_N_PPT", unset = "20"))
     scenario <- Sys.getenv("MC_SCENARIO", unset = "high")
     run_paired_radius_simulation(seq_len(n_sim), n_ppt, scenario)
-}
-
-# -------------------------------------------------------
-# 6. Local pilot generator (callable, not auto-run)
-# -------------------------------------------------------
-
-# Generate and save a single pilot dataset. Not invoked automatically when
-# this file is run directly -- call it explicitly if a one-off pilot
-# dataset is needed. The formal entry point below is main().
-generate_pilot_dataset <- function(seed = 42) {
-    load_noise_and_erp_assets()
-    pilot <- make_dataset(seed = seed)
-    saveRDS(pilot$sim_data, data_path("sim_data_pilot.rds"))
-    saveRDS(pilot$ground_truth, data_path("ground_truth_pilot.rds"))
-    invisible(pilot)
 }
 
 # Load noise and ERP template before generating data.

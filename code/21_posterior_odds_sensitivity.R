@@ -208,7 +208,7 @@ compute_odds_sensitivity <- function(
 
 run_heterogeneity_odds_sensitivity <- function(
         project_root = project_dir,
-        scenarios = c("low", "medium", "high"),
+        scenarios = c("low", "high"),
         thresholds = c(1, 3, 6, 10, 20, 50, 100)) {
     adjacency <- readRDS(file.path(
         project_root, "resources", "adjacency",

@@ -114,6 +114,7 @@ draw_participant_parameters <- function(params) {
 # Shift the common ERP template to a participant-specific onset.
 temporal_signal_at_onset <- function(onset_ms) {
     onset_index <- which(Xf == onset_ms)
+    stopifnot(length(onset_index) == 1L)
 
     c(
         rep(0, onset_index - 2),
@@ -405,7 +406,7 @@ make_paired_datasets <- function(seed = 1L, n_ppt = 20L,
     sensors <- compute_spatial_weight_base(load_electrode_layout(), params)
     noise_cholesky <- compute_noise_cholesky(sensors, params)
     base <- generate_dataset_base(params, sensors, noise_cholesky)
-    specs <- radius_specifications(params$sigma_space)
+    specs <- radius_specifications(params$sigma_space, scenario)
 
     results <- lapply(seq_len(nrow(specs)), function(i) {
         materialize_dataset(

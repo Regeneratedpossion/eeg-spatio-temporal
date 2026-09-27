@@ -9,7 +9,7 @@
 #
 # Optional settings:
 #   MC_N_PPT=20          participant count
-#   MC_SCENARIO=high, low, cond_A, cond_B, or cond_C
+#   MC_SCENARIO=high, high_fixed, low, cond_A, cond_B, or cond_C
 ###########################################################
 
 project_root_path <- Sys.getenv("PROJECT_ROOT", unset = getwd())
@@ -34,6 +34,11 @@ heterogeneity_scenarios <- function() {
         high = list(
             omega_A = 0.70, omega_sigma = 0.60, bump_amplitude = 1.5,
             ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        high_fixed = list(
+            omega_A = 0.70, omega_sigma = 0.60, bump_amplitude = 1.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2),
+            sigma_meanlog_mult = 1.0
         ),
         cond_A = list(
             omega_A = 0.700, omega_sigma = 0.60, bump_amplitude = 0.5,
@@ -77,7 +82,12 @@ simulation_parameters <- function(n_ppt = 20L,
         rho = 0.15,
         scenario = scenario,
         omega_A = dispersion$omega_A,
-        omega_sigma = dispersion$omega_sigma
+        omega_sigma = dispersion$omega_sigma,
+        sigma_meanlog_mult = if (is.null(dispersion$sigma_meanlog_mult)) {
+            0.5
+        } else {
+            dispersion$sigma_meanlog_mult
+        }
     )
 }
 
@@ -116,7 +126,7 @@ draw_participant_parameters <- function(params) {
         ),
         noise_scale = rlnorm(
             params$n_ppt,
-            meanlog = -0.5 * params$omega_sigma^2,
+            meanlog = -params$sigma_meanlog_mult * params$omega_sigma^2,
             sdlog = params$omega_sigma
         ),
         stringsAsFactors = FALSE

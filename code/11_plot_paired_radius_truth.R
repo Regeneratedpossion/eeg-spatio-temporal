@@ -1,7 +1,6 @@
 suppressPackageStartupMessages({
     library(dplyr)
     library(ggplot2)
-    library(patchwork)
 })
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
@@ -80,14 +79,9 @@ truth_topomap_plot <- function(electrodes, title, fill_limit) {
 
 plot_paired_radius_truth_pilot <- function() {
     specs <- data.frame(
-        radius_rule = c("1sd", "half-max", "2sd"),
-        label = c("1 SD (5 active)", "Half-max (9 active)",
-                  "2 SD (21 active)"),
-        data_subdir = c(
-            "montecarlo_r1sd",
-            "montecarlo_rhalfmax",
-            "montecarlo_r2sd"
-        ),
+        radius_rule = "half-max",
+        label = "Half-max (9 active)",
+        data_subdir = "montecarlo_rhalfmax",
         stringsAsFactors = FALSE
     )
     sensors <- readRDS(data_path("sim_data_pilot.rds")) %>%
@@ -119,16 +113,6 @@ plot_paired_radius_truth_pilot <- function() {
             plots[[rule]], width = 4.2, height = 4.4
         )
     }
-    combined <- wrap_plots(plots, nrow = 1, guides = "collect") +
-        plot_annotation(title = "Paired hard-radius truth at 250 ms")
-    ggsave(
-        file.path(out_dir, "truth_250ms_three_radii.png"),
-        combined, width = 12.2, height = 4.7, dpi = 300
-    )
-    ggsave(
-        file.path(out_dir, "truth_250ms_three_radii.pdf"),
-        combined, width = 12.2, height = 4.7
-    )
     invisible(plots)
 }
 

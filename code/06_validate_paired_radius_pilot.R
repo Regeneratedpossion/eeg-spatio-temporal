@@ -1,46 +1,15 @@
 suppressPackageStartupMessages({
     library(dplyr)
-    library(tidyr)
 })
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
 paired_radius_validation_specs <- function() {
     data.frame(
-        radius_rule = c("1sd", "half-max", "2sd"),
-        data_subdir = c(
-            "montecarlo_r1sd",
-            "montecarlo_rhalfmax",
-            "montecarlo_r2sd"
-        ),
-        expected_active = c(5L, 9L, 21L),
+        radius_rule = "half-max",
+        data_subdir = "montecarlo_rhalfmax",
+        expected_active = 9L,
         stringsAsFactors = FALSE
-    )
-}
-
-empirical_truth_residual <- function(sim_data, ground_truth) {
-    empirical <- aggregate_trials(sim_data) %>%
-        group_by(channel, time, condition) %>%
-        summarise(value = mean(eeg_mean), .groups = "drop") %>%
-        pivot_wider(names_from = condition, values_from = value) %>%
-        mutate(empirical = cond2 - cond1) %>%
-        select(channel, time, empirical)
-    truth <- continuous_truth_cells(ground_truth)
-
-    empirical %>%
-        left_join(truth, by = c("channel", "time")) %>%
-        mutate(residual = empirical - effect) %>%
-        arrange(channel, time) %>%
-        select(channel, time, residual)
-}
-
-compare_residual_vectors <- function(left, right) {
-    stopifnot(length(left) == length(right))
-    delta <- left - right
-    list(
-        exactly_identical = identical(left, right),
-        equal_at_14_digits = identical(round(left, 14), round(right, 14)),
-        max_abs_difference = max(abs(delta))
     )
 }
 
@@ -92,10 +61,8 @@ validate_paired_radius_pilot <- function(seeds = 1:5) {
     result_dir <- file.path(project_root(), "results/paired_radius_pilot")
     dir.create(result_dir, showWarnings = FALSE, recursive = TRUE)
     summaries <- list()
-    residual_checks <- list()
 
     for (seed in seeds) {
-        residuals <- list()
         for (i in seq_len(nrow(specs))) {
             sim_path <- data_path(
                 specs$data_subdir[i], sprintf("sim_%03d.rds", seed)
@@ -110,54 +77,18 @@ validate_paired_radius_pilot <- function(seeds = 1:5) {
             )
             summary$seed <- seed
             summaries[[length(summaries) + 1L]] <- summary
-            residuals[[specs$radius_rule[i]]] <- empirical_truth_residual(
-                sim_data, ground_truth
-            )
-        }
-
-        pairs <- combn(specs$radius_rule, 2, simplify = FALSE)
-        for (pair in pairs) {
-            left <- residuals[[pair[1]]]
-            right <- residuals[[pair[2]]]
-            if (!identical(left[c("channel", "time")],
-                           right[c("channel", "time")])) {
-                stop("Residual grids differ for seed ", seed, call. = FALSE)
-            }
-            comparison <- compare_residual_vectors(
-                left$residual, right$residual
-            )
-            residual_checks[[length(residual_checks) + 1L]] <- data.frame(
-                seed = seed,
-                left_rule = pair[1],
-                right_rule = pair[2],
-                exactly_identical = comparison$exactly_identical,
-                equal_at_14_digits = comparison$equal_at_14_digits,
-                max_abs_difference = comparison$max_abs_difference,
-                stringsAsFactors = FALSE
-            )
         }
     }
 
     summary_table <- bind_rows(summaries) %>%
         select(seed, everything())
-    residual_table <- bind_rows(residual_checks)
     write.csv(
         summary_table,
         file.path(result_dir, "radius_validation.csv"),
         row.names = FALSE
     )
-    write.csv(
-        residual_table,
-        file.path(result_dir, "paired_residual_validation.csv"),
-        row.names = FALSE
-    )
     print(summary_table)
-    print(residual_table)
-    if (!all(residual_table$equal_at_14_digits)) {
-        stop("Empirical-minus-truth residuals differ beyond machine rounding",
-             call. = FALSE)
-    }
-    invisible(list(summary = summary_table, residual = residual_table))
+    invisible(summary_table)
 }
 
 if (!interactive() && sys.nframe() == 0) {

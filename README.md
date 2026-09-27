@@ -55,9 +55,7 @@ Rscript code/01_generate_data.R 20
 This writes:
 
 ```text
-data/montecarlo_r1sd/
 data/montecarlo_rhalfmax/
-data/montecarlo_r2sd/
 ```
 
 Fit one radius and replicate locally:

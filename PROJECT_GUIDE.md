@@ -100,9 +100,7 @@ module, memory, and filesystem configuration.
 ## Local-only outputs
 
 ```text
-data/montecarlo_r1sd/
 data/montecarlo_rhalfmax/
-data/montecarlo_r2sd/
 results/
 logs/
 cmdstan_cache/

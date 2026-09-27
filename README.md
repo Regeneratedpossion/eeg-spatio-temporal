@@ -115,3 +115,4 @@ execution sequence:
 - `code/archive/` contains superseded single-radius or one-off scripts.
 
 Obsolete P=5/P=10, single-radius, `k = c(12, 12)`, basis-rescue, and Laplacian
+Slurm launchers were removed. Their history remains available through Git.

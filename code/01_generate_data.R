@@ -9,7 +9,7 @@
 #
 # Optional settings:
 #   MC_N_PPT=20          participant count
-#   MC_SCENARIO=high or low
+#   MC_SCENARIO=high, low, cond_A, cond_B, or cond_C
 ###########################################################
 
 project_root_path <- Sys.getenv("PROJECT_ROOT", unset = getwd())
@@ -28,11 +28,23 @@ BRMS_MEEG <- brms_meeg_path()
 heterogeneity_scenarios <- function() {
     list(
         low = list(
-            omega_A = 0.20, omega_sigma = 0.00,
+            omega_A = 0.20, omega_sigma = 0.00, bump_amplitude = 1.5,
             ronset_ms = seq(from = 140, to = 180, by = 2)
         ),
         high = list(
-            omega_A = 0.70, omega_sigma = 0.60,
+            omega_A = 0.70, omega_sigma = 0.60, bump_amplitude = 1.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        cond_A = list(
+            omega_A = 0.700, omega_sigma = 0.60, bump_amplitude = 0.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        cond_B = list(
+            omega_A = 0.260, omega_sigma = 0.60, bump_amplitude = 1.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        cond_C = list(
+            omega_A = 1.379, omega_sigma = 0.60, bump_amplitude = 0.5,
             ronset_ms = seq(from = 140, to = 180, by = 2)
         )
     )
@@ -61,7 +73,7 @@ simulation_parameters <- function(n_ppt = 20L,
         downsample_factor = 5,
         seed_electrode = "CZ",
         sigma_space = 0.5,
-        bump_amplitude = 1.5,
+        bump_amplitude = dispersion$bump_amplitude,
         rho = 0.15,
         scenario = scenario,
         omega_A = dispersion$omega_A,
@@ -355,9 +367,7 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
 
 # 2c. Radius conditions and paired materialisation
 
-# Three radii test whether BGAM's spatial smoothing is robust to how
-# localized the true effect is. half-max (FWHM) is the primary radius;
-# 1sd and 2sd are kept as robustness checks, not the main focus.
+# Only the half-max (FWHM) radius is generated.
 # The "high" scenario keeps the original directory names, so existing high
 # data and results are untouched. Every other scenario gets its own
 # suffixed directory, so it can never collide with high's data.
@@ -374,7 +384,8 @@ radius_specifications <- function(sigma_space, scenario = "high") {
         data_subdir = data_subdir,
         expected_active = config$expected_active,
         stringsAsFactors = FALSE
-    )
+    ) %>%
+        filter(radius_rule == "half-max")
 }
 
 # Apply one radius to the common stochastic base and construct its truth object.
@@ -398,7 +409,7 @@ materialize_dataset <- function(base, params, sensors, r_active, radius_rule) {
     list(sim_data = sim_data, ground_truth = ground_truth)
 }
 
-# Set the seed once, generate one common base, and materialise all three radii.
+# Set the seed once, generate one common base, and materialise the half-max radius.
 make_paired_datasets <- function(seed = 1L, n_ppt = 20L,
                                  scenario = "high") {
     set.seed(seed)

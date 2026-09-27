@@ -115,16 +115,3 @@ execution sequence:
 - `code/archive/` contains superseded single-radius or one-off scripts.
 
 Obsolete P=5/P=10, single-radius, `k = c(12, 12)`, basis-rescue, and Laplacian
-Slurm launchers were removed. Their history remains available through Git.
-
-## Verification
-
-```bash
-for test_file in tests/test_*.R; do
-  PROJECT_ROOT="$PWD" Rscript --vanilla "$test_file" || exit 1
-done
-```
-
-The regression suite checks the formal configuration, paired random base,
-5/9/21 active-electrode counts, exact spatial zeros, truth semantics, code
-inventory, diagnostic helpers, and sensitivity calculations.

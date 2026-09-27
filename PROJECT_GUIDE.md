@@ -125,11 +125,3 @@ for script in slurm/formal/*.sh slurm/pilot/*.sh; do
   bash -n "$script" || exit 1
 done
 ```
-
-Run regression tests:
-
-```bash
-for test_file in tests/test_*.R; do
-  PROJECT_ROOT="$PWD" Rscript --vanilla "$test_file" || exit 1
-done
-```

@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=hpc2n2025-235
 #SBATCH --job-name=paired_radius_fit
-#SBATCH --array=0-59
+#SBATCH --array=0-19
 #SBATCH --partition=cpu_sky
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -26,7 +26,7 @@ export CMDSTAN_CACHE_DIR="$PROJECT_ROOT/cmdstan_cache/paired_radius_${SLURM_ARRA
 
 mkdir -p "$PROJECT_ROOT/logs" "$TMPDIR" "$CMDSTAN_CACHE_DIR"
 
-RADIUS_RULES=(1sd half-max 2sd)
+RADIUS_RULES=(half-max)
 RADIUS_INDEX=$((SLURM_ARRAY_TASK_ID / 20))
 REPLICATE_SEED=$((SLURM_ARRAY_TASK_ID % 20 + 1))
 RADIUS_RULE="${RADIUS_RULES[$RADIUS_INDEX]}"

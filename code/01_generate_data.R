@@ -9,7 +9,8 @@
 #
 # Optional settings:
 #   MC_N_PPT=20          participant count
-#   MC_SCENARIO=high, high_fixed, low, cond_A, cond_B, or cond_C
+#   MC_SCENARIO=A, B, C, D, A0, B0, C0, D0 (thesis design),
+#               or high, high_fixed, low, cond_A, cond_B, cond_C
 ###########################################################
 
 project_root_path <- Sys.getenv("PROJECT_ROOT", unset = getwd())
@@ -50,6 +51,43 @@ heterogeneity_scenarios <- function() {
         ),
         cond_C = list(
             omega_A = 1.379, omega_sigma = 0.60, bump_amplitude = 0.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        # 2x2x2 thesis design: A-D use E(sigma_p^2) = 1; A0-D0 set omega_sigma = 0.
+        A = list(
+            omega_A = 0.700, omega_sigma = 0.60, bump_amplitude = 0.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2),
+            sigma_meanlog_mult = 1.0
+        ),
+        B = list(
+            omega_A = 0.260, omega_sigma = 0.60, bump_amplitude = 1.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2),
+            sigma_meanlog_mult = 1.0
+        ),
+        C = list(
+            omega_A = 1.379, omega_sigma = 0.60, bump_amplitude = 0.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2),
+            sigma_meanlog_mult = 1.0
+        ),
+        D = list(
+            omega_A = 0.700, omega_sigma = 0.60, bump_amplitude = 1.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2),
+            sigma_meanlog_mult = 1.0
+        ),
+        A0 = list(
+            omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 0.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        B0 = list(
+            omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 1.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        C0 = list(
+            omega_A = 1.379, omega_sigma = 0.00, bump_amplitude = 0.5,
+            ronset_ms = seq(from = 140, to = 180, by = 2)
+        ),
+        D0 = list(
+            omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 1.5,
             ronset_ms = seq(from = 140, to = 180, by = 2)
         )
     )

@@ -2,7 +2,7 @@ suppressPackageStartupMessages(library(dplyr))
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = getwd()), "code/utils.R"))
 
-rules <- c("1sd", "half-max", "2sd")
+rules <- "half-max"
 root <- file.path(project_root(), "results", "paired_radius_bgam_pilot")
 
 comparison <- bind_rows(lapply(rules, function(rule) {

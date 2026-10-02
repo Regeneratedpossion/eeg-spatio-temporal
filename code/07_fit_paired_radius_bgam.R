@@ -17,14 +17,10 @@ paired_radius_bgam_config <- function() {
 
 paired_radius_bgam_specs <- function() {
     data.frame(
-        radius_rule = c("1sd", "half-max", "2sd"),
-        data_subdir = c(
-            "montecarlo_r1sd",
-            "montecarlo_rhalfmax",
-            "montecarlo_r2sd"
-        ),
-        jump_weight = c(0.7038613, 0.5094451, 0.1932698),
-        expected_active = c(5L, 9L, 21L),
+        radius_rule = "half-max",
+        data_subdir = "montecarlo_rhalfmax",
+        jump_weight = 0.5094451,
+        expected_active = 9L,
         stringsAsFactors = FALSE
     )
 }
@@ -101,7 +97,7 @@ run_paired_radius_bgam_fit <- function(radius_rule, seed = 1L) {
 
 if (!interactive() && sys.nframe() == 0) {
     args <- commandArgs(trailingOnly = TRUE)
-    radius_rule <- if (length(args)) args[[1]] else "1sd"
+    radius_rule <- if (length(args)) args[[1]] else "half-max"
     seed <- if (length(args) >= 2L) as.integer(args[[2]]) else 1L
     run_paired_radius_bgam_fit(radius_rule, seed)
 }

@@ -12,14 +12,10 @@ paper_analysis_config <- function() {
             true_offset = 0.342
         ),
         radii = list(
-            radius_rule = c("1sd", "half-max", "2sd"),
-            active_radius_multiplier = c(1, sqrt(2 * log(2)), 2),
-            data_subdir = c(
-                "montecarlo_r1sd",
-                "montecarlo_rhalfmax",
-                "montecarlo_r2sd"
-            ),
-            expected_active = c(5L, 9L, 21L)
+            radius_rule = "half-max",
+            active_radius_multiplier = sqrt(2 * log(2)),
+            data_subdir = "montecarlo_rhalfmax",
+            expected_active = 9L
         ),
         model = list(
             k_xy = 16L,

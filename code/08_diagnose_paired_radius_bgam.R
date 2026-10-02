@@ -400,7 +400,7 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule,
 
 if (!interactive() && sys.nframe() == 0) {
     args <- commandArgs(trailingOnly = TRUE)
-    radius_rule <- if (length(args)) args[[1]] else "1sd"
+    radius_rule <- if (length(args)) args[[1]] else "half-max"
     mode <- if (length(args) >= 2L) args[[2]] else "all-methods"
     if (!mode %in% c("all-methods", "bgam-only")) {
         stop("Mode must be all-methods or bgam-only", call. = FALSE)

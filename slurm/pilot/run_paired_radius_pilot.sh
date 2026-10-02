@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=128G
-#SBATCH --array=0-2
+#SBATCH --array=0
 #SBATCH -o logs/paired_radius_bgam_%A_%a.log
 #SBATCH -e logs/paired_radius_bgam_%A_%a.log
 #SBATCH --mail-type=END,FAIL
@@ -24,7 +24,7 @@ export TEMP=$TMPDIR
 export CMDSTAN_CACHE_DIR=$PROJECT_ROOT/cmdstan_cache/paired_radius_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}
 mkdir -p "$PROJECT_ROOT/logs" "$TMPDIR" "$CMDSTAN_CACHE_DIR"
 
-RADIUS_RULES=(1sd half-max 2sd)
+RADIUS_RULES=(half-max)
 RADIUS_RULE="${RADIUS_RULES[$SLURM_ARRAY_TASK_ID]}"
 
 cd "$PROJECT_ROOT"

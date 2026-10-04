@@ -235,7 +235,7 @@ run_heterogeneity_odds_sensitivity <- function(
                    "_heterogeneity_exacttruth"),
             "gt_001.rds"
         ))
-        truth_cells <- ground_truth$continuous_effect %>%
+        truth_cells <- continuous_truth_cells(ground_truth) %>%
             transmute(channel, time, true_active = effect > global_sesoi)
 
         compute_odds_sensitivity(

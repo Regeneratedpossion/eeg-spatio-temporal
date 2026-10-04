@@ -50,7 +50,7 @@ read_scenario <- function(scenario) {
         group_by(scenario, channel, time) %>%
         summarise(difference = mean(difference), .groups = "drop")
 
-    truth_by_electrode <- ground_truth$continuous_effect %>%
+    truth_by_electrode <- continuous_truth_cells(ground_truth) %>%
         filter(channel %in% channels) %>%
         transmute(
             scenario = scenario,

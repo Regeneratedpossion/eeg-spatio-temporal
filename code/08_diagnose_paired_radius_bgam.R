@@ -272,9 +272,6 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule,
         channels = channels,
         times = target_time
     ) %>% arrange(match(channel, channels))
-    realized_truth_at_peak <- continuous_truth_cells(
-        ground_truth, channels = channels, times = target_time
-    ) %>% arrange(match(channel, channels))
     active_channels <- ground_truth$active_electrodes
 
     selected_methods <- if (isTRUE(bgam_only)) {
@@ -326,9 +323,6 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule,
     truth_peak <- truth_at_peak %>%
         filter(channel == "CZ") %>%
         pull(effect)
-    realized_truth_peak <- realized_truth_at_peak %>%
-        filter(channel == "CZ") %>%
-        pull(effect)
     theta_hat <- posterior_map %>%
         filter(time == target_time) %>%
         arrange(match(channel, channels)) %>%
@@ -369,7 +363,6 @@ run_paired_radius_bgam_diagnostics <- function(radius_rule,
         temporal_edf_fraction = direction_value("time", "fraction_of_upper"),
         temporal_edf_near_upper = direction_value("time", "near_upper"),
         truth_cz_250 = truth_peak,
-        realized_truth_cz_250 = realized_truth_peak,
         bgam_cz_250 = bgam_peak,
         peak_ratio = bgam_peak / truth_peak,
         FP = bgam_metrics$FP,

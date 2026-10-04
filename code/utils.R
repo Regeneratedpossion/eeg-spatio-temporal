@@ -48,6 +48,7 @@ brms_meeg_path <- function(...) {
     resource_path("brms_meeg/code", ...)
 }
 adjacency_path <- function(...) resource_path("adjacency", ...)
+source(file.path(project_root(), "code", "ground_truth.R"))
 
 resolve_path <- function(base, path) {
     if (grepl("^(/|[A-Za-z]:)", path)) path else file.path(base, path)
@@ -141,33 +142,12 @@ aggregate_trials <- function(sim_data) {
         mutate(condition = factor(condition, levels = c("cond1", "cond2")))
 }
 
-# Select the exact population-level truth saved by the data generator.
-# Diagnostics deliberately fail for legacy datasets rather than reconstructing
-# an approximate signal from generation parameters.
+# Theoretical population truth (thesis Eq. 19) for the requested cells.
 continuous_truth_cells <- function(ground_truth, channels = NULL, times = NULL) {
-    truth <- ground_truth$continuous_effect
-    if (is.null(truth)) {
-        stop(
-            "Exact continuous ground truth is unavailable; regenerate the dataset ",
-            "with code/01_generate_data.R using the current data generator.",
-            call. = FALSE
-        )
-    }
-
-    required <- c("channel", "time", "effect")
-    missing_columns <- setdiff(required, names(truth))
-    if (length(missing_columns) > 0L) {
-        stop(
-            "continuous_effect is missing required columns: ",
-            paste(missing_columns, collapse = ", "),
-            call. = FALSE
-        )
-    }
-
-    truth <- truth[, required, drop = FALSE]
-    if (anyDuplicated(truth[c("channel", "time")])) {
-        stop("Duplicated continuous ground-truth cells", call. = FALSE)
-    }
+    truth <- paired_radius_superpopulation_truth(
+        ground_truth,
+        template_path = brms_meeg_path("erp_template.R")
+    )
 
     requested_channels <- if (is.null(channels)) {
         unique(as.character(truth$channel))
@@ -197,7 +177,7 @@ continuous_truth_cells <- function(ground_truth, channels = NULL, times = NULL) 
     matched <- matched[order(
         match(matched$channel, requested_channels),
         match(matched$time, requested_times)
-    ), required, drop = FALSE]
+    ), c("channel", "time", "effect"), drop = FALSE]
     rownames(matched) <- NULL
     matched
 }

@@ -194,7 +194,7 @@ run_heterogeneity_alpha_sensitivity <- function(
                 tfce_p, "TFCE", channels, times, practical_null
             )
         )
-        truth_cells <- ground_truth$continuous_effect %>%
+        truth_cells <- continuous_truth_cells(ground_truth) %>%
             transmute(channel, time, true_active = effect > global_sesoi)
 
         compute_alpha_sensitivity(

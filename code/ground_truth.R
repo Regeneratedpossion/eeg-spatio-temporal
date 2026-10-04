@@ -1,24 +1,9 @@
-paired_radius_superpopulation_truth <- function(
-        ground_truth, template_path, channels = NULL, times = NULL) {
-    required_fields <- c(
-        "bump_amplitude", "onset_support_ms", "downsample_factor",
-        "continuous_effect"
-    )
-    missing_fields <- setdiff(required_fields, names(ground_truth))
-    if (length(missing_fields)) {
-        stop(
-            "ground_truth is missing required fields: ",
-            paste(missing_fields, collapse = ", "),
-            call. = FALSE
-        )
-    }
+# Population-mean effect waveform A * fbar(t) on the analysis grid (thesis Eq. 19).
+population_effect_waveform <- function(bump_amplitude, onset_support_ms,
+                                       downsample_factor, template_path) {
     if (!file.exists(template_path)) {
         stop("ERP template does not exist: ", template_path, call. = FALSE)
     }
-
-    bump_amplitude <- ground_truth$bump_amplitude
-    onset_support_ms <- ground_truth$onset_support_ms
-    downsample_factor <- ground_truth$downsample_factor
     if (length(bump_amplitude) != 1L || !is.finite(bump_amplitude)) {
         stop("bump_amplitude must be one finite number", call. = FALSE)
     }
@@ -95,6 +80,32 @@ paired_radius_superpopulation_truth <- function(
     )
     analysis_times <- sample_times_ms[analysis_index] / 1000
     expected_temporal <- expected_temporal[analysis_index]
+
+    data.frame(time = analysis_times, effect_waveform = expected_temporal)
+}
+
+paired_radius_superpopulation_truth <- function(
+        ground_truth, template_path, channels = NULL, times = NULL) {
+    required_fields <- c(
+        "bump_amplitude", "onset_support_ms", "downsample_factor",
+        "continuous_effect"
+    )
+    missing_fields <- setdiff(required_fields, names(ground_truth))
+    if (length(missing_fields)) {
+        stop(
+            "ground_truth is missing required fields: ",
+            paste(missing_fields, collapse = ", "),
+            call. = FALSE
+        )
+    }
+    waveform <- population_effect_waveform(
+        ground_truth$bump_amplitude,
+        ground_truth$onset_support_ms,
+        ground_truth$downsample_factor,
+        template_path
+    )
+    analysis_times <- waveform$time
+    expected_temporal <- waveform$effect_waveform
 
     continuous_effect <- ground_truth$continuous_effect
     required_columns <- c("channel", "spatial_weight")

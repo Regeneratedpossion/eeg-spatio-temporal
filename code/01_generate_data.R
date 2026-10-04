@@ -300,30 +300,24 @@ downsample_base_dataset <- function(base_data, params) {
 # 2b. Estimands and finite-sample ground truth
 
 # Save the ground truth.
-# Two fields are returned: a continuous effect field, and a boolean active mask.
+# The continuous effect field is the theoretical population truth, not the seed's sample mean.
 build_ground_truth <- function(params, sensors, participant_parameters) {
     active_radius <- sensors$active_radius[1]
     radius_rule <- sensors$radius_rule[1]
 
-    # Step 1: average the participant waveforms into one population waveform.
-    generation_waveforms <- vapply(
-        seq_len(nrow(participant_parameters)),
-        function(i) {
-            participant_parameters$amplitude[i] *
-                temporal_signal_at_onset(participant_parameters$onset_ms[i])
-        },
-        numeric(length(Xf))
+    # Steps 1-2: population-mean waveform A * fbar(t) on the analysis grid.
+    population_waveform <- population_effect_waveform(
+        params$bump_amplitude,
+        params$ronset,
+        params$downsample_factor,
+        file.path(BRMS_MEEG, "erp_template.R")
     )
-    mean_effect_waveform <- rowMeans(generation_waveforms)
-
-    # Step 2: downsample to the same time grid as the simulated data.
-    keep_idx <- analysis_time_indices(params$downsample_factor)
-    analysis_time <- Xf[keep_idx] / 1000
-    analysis_effect_waveform <- mean_effect_waveform[keep_idx]
+    analysis_time <- population_waveform$time
+    analysis_effect_waveform <- population_waveform$effect_waveform
 
     # Step 3: define the active time window.
     # This fixed reference window is used for evaluation. It is not the exact
-    # non-zero temporal support of every realised population field.
+    # non-zero temporal support of the population field.
     temporal_active <- analysis_time[
         analysis_time >= params$true_onset &
             analysis_time <= params$true_offset

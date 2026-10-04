@@ -32,7 +32,7 @@ channels <- intersect(
     unique(as.character(sim_model$channel))
 )
 cond_levels <- c("cond1", "cond2")
-landmarks <- data.frame(t = c(0.160, 0.250, 0.342))
+landmarks <- data.frame(t = c(0.160, 0.250, 0.340))
 p_threshold <- ODDS_THRESHOLD / (ODDS_THRESHOLD + 1)
 
 # Predict both conditions on selected channels, then compute P(cond2 - cond1 > 0).

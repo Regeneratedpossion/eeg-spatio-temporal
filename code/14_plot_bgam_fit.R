@@ -35,7 +35,7 @@ channels <- intersect(
     unique(as.character(sim_data$channel))
 )
 cond_levels <- c("cond1", "cond2")
-landmarks <- data.frame(t = c(0.160, 0.250, 0.342))
+landmarks <- data.frame(t = c(0.160, 0.250, 0.340))
 cond_cols <- c(cond1 = "#3498db", cond2 = "#e74c3c")
 
 as_channel_factor <- function(data) {

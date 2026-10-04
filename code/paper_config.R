@@ -9,7 +9,7 @@ paper_analysis_config <- function() {
             n_reps = 20L,
             signal_mode = "hard_signal",
             true_onset = 0.160,
-            true_offset = 0.342
+            true_offset = 0.340
         ),
         radii = list(
             radius_rule = "half-max",
@@ -35,7 +35,7 @@ paper_analysis_config <- function() {
         ),
         evaluation = list(
             reference_onset = 0.160,
-            reference_offset = 0.342,
+            reference_offset = 0.340,
             timing_grid = seq(0.16, 0.34, by = 0.01)
         )
     )

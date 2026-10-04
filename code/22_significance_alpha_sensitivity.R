@@ -194,7 +194,10 @@ run_heterogeneity_alpha_sensitivity <- function(
                 tfce_p, "TFCE", channels, times, practical_null
             )
         )
-        truth_cells <- continuous_truth_cells(ground_truth) %>%
+        truth_cells <- paired_radius_superpopulation_truth(
+            ground_truth,
+            file.path(project_dir, "resources", "brms_meeg", "code", "erp_template.R")
+        ) %>%
             transmute(channel, time, true_active = effect > global_sesoi)
 
         compute_alpha_sensitivity(

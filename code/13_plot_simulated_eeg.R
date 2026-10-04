@@ -10,6 +10,7 @@ library(dplyr)
 library(ggplot2)
 
 project_root <- Sys.getenv("PROJECT_ROOT", unset = getwd())
+source(file.path(project_root, "code", "ground_truth.R"))
 scenarios <- c("low", "high")
 channels <- c("CZ", "FCZ", "CPZ", "C2", "PZ", "FP1")
 
@@ -50,7 +51,10 @@ read_scenario <- function(scenario) {
         group_by(scenario, channel, time) %>%
         summarise(difference = mean(difference), .groups = "drop")
 
-    truth_by_electrode <- continuous_truth_cells(ground_truth) %>%
+    truth_by_electrode <- paired_radius_superpopulation_truth(
+        ground_truth,
+        file.path(project_root, "resources", "brms_meeg", "code", "erp_template.R")
+    ) %>%
         filter(channel %in% channels) %>%
         transmute(
             scenario = scenario,

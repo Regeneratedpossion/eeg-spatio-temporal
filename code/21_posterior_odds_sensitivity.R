@@ -13,6 +13,7 @@ suppressPackageStartupMessages({
 })
 
 project_dir <- Sys.getenv("PROJECT_ROOT", unset = getwd())
+source(file.path(project_dir, "code", "ground_truth.R"))
 
 .sensitivity_components <- function(mask, adjacency) {
     active_cells <- which(mask, arr.ind = TRUE)
@@ -235,7 +236,10 @@ run_heterogeneity_odds_sensitivity <- function(
                    "_heterogeneity_exacttruth"),
             "gt_001.rds"
         ))
-        truth_cells <- continuous_truth_cells(ground_truth) %>%
+        truth_cells <- paired_radius_superpopulation_truth(
+            ground_truth,
+            file.path(project_dir, "resources", "brms_meeg", "code", "erp_template.R")
+        ) %>%
             transmute(channel, time, true_active = effect > global_sesoi)
 
         compute_odds_sensitivity(

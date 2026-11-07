@@ -17,15 +17,13 @@ dir.create(file.path(project_root(), "results/comparisons"), showWarnings = FALS
 # Main comparison settings. Change these here to rerun the benchmark differently.
 compare_method_settings <- function() {
     list(
-        alpha = 0.1,
+        alpha = 0.05,
         n_perm = 1024L,
         perm_seed = 42L,
         tfce_start = 0.0,
         tfce_step = 0.2,
         total_draws = 8000L,
-        min_cluster_size = 2L,
-        min_onset_channels = 3L,
-        min_onset_run = 2L
+        min_cluster_size = 2L
     )
 }
 
@@ -39,8 +37,6 @@ TFCE_STEP <- settings$tfce_step
 TOTAL_DRAWS <- settings$total_draws
 ODDS_FLOOR <- 1 / TOTAL_DRAWS
 MIN_CLUSTER_SIZE <- settings$min_cluster_size
-MIN_ONSET_CHANNELS <- settings$min_onset_channels
-MIN_ONSET_RUN <- settings$min_onset_run
 
 # MNE is optional; cluster and TFCE return NA if MNE is unavailable.
 load_mne <- function() {
@@ -127,35 +123,21 @@ mne <- load_mne()
 # Onset / offset from the largest connected blob
 # ---------------------------------------------------------------
 
-.extract_onset_offset_2d <- function(mask, times, adj_chan,
-                                      min_size = MIN_CLUSTER_SIZE,
-                                      min_channels = MIN_ONSET_CHANNELS,
-                                      min_run = MIN_ONSET_RUN) {
-    # Work only with blobs large enough to count as a detection.
-    comp <- .large_components(mask, adj_chan, min_size)
-    if (is.null(comp) || !any(comp$keep)) {
-        return(list(onset = NA_real_, offset = NA_real_))
+.extract_onset_offset_2d <- function(mask, times, adj_chan) {
+    # Both estimates are missing when no cell is detected.
+    info <- .find_st_components(mask, adj_chan)
+    if (is.null(info)) {
+        return(list(onset = NA_real_, offset = NA_real_, tied = 0))
     }
 
-    # Use the largest detected blob.
-    cl <- comp$info$cl
-    large_ids <- unique(cl$membership[comp$keep])
-    largest <- large_ids[which.max(cl$csize[large_ids])]
-    time_idx <- comp$info$idx_true[cl$membership == largest, 1]
-    n_detected <- tabulate(time_idx, nbins = length(times))
+    # Use the largest blob; which.max keeps the first one when sizes tie.
+    cl <- info$cl
+    largest <- which.max(cl$csize)
+    tied <- as.numeric(sum(cl$csize == max(cl$csize)) > 1)
+    time_idx <- info$idx_true[cl$membership == largest, 1]
 
-    # Onset/offset require enough active channels for enough consecutive times.
-    runs <- rle(n_detected >= min_channels)
-    good <- which(runs$values & runs$lengths >= min_run)
-    if (length(good) == 0L) {
-        return(list(onset = NA_real_, offset = NA_real_))
-    }
-
-    starts <- cumsum(c(1L, head(runs$lengths, -1L)))
-    ends <- cumsum(runs$lengths)
-
-    list(onset  = times[starts[good[1]]],
-         offset = times[ends[tail(good, 1)]])
+    list(onset = times[min(time_idx)], offset = times[max(time_idx)],
+         tied = tied)
 }
 
 # ---------------------------------------------------------------
@@ -307,7 +289,7 @@ compare_methods_2d <- function(sim_data, ground_truth,
                                 adj_chan,
                                 bgam_full,
                                 mne = NULL,
-                                alpha = 0.1) {
+                                alpha = 0.05) {
 
     stopifnot(!is.null(bgam_full))
 
@@ -331,8 +313,7 @@ compare_methods_2d <- function(sim_data, ground_truth,
 
     # Extract onset/offset from the largest component for every method.
     bind_rows(lapply(names(masks), function(nm) {
-        oo <- .extract_onset_offset_2d(masks[[nm]], times, adj_chan,
-                                        min_size = MIN_CLUSTER_SIZE)
+        oo <- .extract_onset_offset_2d(masks[[nm]], times, adj_chan)
         data.frame(
             method         = nm,
             onset          = oo$onset,

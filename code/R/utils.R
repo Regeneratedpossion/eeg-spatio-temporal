@@ -36,7 +36,6 @@ fixed_grid_batch <- function() {
 
 data_path <- function(...)   file.path(project_root(), "data", ...)
 fit_path  <- function(...)   file.path(project_root(), "results/fits", ...)
-diag_path <- function(...)   file.path(project_root(), "results/diagnostics", ...)
 fig_path  <- function(...)   file.path(project_root(), "results/figures", ...)
 resource_path <- function(...) file.path(project_root(), "resources", ...)
 brms_meeg_path <- function(...) {
@@ -46,37 +45,10 @@ brms_meeg_path <- function(...) {
     }
     resource_path("brms_meeg/code", ...)
 }
-adjacency_path <- function(...) resource_path("adjacency", ...)
 source(file.path(project_root(), "code", "R", "superpopulation_truth.R"))
 
 resolve_path <- function(base, path) {
     if (grepl("^(/|[A-Za-z]:)", path)) path else file.path(base, path)
-}
-
-basis_settings <- function(default_xy = 16L, default_t = 12L) {
-    list(
-        k_xy = as.integer(Sys.getenv("K_XY", default_xy)),
-        k_t = as.integer(Sys.getenv("K_T", default_t)),
-        full = FALSE
-    )
-}
-
-slide_inputs <- function() {
-    data_subdir <- Sys.getenv("SLIDE_DATA_SUBDIR", "montecarlo_n20_hard")
-    seed <- as.integer(Sys.getenv("SLIDE_SEED", "1"))
-    sim_default <- file.path(data_subdir, sprintf("sim_%03d.rds", seed))
-    gt_default <- file.path(data_subdir, sprintf("gt_%03d.rds", seed))
-
-    list(
-        out_dir = fig_path(Sys.getenv("SLIDE_OUT_SUBDIR",
-                                      "n20_hard_sem_slides")),
-        sim_file = resolve_path(data_path(), Sys.getenv("SLIDE_SIM_FILE", sim_default)),
-        gt_file = resolve_path(data_path(), Sys.getenv("SLIDE_GT_FILE", gt_default)),
-        fit_file = resolve_path(
-            fit_path(),
-            Sys.getenv("SLIDE_FIT_FILE", "bgam_fit_v5_k20_sem.rds")
-        )
-    )
 }
 
 mc_paths <- function() {
@@ -95,36 +67,6 @@ mc_paths <- function() {
                                            unset = paste0(data_subdir, "_sem"))),
         out_dir = file.path(project_root(), "results/comparisons")
     )
-}
-
-montecarlo_files <- function(seed, paths = mc_paths()) {
-    list(
-        sim = file.path(paths$data_dir, sprintf("sim_%03d.rds", seed)),
-        gt = file.path(paths$data_dir, sprintf("gt_%03d.rds", seed)),
-        summary = file.path(paths$summary_dir, sprintf("bgam_summary_%03d.rds", seed)),
-        csv = file.path(paths$compare_dir, sprintf("sim_%03d.csv", seed))
-    )
-}
-
-ppc_inputs <- function() {
-    data_subdir <- Sys.getenv("PPC_DATA_SUBDIR", "montecarlo_n20_hard")
-    seed <- as.integer(Sys.getenv("PPC_SEED", "1"))
-    sim_default <- file.path(data_subdir, sprintf("sim_%03d.rds", seed))
-
-    list(
-        sim_file = resolve_path(data_path(), Sys.getenv("PPC_SIM_FILE", sim_default)),
-        fig_dir = fig_path()
-    )
-}
-
-setup_cmdstan_cache <- function() {
-    cache_dir <- Sys.getenv(
-        "CMDSTAN_CACHE_DIR",
-        unset = file.path(project_root(), "cmdstan_cache")
-    )
-    dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
-    options(cmdstanr_write_stan_file_dir = cache_dir)
-    invisible(cache_dir)
 }
 
 # Aggregate trials to participant x channel x condition x time.
@@ -181,34 +123,6 @@ continuous_truth_cells <- function(ground_truth, channels = NULL, times = NULL) 
     matched
 }
 
-continuous_truth_summary <- function(ground_truth, channel, peak_time,
-                                     window_times) {
-    cells <- continuous_truth_cells(
-        ground_truth,
-        channels = channel,
-        times = unique(c(peak_time, window_times))
-    )
-
-    list(
-        peak = cells$effect[cells$time == peak_time],
-        window_mean = mean(cells$effect[cells$time %in% window_times])
-    )
-}
-
-continuous_truth_matrix <- function(ground_truth, times, channels) {
-    cells <- continuous_truth_cells(
-        ground_truth,
-        channels = channels,
-        times = times
-    )
-    matrix(
-        cells$effect,
-        nrow = length(times),
-        ncol = length(channels),
-        dimnames = list(as.character(times), as.character(channels))
-    )
-}
-
 # Inverse-distance interpolation for topomaps.
 idw_interp <- function(grid_xy, src_xy, src_v, power = 2, k = 6) {
     n_g <- nrow(grid_xy)
@@ -221,22 +135,6 @@ idw_interp <- function(grid_xy, src_xy, src_v, power = 2, k = 6) {
         out[i] <- sum(w * src_v[idx]) / sum(w)
     }
     out
-}
-
-pick_time <- function(target_t, all_times) {
-    all_times[which.min(abs(all_times - target_t))]
-}
-
-# Find contiguous 1D significant intervals.
-find_clusters <- function(time, value, threshold) {
-    data.frame(time = time, above = value > threshold) %>%
-        mutate(cluster_id = cumsum(above & !lag(above, default = FALSE))) %>%
-        filter(above) %>%
-        group_by(cluster_id) %>%
-        summarise(cluster_onset  = first(time),
-                  cluster_offset = last(time),
-                  .groups = "drop") %>%
-        data.frame()
 }
 
 # Head outline used by topomap plots.

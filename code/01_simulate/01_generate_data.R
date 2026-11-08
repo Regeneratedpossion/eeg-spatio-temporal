@@ -315,17 +315,6 @@ generate_dataset_base <- function(params, sensors, L) {
 # 5. Ground truth
 # -------------------------------------------------------
 
-# Downsample from 500 Hz to 100 Hz by keeping every fifth time point.
-downsample_dataset <- function(sim_data, params) {
-    all_times <- sort(unique(sim_data$time))
-    keep_times <- all_times[seq(1, length(all_times),
-                                by = params$downsample_factor)]
-
-    sim_data %>%
-        filter(time %in% keep_times) %>%
-        mutate(across(where(is.numeric), ~round(.x, 4)))
-}
-
 # Preserve the exact temporal signal used to construct continuous ground truth.
 # Noise and public coordinates retain the historical four-decimal storage.
 downsample_base_dataset <- function(base_data, params) {

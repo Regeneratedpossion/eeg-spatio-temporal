@@ -7,8 +7,18 @@
 /check_env.R
 
 # Generated data, fits, figures, logs, and caches
-data/
-results/
+data/*
+!data/single_node_cond?_seeds001_100/
+data/single_node_cond?_seeds001_100/*
+!data/single_node_cond?_seeds001_100/gt_*.rds
+results/*
+!results/fig_data/
+!results/single_node_cond?_ds_cr_seeds001_100/
+results/single_node_cond?_ds_cr_seeds001_100/seed_*/*
+!results/single_node_cond?_ds_cr_seeds001_100/seed_*/evaluation/
+!results/single_node_cond?_ds_cr_seeds001_100/seed_*/fixed_grid/
+__pycache__/
+*.pyc
 figures/
 logs/
 cmdstan_cache/
@@ -41,3 +51,7 @@ share/
 tmp_remote_diagnostics/
 .worktrees/
 !resources/**/*.rds
+
+# Small inputs of the tables and figures that are kept in git
+!data/single_node_cond?_seeds001_100/gt_*.rds
+!results/single_node_cond?_ds_cr_seeds001_100/seed_*/evaluation/*.rds

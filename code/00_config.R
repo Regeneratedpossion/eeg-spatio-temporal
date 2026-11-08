@@ -1,11 +1,11 @@
 # Settings shared by the thesis scripts (tables, figures and figure data).
 # Run every script from the project root, the folder that holds the .here file.
 #   PROJECT_ROOT  overrides the project folder (default: found with here::here())
-#   THESIS_DIR    the thesis folder (default: the folder "thesis" next to the project folder)
+#   THESIS_DIR    folder with the small input files and the outputs of tables and figures (default: results/)
 #   FIG_OUT       if set, figures and csv files are written there instead of their usual folder
 if (!exists("thesis_dir")) {
   project_dir <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
-  thesis_dir  <- normalizePath(Sys.getenv("THESIS_DIR", unset = file.path(dirname(project_dir), "thesis")))
+  thesis_dir  <- normalizePath(Sys.getenv("THESIS_DIR", unset = file.path(project_dir, "results")))
   fig_out     <- Sys.getenv("FIG_OUT", unset = "")
   thesis_path  <- function(...) file.path(thesis_dir, ...)
   project_path <- function(...) file.path(project_dir, ...)

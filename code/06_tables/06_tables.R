@@ -1,9 +1,9 @@
 # Builds the result tables. Usage: Rscript make_tables.R [all|passed]
 suppressMessages(library(dplyr))
 mode <- commandArgs(TRUE)[1]; if (is.na(mode)) mode <- "passed"
-source(here::here("code/00_config.R"))   # run from the project root: Rscript fig_data/tables/make_tables.R passed
+source(here::here("code/00_config.R"))   # run from the project root: Rscript code/06_tables/06_tables.R passed
 tdir <- thesis_path("fig_data/tables"); odir <- fig_dir(tdir)
-root0 <- thesis_path("fig_data")
+root0 <- project_path("results")
 sc <- c(I = 1, H = 2, F = 3, E = 4)
 man <- read.table(here::here("resources/passed_fits.txt"), col.names = c("cond", "seed"))
 rd <- function(c, f, root = root0) bind_rows(lapply(sort(Sys.glob(sprintf("%s/single_node_cond%s_ds_cr_seeds001_100/seed_*/evaluation/%s", root, c, f))), function(p) {

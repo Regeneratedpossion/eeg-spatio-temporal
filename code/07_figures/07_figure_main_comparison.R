@@ -2,7 +2,7 @@ source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"
 # Builds the main comparison figure and the trade-off figure from the per-seed evaluation CSVs.
 suppressPackageStartupMessages({library(ggplot2); library(dplyr); library(tidyr)})
 
-data_dir <- thesis_path("fig_data")
+data_dir <- project_path("results")
 out_dir <- fig_dir(thesis_path("diagnostics"))
 scen_dir <- c("1" = "I", "2" = "H", "3" = "F", "4" = "E")
 scen_lab <- c("1" = "'Scenario 1:'~A == '0.5'*','~omega[A] == '0.26'", "2" = "'Scenario 2:'~A == '0.5'*','~omega[A] == '0.70'",
@@ -149,7 +149,7 @@ fig_a(c("1", "2"), "fig_main_comparison.pdf")
 fig_a(c("3", "4"), "fig_main_comparison_appendix.pdf")
 fig_c(c("1", "2", "3", "4"), "fig_tradeoff.pdf")
 nvalid_table("nvalid_rows.tex")
-write.csv(summ, file.path(fig_dir(data_dir), "figure_summary.csv"), row.names = FALSE)
+write.csv(summ, file.path(fig_dir(thesis_path("fig_data")), "figure_summary.csv"), row.names = FALSE)
 cat("done\n")
 
 # ---- False positive rate by ring (2 x 2 panels) ----

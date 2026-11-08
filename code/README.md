@@ -1,8 +1,8 @@
 # Code for the thesis
 
 Run every script from the project root, the folder that holds the `.here` file.
-Paths are found with `here::here()`; `PROJECT_ROOT` overrides the root, `THESIS_DIR` the thesis folder
-(default: the folder `thesis` next to the project) and `FIG_OUT` the output folder of figures and tables.
+Paths are found with `here::here()`; `PROJECT_ROOT` overrides the root, `THESIS_DIR` the folder that holds the
+small input files and the outputs of tables and figures (default: `results/` in the project) and `FIG_OUT` the output folder of figures and tables.
 
 | Step | Script | What it does |
 |---|---|---|

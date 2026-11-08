@@ -9,7 +9,7 @@
 #SBATCH --mem=16G
 #SBATCH --output=logs/evaluate_bgam_%A_%a.log
 
-# Evaluate one fit per array task with code/04_evaluate_bgam.R.
+# Evaluate one fit per array task with code/04_evaluate/04_evaluate_bgam.R.
 # Usage: sbatch --export=ALL,RESULTS_BATCH=<results subdirectory> slurm/04_evaluate_bgam_array.sh
 
 set -euo pipefail
@@ -24,7 +24,7 @@ SEED_DIR="results/${RESULTS_BATCH}/$(printf 'seed_%03d' "$SLURM_ARRAY_TASK_ID")"
 DATA_SUBDIR=$(Rscript --vanilla -e "cat(readRDS('${SEED_DIR}/config.rds')\$data_subdir)")
 SEED_TAG=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")
 
-Rscript --vanilla code/04_evaluate_bgam.R \
+Rscript --vanilla code/04_evaluate/04_evaluate_bgam.R \
     "${SEED_DIR}/fit.rds" \
     "data/${DATA_SUBDIR}/sim_${SEED_TAG}.rds" \
     "data/${DATA_SUBDIR}/gt_${SEED_TAG}.rds" \

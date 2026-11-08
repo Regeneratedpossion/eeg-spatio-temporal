@@ -10,7 +10,7 @@
 #SBATCH --output=logs/evaluate_conv_nospace_%A_%a.log
 
 # Evaluate the conventional methods on one dataset per array task with
-# code/03_evaluate_conventional.R.
+# code/03_conventional/03_evaluate_conventional.R.
 # Usage: sbatch --export=ALL,RESULTS_BATCH=<results subdirectory> slurm/03_evaluate_conventional_array.sh
 
 set -euo pipefail
@@ -25,7 +25,7 @@ SEED_DIR="results/${RESULTS_BATCH}/$(printf 'seed_%03d' "$SLURM_ARRAY_TASK_ID")"
 DATA_SUBDIR=$(Rscript --vanilla -e "cat(readRDS('${SEED_DIR}/config.rds')\$data_subdir)")
 SEED_TAG=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")
 
-Rscript --vanilla code/03_evaluate_conventional_no_space.R \
+Rscript --vanilla code/03_conventional/03_evaluate_conventional_no_space.R \
     "data/${DATA_SUBDIR}/sim_${SEED_TAG}.rds" \
     "data/${DATA_SUBDIR}/gt_${SEED_TAG}.rds" \
     "${SEED_DIR}/evaluation_no_space"

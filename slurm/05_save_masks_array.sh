@@ -14,4 +14,4 @@ mkdir -p "$PROJECT_ROOT/logs"
 cd "$PROJECT_ROOT"
 module purge
 module load R/4.4.2-gcc141-base
-Rscript --vanilla code/05_save_masks.R "$COND" "$SLURM_ARRAY_TASK_ID" "$WHAT"
+Rscript --vanilla code/05_aggregate/05_save_masks.R "$COND" "$SLURM_ARRAY_TASK_ID" "$WHAT"

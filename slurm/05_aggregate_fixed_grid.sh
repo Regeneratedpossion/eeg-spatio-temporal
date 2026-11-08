@@ -17,4 +17,4 @@ cd "$PROJECT_ROOT"
 module purge
 module load R/4.4.2-gcc141-base
 
-Rscript --vanilla code/41_aggregate_and_plot_fixed_grid.R
+Rscript --vanilla code/05_aggregate/05_aggregate_fixed_grid.R

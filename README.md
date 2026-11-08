@@ -15,52 +15,40 @@ Four scenarios (A = amplitude, ω_A = between-participant variability of the amp
 
 Each scenario has 100 simulated datasets (seeds 1–100). The BGAM is fitted to every dataset, and 362 of the 400 fits pass the convergence criterion (`resources/passed_fits.txt`). Onset, offset and spatial extent of the effect are then compared with the conventional methods.
 
-## Structure at a glance
+## Structure
 
 ```text
 eeg-spatio-temporal/
-├── code/            ← THE CODE OF THE THESIS (start here)
-│   ├── 01_...       simulate data
-│   ├── 02_...       fit the Bayesian model
-│   ├── 03_...       conventional methods (cluster test, TFCE)
-│   ├── 04_...       evaluate the fits
-│   ├── 05_...       collect results of all seeds
-│   ├── 06_...       tables of the thesis
-│   ├── 07_...       figures of the thesis
-│   └── R/           helper functions
-├── slurm/           ← cluster job scripts, same numbers as code/
-├── resources/       ← small input files
-├── inventory.csv    ← which script makes which table or figure
-└── archive/         ← OLD, NOT USED. Ignore this folder.
+├── code/
+│   ├── 00_config.R          paths and scenario map, loaded by every script
+│   ├── 01_simulate/         simulate the datasets
+│   ├── 02_fit/              fit the Bayesian model (one seed per job)
+│   ├── 03_conventional/     cluster test, TFCE and other conventional methods
+│   ├── 04_evaluate/         turn each fit into detection masks and measures
+│   ├── 05_aggregate/        collect the results of all seeds
+│   ├── 06_tables/           tables of the thesis
+│   ├── 07_figures/          figures of the thesis and their data
+│   └── R/                   helper functions
+├── slurm/                   cluster job scripts, same numbers as code/
+├── resources/               small input files (electrodes, adjacency, passed fits, brms template)
+├── inventory.csv            which script makes which table or figure
+└── README.md
 ```
 
-A file named `05_xxx.R` belongs to step 05. Files with the same number belong together.
-
-## Folders
-
-| Folder | Content |
-|---|---|
-| `code/` | all R and Python scripts, numbered in the order they are run |
-| `code/R/` | helper functions that the numbered scripts load |
-| `slurm/` | one cluster submit script per step, numbered like `code/` |
-| `resources/` | small input files: electrode layout, adjacency matrix, list of passed fits, brms template |
-| `inventory.csv` | every table and figure of the thesis, with the script that makes it |
-| `archive/` | old code, notes and results, kept only for reference |
-
-Generated data, fitted models, figures and logs are not in this repository.
+Old code, notes and results from earlier versions of the project are not on this branch. They are on the branch `archive`.
 
 ## Order of the scripts
 
 | Step | Script | Where it runs |
 |---|---|---|
 | 00 | `00_config.R` (paths and scenario map) | loaded by the other scripts |
-| 01 | `01_generate_data.R` simulates the datasets | cluster or local |
-| 02 | `02_fit_bgam.R` fits the BGAM of one seed (`COND` = I, H, F or E) | cluster, about 20 h per fit |
-| 03 | `03_evaluate_conventional*.R` runs the conventional tests | cluster |
-| 04 | `04_evaluate_bgam.R` turns each fit into detection masks and measures | cluster |
-| 05 | `05_*.R` collects the per-seed results | cluster |
-| 06 | `06_tables.R` makes the result tables | local |
-| 07 | `07_figure_*.R` makes the figures | local |
+| 01 | `01_simulate/01_generate_data.R` simulates the datasets | cluster or local |
+| 02 | `02_fit/02_fit_bgam.R` fits the BGAM of one seed (`COND` = I, H, F or E) | cluster, about 20 h per fit |
+| 03 | `03_conventional/03_evaluate_conventional*.R` runs the conventional tests | cluster |
+| 04 | `04_evaluate/04_evaluate_bgam.R` turns each fit into detection masks and measures | cluster |
+| 05 | `05_aggregate/05_*.R` collects the per-seed results | cluster |
+| 06 | `06_tables/06_tables.R` makes the result tables | local |
+| 07 | `07_figures/07_figure_*.R` makes the figures | local |
 
 Run every script from the repository root. Details, environment variables and the Slurm call are in [code/README.md](code/README.md).
 

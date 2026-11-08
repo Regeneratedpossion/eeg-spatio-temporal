@@ -1,5 +1,5 @@
 #!/bin/bash
-# Wrapper: retries code/02_fit_bgam.R up to 5 times on failure (mitigates
+# Wrapper: retries code/02_fit/02_fit_bgam.R up to 5 times on failure (mitigates
 # sporadic GCC internal-compiler-error segfaults, ~12% observed rate, not
 # tied to any specific seed or node).
 set -uo pipefail
@@ -10,7 +10,7 @@ SEED_DIR="${PROJECT_ROOT}/results/single_node_cond${COND}_ds_cr_seeds001_100/see
 
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "attempt ${attempt}/${MAX_ATTEMPTS} for seed ${SLURM_ARRAY_TASK_ID} at $(date --iso-8601=seconds)"
-    Rscript --vanilla code/02_fit_bgam.R
+    Rscript --vanilla code/02_fit/02_fit_bgam.R
     status=$?
     if [ $status -eq 0 ]; then
         echo "succeeded on attempt ${attempt}"

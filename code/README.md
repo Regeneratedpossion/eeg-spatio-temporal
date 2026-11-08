@@ -7,7 +7,7 @@ Paths are found with `here::here()`; `PROJECT_ROOT` overrides the root, `THESIS_
 | Step | Script | What it does |
 |---|---|---|
 | 00 | `00_config.R` | paths and the scenario map (1 = I, 2 = H, 3 = F, 4 = E) |
-| 01 | `01_simulate/01_generate_data.R` | simulates the datasets (`data/single_node_cond*_seeds001_100`) |
+| 01 | `01_simulate/01_generate_dataset.R` (+ `01_generate_data.R`, the generator functions) | simulates one dataset; condition from `COND`, seed from `SLURM_ARRAY_TASK_ID` or the first argument; writes `data/single_node_cond*_seeds001_100/sim_NNN.rds` and `gt_NNN.rds` |
 | 01 | `01_simulate/01_make_adjacency_61ch.py`, `01_simulate/01_adjacency_csv_to_rds.R` | rebuild `resources/adjacency/adjacency_xproj_yproj_61ch.rds` |
 | 02 | `02_fit/02_fit_bgam.R` (+ `R/fit_config.R`) | fits the BGAM of one seed; condition from `COND`, seed from `SLURM_ARRAY_TASK_ID` |
 | 03 | `03_conventional/03_evaluate_conventional.R`, `03_conventional/03_evaluate_conventional_no_space.R` | uncorrected, BH, BY, Holm, cluster mass, TFCE |

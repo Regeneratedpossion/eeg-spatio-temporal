@@ -42,7 +42,7 @@ Old code, notes and results from earlier versions of the project are not on this
 | Step | Script | Where it runs |
 |---|---|---|
 | 00 | `00_config.R` (paths and scenario map) | loaded by the other scripts |
-| 01 | `01_simulate/01_generate_data.R` simulates the datasets | cluster or local |
+| 01 | `01_simulate/01_generate_dataset.R` simulates one dataset (`COND` = I, H, F or E, seed 1–100) | cluster or local |
 | 02 | `02_fit/02_fit_bgam.R` fits the BGAM of one seed (`COND` = I, H, F or E) | cluster, about 20 h per fit |
 | 03 | `03_conventional/03_evaluate_conventional*.R` runs the conventional tests | cluster |
 | 04 | `04_evaluate/04_evaluate_bgam.R` turns each fit into detection masks and measures | cluster |

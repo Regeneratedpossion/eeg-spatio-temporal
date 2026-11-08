@@ -230,11 +230,10 @@ draw_participant_parameters <- function(params) {
 # 2. Electrode layout and simulation assets
 # -------------------------------------------------------
 
-# Reuse the electrode coordinates from the pilot data.
+# Electrode coordinates, in the order that the noise matrix uses.
 load_electrode_layout <- function() {
-    sim_pilot <- readRDS(data_path("sim_data_pilot.rds"))
-    sim_pilot %>%
-        distinct(channel, xproj, yproj)
+    read.csv(file.path(project_root(), "resources", "electrodes", "electrode_layout_61ch.csv"),
+             stringsAsFactors = FALSE)[, c("channel", "xproj", "yproj")]
 }
 
 # Load the external noise generator, ERP template, and frequency-power profile.

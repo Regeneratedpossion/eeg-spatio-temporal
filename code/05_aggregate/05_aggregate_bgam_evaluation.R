@@ -2,8 +2,8 @@
 # 05_aggregate_bgam_evaluation.R
 #
 # Summarise per-seed BGAM evaluations (code/04_evaluate/04_evaluate_bgam.R) for one
-# results directory, with Monte Carlo standard errors (Section 2.4.2) and the
-# two inclusion policies of Section 2.4.4.
+# results directory, with Monte Carlo standard errors (Section 2.2.5) and the
+# two inclusion policies of Section 2.2.5.
 #
 # Run:
 #   Rscript code/05_aggregate/05_aggregate_bgam_evaluation.R <results_dir>
@@ -17,10 +17,9 @@
 
 suppressPackageStartupMessages(library(dplyr))
 
-# Convergence criteria from Section 2.4.4, applied to the evaluated effect g.
+# Convergence criteria from Section 2.2.5, applied to the evaluated effect g.
 converged <- function(x) {
-    x$divergences == 0 & x$max_rhat_g <= 1.01 &
-        x$min_ess_bulk_g >= 400 & x$min_ess_tail_g >= 400
+    x$max_rhat_g <= 1.01 & x$min_ess_bulk_g >= 400 & x$min_ess_tail_g >= 400
 }
 
 # Mean-type summary with MCSE = SD / sqrt(N).
@@ -32,7 +31,7 @@ mean_row <- function(v, measure) {
                mcse = if (n > 1) sd(v) / sqrt(n) else NA_real_)
 }
 
-# Bias, MAE, RMSE and SD of a timing error (Section 3.3), with MCSEs.
+# Bias, MAE, RMSE and SD of a timing error (Section 2.2.4), with MCSEs.
 timing_rows <- function(e, label) {
     e <- e[is.finite(e)]
     n <- length(e)
@@ -109,7 +108,7 @@ read_conventional <- function(results_dir, seeds) {
     }))
 }
 
-# Per-method summaries and paired BGAM-minus-method differences (Section 2.4.2).
+# Per-method summaries and paired BGAM-minus-method differences (Section 2.2.5).
 compare_with_conventional <- function(results_dir, bgam, conv) {
     by_method <- do.call(rbind, lapply(split(conv, conv$method), function(d) {
         cbind(method = d$method[1], summarise_policy(d, "all_datasets"))

@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
 
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 # Shared truth, extraction rule and metric functions.
-source(file.path(project_root, "code", "04_evaluate", "04_evaluate_bgam.R"))
+source(file.path(project_root, "code", "R", "evaluation_functions.R"))
 
 conventional_settings <- function() {
     list(alphas = c(0.05, 0.01, 0.005, 0.001), main_alpha = 0.05,

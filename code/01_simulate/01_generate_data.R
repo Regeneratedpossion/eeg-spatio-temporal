@@ -1,16 +1,16 @@
 ###########################################################
-# 00_generate_data.R
+# 01_generate_data.R
 #
-# Generate one simulated two-condition EEG dataset.
+# Functions that simulate one two-condition EEG dataset of the thesis (scenario cond_E, cond_F, cond_H or cond_I).
+# Run code/01_simulate/01_generate_dataset.R to write the datasets.
 #
 # Main structure:
-#   1. define_simulation_parameters()
+#   1. heterogeneity_scenarios() and simulation_parameters()
 #   2. load_electrode_layout()
-#   3. compute_spatial_weights()
-#   4. compute_noise_covariance()
-#   5. generate_one_dataset()
-#   6. downsample_dataset()
-#   7. build_ground_truth()
+#   3. compute_spatial_weight_base() and compute_noise_covariance()
+#   4. generate_dataset_base() and materialize_dataset()
+#   5. build_ground_truth()
+#   6. make_dataset()
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = here::here()), "code/R/utils.R"))
@@ -25,119 +25,20 @@ BRMS_MEEG <- brms_meeg_path()
 # -------------------------------------------------------
 
 heterogeneity_scenarios <- function() {
+    onsets <- seq(from = 140, to = 180, by = 2)
     list(
-        legacy = list(
-            omega_A = 0.00, omega_sigma = 0.00,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 150, to = 170, by = 2)
-        ),
-        low = list(
-            omega_A = 0.20, omega_sigma = 0.00,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        medium = list(
-            omega_A = 0.45, omega_sigma = 0.30,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        # Condition D (already generated/fitted as "high"): high absolute
-        # heterogeneity (s ~= 1.193 uV), large amplitude.
-        high = list(
-            omega_A = 0.70, omega_sigma = 0.60,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        # Same as "high" but the noise-scale centring gives E(sigma_p^2) = 1.
-        high_fixed = list(
-            omega_A = 0.70, omega_sigma = 0.60,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2),
-            sigma_meanlog_mult = 1.0
-        ),
-        # 2x2 heterogeneity x amplitude design (Ladislas). omega_A is chosen
-        # per condition so that the IMPLIED ABSOLUTE participant-amplitude SD
-        # (s = bump_amplitude * sqrt(exp(omega_A^2) - 1)) lands on one of two
-        # fixed tiers: s_low ~= 0.397 uV (cond_A, cond_B) or s_high ~= 1.193
-        # uV (cond_C, matching "high"/cond_D). Cohen's d = bump_amplitude / s
-        # is therefore independently tunable from the absolute heterogeneity
-        # tier. cond_A and "high" share the same d by design (paired
-        # contrast: same standardised effect, 3x the absolute heterogeneity
-        # and 3x the amplitude).
-        cond_A = list(
-            omega_A = 0.700, omega_sigma = 0.60,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        cond_B = list(
-            omega_A = 0.260, omega_sigma = 0.60,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        cond_C = list(
-            omega_A = 1.379, omega_sigma = 0.60,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        # Noise-heterogeneity contrast: identical to "high"/cond_D (mu=1.5,
-        # omega_A=0.700, s~=1.193) except omega_sigma=0, to isolate the
-        # effect of noise-scale heterogeneity alone.
-        cond_E = list(
-            omega_A = 0.700, omega_sigma = 0.00,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        # Same noise-heterogeneity contrast (omega_sigma=0), paired with
-        # cond_B, cond_C and cond_A respectively.
-        cond_F = list(
-            omega_A = 0.260, omega_sigma = 0.00,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        cond_G = list(
-            omega_A = 0.26, omega_sigma = 0.00,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        cond_H = list(
-            omega_A = 0.700, omega_sigma = 0.00,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        # New 2x2 design entirely at omega_sigma=0: cond_I (mu=0.5,
-        # omega_A=0.26) pairs with cond_F (mu=1.5, omega_A=0.26), cond_H
-        # (mu=0.5, omega_A=0.70) and cond_E (mu=1.5, omega_A=0.70).
-        cond_I = list(
-            omega_A = 0.260, omega_sigma = 0.00,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2)
-        ),
-        # Same as cond_A/cond_B/cond_C but with the variance-centred
-        # noise-scale convention (sigma_meanlog_mult = 1.0, matching
-        # "high_fixed"): E(sigma_p^2) = 1 instead of E(sigma_p) = 1.
-        cond_A_fixed = list(
-            omega_A = 0.700, omega_sigma = 0.60,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2),
-            sigma_meanlog_mult = 1.0
-        ),
-        cond_B_fixed = list(
-            omega_A = 0.260, omega_sigma = 0.60,
-            bump_amplitude = 1.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2),
-            sigma_meanlog_mult = 1.0
-        ),
-        cond_C_fixed = list(
-            omega_A = 0.26, omega_sigma = 0.60,
-            bump_amplitude = 0.5,
-            ronset_ms = seq(from = 140, to = 180, by = 2),
-            sigma_meanlog_mult = 1.0
-        )
+        # Scenario 1: weak effect, little variation between participants
+        cond_I = list(omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 0.5, ronset_ms = onsets),
+        # Scenario 2: weak effect, large variation
+        cond_H = list(omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 0.5, ronset_ms = onsets),
+        # Scenario 3: strong effect, little variation
+        cond_F = list(omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 1.5, ronset_ms = onsets),
+        # Scenario 4: strong effect, large variation
+        cond_E = list(omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 1.5, ronset_ms = onsets)
     )
 }
 
-define_simulation_parameters <- function(scenario = "legacy",
-                                         bump_amplitude = NULL) {
+define_simulation_parameters <- function(scenario) {
     scenarios <- heterogeneity_scenarios()
     if (!scenario %in% names(scenarios)) {
         stop("Unknown heterogeneity scenario: ", scenario,
@@ -147,7 +48,7 @@ define_simulation_parameters <- function(scenario = "legacy",
 
     list(
         n_trials = 20,
-        n_ppt = 5,
+        n_ppt = 20,
         outvar = 0.5,
         srate = 500,
         ronset_ms = dispersion$ronset_ms,
@@ -156,42 +57,18 @@ define_simulation_parameters <- function(scenario = "legacy",
         downsample_factor = 5,
         seed_electrode = "CZ",
         sigma_space = 0.5,
-        bump_amplitude = if (is.null(bump_amplitude)) {
-            dispersion$bump_amplitude
-        } else {
-            bump_amplitude
-        },
+        bump_amplitude = dispersion$bump_amplitude,
         rho = 0.15,
         signal_mode = "hard_signal",
         scenario = scenario,
         omega_A = dispersion$omega_A,
         omega_sigma = dispersion$omega_sigma,
-        sigma_meanlog_mult = if (is.null(dispersion$sigma_meanlog_mult)) {
-            0.5
-        } else {
-            dispersion$sigma_meanlog_mult
-        }
+        sigma_meanlog_mult = 0.5
     )
 }
 
-default_params <- define_simulation_parameters()
-
-simulation_parameters <- function(n_ppt = default_params$n_ppt,
-                                  signal_mode = Sys.getenv(
-                                      "MC_SIGNAL_MODE",
-                                      default_params$signal_mode
-                                  ),
-                                  scenario = Sys.getenv(
-                                      "MC_SCENARIO",
-                                      "legacy"
-                                  ),
-                                  bump_amplitude = {
-                                      env_val <- Sys.getenv(
-                                          "MC_BUMP_AMPLITUDE", unset = NA
-                                      )
-                                      if (is.na(env_val)) NULL else as.numeric(env_val)
-                                  }) {
-    params <- define_simulation_parameters(scenario, bump_amplitude)
+simulation_parameters <- function(scenario, n_ppt = 20L, signal_mode = "hard_signal") {
+    params <- define_simulation_parameters(scenario)
     if (!identical(signal_mode, "hard_signal")) {
         stop("signal_mode is fixed to hard_signal", call. = FALSE)
     }
@@ -248,24 +125,8 @@ load_noise_and_erp_assets <- function() {
 # 3. Spatial weights and noise covariance
 # -------------------------------------------------------
 
-# Part A: raw Gaussian weights and deterministic hard-radius truncation.
-radius_specifications <- function(sigma_space) {
-    data.frame(
-        radius_rule = c("1sd", "half-max", "2sd"),
-        active_radius = c(
-            sigma_space,
-            sigma_space * sqrt(2 * log(2)),
-            sigma_space * 2
-        ),
-        data_subdir = c(
-            "montecarlo_r1sd",
-            "montecarlo_rhalfmax",
-            "montecarlo_r2sd"
-        ),
-        expected_active = c(5L, 9L, 21L),
-        stringsAsFactors = FALSE
-    )
-}
+# Part A: raw Gaussian weights and deterministic hard-radius truncation at the half-maximum radius.
+half_max_radius <- function(sigma_space) sigma_space * sqrt(2 * log(2))
 
 compute_spatial_weight_base <- function(sensors, params) {
     seed_coord <- sensors %>%
@@ -579,50 +440,14 @@ materialize_dataset <- function(base, params, sensors, r_active, radius_rule) {
     list(sim_data = sim_data, ground_truth = ground_truth)
 }
 
-make_paired_datasets <- function(seed = 1L, n_ppt = 20L,
-                                 scenario = "high",
-                                 bump_amplitude = NULL) {
+make_dataset <- function(seed, scenario, n_ppt = 20L) {
     set.seed(seed)
-    params <- simulation_parameters(
-        n_ppt = n_ppt, scenario = scenario, signal_mode = "hard_signal",
-        bump_amplitude = bump_amplitude
-    )
+    params <- simulation_parameters(n_ppt = n_ppt, scenario = scenario)
     sensors <- compute_spatial_weight_base(load_electrode_layout(), params)
     noise_cov <- compute_noise_covariance(sensors, params)
     base <- generate_dataset_base(params, sensors, noise_cov$L)
-    specs <- radius_specifications(params$sigma_space)
-
-    results <- lapply(seq_len(nrow(specs)), function(i) {
-        materialize_dataset(
-            base, params, sensors,
-            specs$active_radius[i], specs$radius_rule[i]
-        )
-    })
-    names(results) <- specs$radius_rule
-    results
-}
-
-make_dataset <- function(seed = 42, n_ppt = default_params$n_ppt,
-                         scenario = Sys.getenv("MC_SCENARIO", "legacy"),
-                         signal_mode = Sys.getenv("MC_SIGNAL_MODE",
-                                                  "hard_signal"),
-                         radius_rule = "1sd") {
-    if (!identical(signal_mode, "hard_signal")) {
-        stop("signal_mode is fixed to hard_signal", call. = FALSE)
-    }
-    paired <- make_paired_datasets(seed, n_ppt, scenario)
-    if (!radius_rule %in% names(paired)) {
-        stop("Unknown radius_rule: ", radius_rule, call. = FALSE)
-    }
-    paired[[radius_rule]]
+    materialize_dataset(base, params, sensors, half_max_radius(params$sigma_space), "half-max")
 }
 
 # Load noise and ERP template before generating data.
 load_noise_and_erp_assets()
-
-# Run only when this file is executed directly.
-if (!interactive() && sys.nframe() == 0) {
-    pilot <- make_dataset(seed = 42)
-    saveRDS(pilot$sim_data, data_path("sim_data_pilot.rds"))
-    saveRDS(pilot$ground_truth, data_path("ground_truth_pilot.rds"))
-}

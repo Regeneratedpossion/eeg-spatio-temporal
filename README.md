@@ -37,6 +37,16 @@ eeg-spatio-temporal/
 
 Old code, notes and results from earlier versions of the project are not on this branch. They are on the branch `archive`.
 
+## Where the parameters are
+
+| Parameters | File and function |
+|---|---|
+| Simulation (participants, trials, noise, onsets, the four scenarios) | `code/01_simulate/01_generate_data.R`: `define_simulation_parameters()`, `heterogeneity_scenarios()` |
+| BGAM (basis, k, chains, iterations, priors, contrast coding) | `code/R/fit_config.R`: `ds_cr_seed_config()` |
+| Evaluation (SESOI baseline, posterior odds, active window, thresholds) | `code/R/evaluation_functions.R`: `evaluation_settings()` |
+| Conventional methods (permutations, seed, alpha, TFCE) | `code/03_conventional/03_evaluate_conventional.R`: `conventional_settings()` |
+| Convergence rule (R-hat < 1.01, ESS > 400) | `code/05_aggregate/05_make_passed_fits.R` |
+
 ## Order of the scripts
 
 | Step | Script | Where it runs |
@@ -54,7 +64,7 @@ Run every script from the repository root. Details, environment variables and th
 
 ## To reproduce only the tables and figures
 
-Steps 06 and 07 need the aggregated results from step 05. Those are large and are not stored here.
+The small per-seed results that steps 06 and 07 need are in `results/` and `data/*/gt_*.rds`, so a clone can make the tables and figures without fitting anything: `Rscript code/06_tables/06_tables.R passed`, then the scripts in `code/07_figures/`. Fits, simulated EEG data and logs are not stored.
 
 ## Software
 

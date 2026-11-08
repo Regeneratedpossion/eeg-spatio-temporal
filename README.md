@@ -37,7 +37,7 @@ slurm/
 `-- pilot/           one-replicate paired-radius run
 ```
 
-See [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the numbered execution order.
+See [code/README.md](code/README.md) for the numbered execution order. Older material is in `archive/`.
 
 ## Formal workflow
 

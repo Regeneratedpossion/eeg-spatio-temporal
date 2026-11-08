@@ -1,5 +1,5 @@
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))   # run from the project root
-out_dir <- fig_dir(thesis_path("figures_out")); truth_file <- thesis_path("fig_data/truth_250.csv")
+out_dir <- fig_dir(thesis_path("diagnostics")); truth_file <- thesis_path("fig_data/truth_250.csv")
 setwd(project_dir)
 suppressMessages({library(dplyr); library(ggplot2); library(patchwork)})
 source("code/R/utils.R")
@@ -45,4 +45,4 @@ base <- function(g, lim, nm, strip_left) {
 dl <- ceiling(max(abs(g2$v), na.rm = TRUE) * 20) / 20
 p <- base(g1, 1, "Truth and estimate (fraction of the true peak)", TRUE) | base(g2, dl, "Difference (fraction of the true peak)", FALSE)
 p <- p + plot_layout(widths = c(2.25, 1))
-ggsave(file.path(out_dir, "spatial_scenarios.png"), p, width = 7.5, height = 9.5, dpi = 200, bg = "white")
+ggsave(file.path(out_dir, "bgam_fit_spatial_scenarios.png"), p, width = 7.5, height = 9.5, dpi = 200, bg = "white")

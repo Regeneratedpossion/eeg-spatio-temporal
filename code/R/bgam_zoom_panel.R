@@ -1,6 +1,6 @@
 if (!exists("thesis_path")) source(here::here("code/00_config.R"))   # run from the project root
 if (!exists("pgs")) source(here::here("code/R/passed_fits.R"))
-out_dir <- fig_dir(thesis_path("figures_out")); truth_file <- thesis_path("fig_data/truth_250.csv")
+out_dir <- fig_dir(thesis_path("diagnostics")); truth_file <- thesis_path("fig_data/truth_250.csv")
 setwd(project_dir)
 mk <- function(c, scen) { ps <- .man$seed[.man$cond == c]
   ce <- do.call(rbind, lapply(ps, function(s) readRDS(sprintf("data/single_node_cond%s_seeds001_100/gt_%03d.rds", c, s))$continuous_effect[, c("channel", "time", "effect")]))

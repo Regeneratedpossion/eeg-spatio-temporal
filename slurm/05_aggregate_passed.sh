@@ -10,5 +10,5 @@
 set -euo pipefail
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
 cd "$PROJECT_ROOT"; module purge; module load R/4.4.2-gcc141-base
-C=(I F H E); export FIXED_GRID_BATCH=single_node_cond${C[$SLURM_ARRAY_TASK_ID]}_ds_cr_seeds001_100
+C=(I F H E); export COND=${C[$SLURM_ARRAY_TASK_ID]}
 Rscript --vanilla code/05_aggregate/05_aggregate_fixed_grid.R

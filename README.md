@@ -64,7 +64,7 @@ Run every script from the repository root. Details, environment variables and th
 
 ## To reproduce only the tables and figures
 
-The small per-seed results that steps 06 and 07 need are in `results/` and `data/*/gt_*.rds`, so a clone can make the tables and figures without fitting anything: `Rscript code/06_tables/06_tables.R passed`, then the scripts in `code/07_figures/`. Fits, simulated EEG data and logs are not stored.
+The small per-seed results that steps 06 and 07 need are in `results/` and `data/*/gt_*.rds`, so a clone can make the tables and figures without fitting anything: `Rscript code/06_tables/06_tables.R passed`, then the scripts in `code/07_figures/`. Fits, simulated EEG data and logs are not stored. All figure scripts write to `results/diagnostics/` under the file names that the thesis uses; no file has to be renamed or copied. The table scripts write `.tex` fragments to `results/fig_data/tables/`; the rows are pasted into the thesis by hand.
 
 ## Software
 

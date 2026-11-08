@@ -10,9 +10,12 @@
 #SBATCH --output=logs/fixed_grid_extract_%A_%a.log
 #SBATCH --error=logs/fixed_grid_extract_%A_%a.log
 
+# Usage: sbatch --export=ALL,COND=E slurm/05_extract_fixed_grid_array.sh   (COND = I, H, F or E)
+
 set -euo pipefail
 
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
+export FIXED_GRID_BATCH="single_node_cond${COND:?set COND to I, H, F or E}_ds_cr_seeds001_100"
 export TMPDIR="${TMPDIR:-/tmp}/fixed_grid_${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 export TMP="$TMPDIR"
 export TEMP="$TMPDIR"

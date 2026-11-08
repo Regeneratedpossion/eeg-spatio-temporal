@@ -7,8 +7,11 @@ from PIL import Image
 
 # Run from the project root (PROJECT_ROOT overrides it).
 project = os.path.abspath(os.environ.get("PROJECT_ROOT", os.getcwd()))
-src = os.path.join(project, "results", "heatmaps")
-out = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("THESIS_DIR", os.path.join(os.pardir, "thesis")) + "/diagnostics"
+# FIG_OUT, if set, holds the topo_*.png files and receives the cropped images.
+fig_out = os.environ.get("FIG_OUT", "")
+src = fig_out or os.path.join(project, "results", "heatmaps")
+out = sys.argv[1] if len(sys.argv) > 1 else (fig_out or os.path.join(os.environ.get("THESIS_DIR", os.path.join(project, "results")), "diagnostics"))
+os.makedirs(out, exist_ok=True)
 scenario = {"I": 1, "H": 2, "F": 3, "E": 4}
 box = (245, 0, 245 + 1162, 2125)
 

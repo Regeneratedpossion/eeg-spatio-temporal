@@ -1,9 +1,9 @@
 ###########################################################
-# 41_aggregate_and_plot_fixed_grid.R
+# 05_aggregate_fixed_grid.R
 #
 # Aggregates the 100 per-seed fixed_grid CSVs produced by
 # 05_extract_fixed_grid.R into three diagnostic plots for
-# the single_node_high_ds_cr_seeds001_100 batch:
+# the single_node_cond<COND>_ds_cr_seeds001_100 batch:
 #
 #   1. bgam_fit_aggregate.png     - 6-channel fit curve
 #        (mean across converged fits' posterior means, with a band
@@ -31,7 +31,7 @@ source(file.path(project_root(), "code/R/plot_diagnostics.R"))
 source(file.path(project_root(), "code/R/superpopulation_truth.R"))
 
 base_dir <- file.path(project_root(), "results",
-    Sys.getenv("FIXED_GRID_BATCH", "single_node_high_ds_cr_seeds001_100"))
+    fixed_grid_batch())
 plot_label <- Sys.getenv("FIXED_GRID_LABEL", "cr basis")
 out_dir <- file.path(base_dir, "figures_aggregate_passed")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

@@ -25,6 +25,15 @@ project_root <- function() {
     normalizePath(here::here(), mustWork = FALSE)
 }
 
+# Results folder of one scenario: FIXED_GRID_BATCH, or single_node_cond<COND>_ds_cr_seeds001_100 with COND = I, H, F or E.
+fixed_grid_batch <- function() {
+    batch <- Sys.getenv("FIXED_GRID_BATCH", unset = "")
+    cond <- Sys.getenv("COND", unset = "")
+    if (nzchar(batch)) return(batch)
+    if (!cond %in% c("I", "H", "F", "E")) stop("Set COND to I, H, F or E", call. = FALSE)
+    sprintf("single_node_cond%s_ds_cr_seeds001_100", cond)
+}
+
 data_path <- function(...)   file.path(project_root(), "data", ...)
 fit_path  <- function(...)   file.path(project_root(), "results/fits", ...)
 diag_path <- function(...)   file.path(project_root(), "results/diagnostics", ...)

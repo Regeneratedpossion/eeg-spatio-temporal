@@ -24,3 +24,5 @@ Set `R_LIBS_USER` and `CMDSTAN_PATH` in your shell before submitting; the script
 `resources/passed_fits.txt` lists the 362 fits that passed the convergence criterion (condition, seed).
 The older code is on the branch `archive`. The full list of tables, figures, scripts and checks
 is in `inventory.csv`.
+
+The Slurm scripts of steps 01 to 05 all take the scenario from `COND` (I, H, F or E), e.g. `sbatch --export=ALL,COND=E slurm/05_extract_fixed_grid_array.sh`.

@@ -3,7 +3,7 @@
 #
 # Per-seed extraction for the aggregated 3-plot diagnostic
 # (fit curve / posterior probability / topomap) across the
-# single_node_high_ds_cr_seeds001_100 batch.
+# single_node_cond<COND>_ds_cr_seeds001_100 batch.
 #
 # For ONE seed, computes:
 #   - six_channel.csv : posterior mean_diff + p_sig for the
@@ -49,7 +49,7 @@ source(file.path(project_root(), "code/R/plot_diagnostics.R"))
 seed_str <- sprintf("%03d", seed_task)
 result_dir <- file.path(
     project_root(), "results",
-    Sys.getenv("FIXED_GRID_BATCH", "single_node_high_ds_cr_seeds001_100"),
+    fixed_grid_batch(),
     paste0("seed_", seed_str)
 )
 out_dir <- file.path(result_dir, "fixed_grid")

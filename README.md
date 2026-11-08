@@ -15,6 +15,27 @@ Four scenarios (A = amplitude, ω_A = between-participant variability of the amp
 
 Each scenario has 100 simulated datasets (seeds 1–100). The BGAM is fitted to every dataset, and 362 of the 400 fits pass the convergence criterion (`resources/passed_fits.txt`). Onset, offset and spatial extent of the effect are then compared with the conventional methods.
 
+## Structure at a glance
+
+```text
+eeg-spatio-temporal/
+├── code/            ← THE CODE OF THE THESIS (start here)
+│   ├── 01_...       simulate data
+│   ├── 02_...       fit the Bayesian model
+│   ├── 03_...       conventional methods (cluster test, TFCE)
+│   ├── 04_...       evaluate the fits
+│   ├── 05_...       collect results of all seeds
+│   ├── 06_...       tables of the thesis
+│   ├── 07_...       figures of the thesis
+│   └── R/           helper functions
+├── slurm/           ← cluster job scripts, same numbers as code/
+├── resources/       ← small input files
+├── inventory.csv    ← which script makes which table or figure
+└── archive/         ← OLD, NOT USED. Ignore this folder.
+```
+
+A file named `05_xxx.R` belongs to step 05. Files with the same number belong together.
+
 ## Folders
 
 | Folder | Content |

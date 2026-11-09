@@ -5,8 +5,8 @@
 #SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=48G
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=8G
 #SBATCH --output=logs/fixed_grid_extract_%A_%a.log
 #SBATCH --error=logs/fixed_grid_extract_%A_%a.log
 

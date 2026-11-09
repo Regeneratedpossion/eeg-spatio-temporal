@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=evaluate_bgam
 #SBATCH --partition=short
-#SBATCH --array=1-100%20
+#SBATCH --array=1-100%50
 #SBATCH --time=00:30:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=16G
+#SBATCH --mem=10G
 #SBATCH --output=logs/evaluate_bgam_%A_%a.log
 
 # Evaluate one fit per array task with code/04_evaluate/04_evaluate_bgam.R.

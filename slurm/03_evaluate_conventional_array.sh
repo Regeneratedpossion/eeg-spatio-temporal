@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=evaluate_conv
 #SBATCH --partition=short
-#SBATCH --array=1-100%20
+#SBATCH --array=1-100%50
 #SBATCH --time=00:45:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
+#SBATCH --mem=2G
 #SBATCH --output=logs/evaluate_conv_%A_%a.log
 
 # Evaluate the conventional methods on one dataset per array task with

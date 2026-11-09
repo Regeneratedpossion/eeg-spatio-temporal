@@ -19,7 +19,7 @@ suppressPackageStartupMessages(library(dplyr))
 
 # Convergence criteria from Section 2.2.5, applied to the evaluated effect g.
 converged <- function(x) {
-    x$max_rhat_g <= 1.01 & x$min_ess_bulk_g >= 400 & x$min_ess_tail_g >= 400
+    x$max_rhat_g < 1.01 & x$min_ess_bulk_g > 400 & x$min_ess_tail_g > 400
 }
 
 # Mean-type summary with MCSE = SD / sqrt(N).

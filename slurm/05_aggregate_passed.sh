@@ -2,7 +2,7 @@
 #SBATCH --partition=short
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4G
+#SBATCH --mem=2G
 #SBATCH --time=00:30:00
 #SBATCH --job-name=agg_passed
 #SBATCH --array=0-3

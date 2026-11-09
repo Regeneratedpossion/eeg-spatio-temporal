@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: sbatch --job-name=ds_cr_condE_fit --output=logs/ds_cr_condE_fit_%A_%a.log --export=ALL,COND=E slurm/02_fit_array.sh
+# Usage: sbatch --job-name=ds_cr_cond4_fit --output=logs/ds_cr_cond4_fit_%A_%a.log --export=ALL,COND=4 slurm/02_fit_array.sh
 #SBATCH --job-name=ds_cr_fit
 #SBATCH --partition=ultralong
 #SBATCH --array=1-100%50

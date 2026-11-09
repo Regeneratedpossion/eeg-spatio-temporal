@@ -8,7 +8,7 @@ source(here::here("code/01_simulate/01_generate_data.R"))
 set.seed(3)
 
 # One participant of scenario 3 (A = 1.5, omega_A = 0.26)
-params <- simulation_parameters(n_ppt = 20, scenario = "cond_F", signal_mode = "hard_signal")
+params <- simulation_parameters(n_ppt = 20, scenario = "cond_3", signal_mode = "hard_signal")
 sensors <- compute_spatial_weight_base(coords, params)
 sensors <- apply_active_radius(sensors, params$sigma_space * sqrt(2 * log(2)), "half-max")
 L <- compute_noise_covariance(sensors, params)$L

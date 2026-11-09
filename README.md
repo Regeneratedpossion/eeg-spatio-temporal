@@ -8,10 +8,10 @@ Four scenarios (A = amplitude, ω_A = between-participant variability of the amp
 
 | Scenario | Name in code | A | ω_A |
 |---|---|---:|---:|
-| 1 | `cond_I` | 0.5 | 0.26 |
-| 2 | `cond_H` | 0.5 | 0.70 |
-| 3 | `cond_F` | 1.5 | 0.26 |
-| 4 | `cond_E` | 1.5 | 0.70 |
+| 1 | `cond_1` | 0.5 | 0.26 |
+| 2 | `cond_2` | 0.5 | 0.70 |
+| 3 | `cond_3` | 1.5 | 0.26 |
+| 4 | `cond_4` | 1.5 | 0.70 |
 
 Each scenario has 100 simulated datasets (seeds 1–100). The BGAM is fitted to every dataset, and 362 of the 400 fits pass the convergence criterion (`resources/passed_fits.txt`). Onset, offset and spatial extent of the effect are then compared with the conventional methods.
 
@@ -52,8 +52,8 @@ Old code, notes and results from earlier versions of the project are not on this
 | Step | Script | Where it runs |
 |---|---|---|
 | 00 | `00_config.R` (paths and scenario map) | loaded by the other scripts |
-| 01 | `01_simulate/01_generate_dataset.R` simulates one dataset (`COND` = I, H, F or E, seed 1–100) | cluster or local |
-| 02 | `02_fit/02_fit_bgam.R` fits the BGAM of one seed (`COND` = I, H, F or E) | cluster, about 20 h per fit |
+| 01 | `01_simulate/01_generate_dataset.R` simulates one dataset (`COND` = 1, 2, 3 or 4, seed 1–100) | cluster or local |
+| 02 | `02_fit/02_fit_bgam.R` fits the BGAM of one seed (`COND` = 1, 2, 3 or 4) | cluster, about 20 h per fit |
 | 03 | `03_conventional/03_evaluate_conventional*.R` runs the conventional tests | cluster |
 | 04 | `04_evaluate/04_evaluate_bgam.R` turns each fit into detection masks and measures | cluster |
 | 05 | `05_aggregate/05_*.R` collects the per-seed results | cluster |
@@ -74,3 +74,4 @@ R 4.4.2, brms 2.23.0, cmdstanr 0.8.0 with CmdStan 2.38.0, mgcv 1.9-4, posterior 
 
 1. **Folder for tables and figures.** `THESIS_DIR` defaults to `results/` in the repository (see `code/00_config.R`). Tables go to `results/fig_data/tables/`, figure data to `results/fig_data/`, figures to `results/diagnostics/` and `results/figures_out/`.
 2. **Summaries between steps 05 and 06.** `06_tables.R` reads `sesoi_rule_passed.csv` and `sesoi_rule_20261009.csv` from `results/fig_data/tables/`. They are made by `05_agg_sesoi_passed.R` and `05_agg_sesoi_all.R`, which now write to that folder (`AGG_OUT` overrides it). `05_agg_ring_fpr.R` and `05_agg_threshold_sweep.R` write to `results/fig_data/`. Run all four from the project root after the per-seed evaluations exist; they reproduce the stored files up to rounding in the last digit.
+3. **Scenario names on the cluster.** The scenarios are numbered 1 to 4 in this repository. Folders created on LiDO before the renaming use the letters I, H, F and E (1 = I, 2 = H, 3 = F, 4 = E). Rename them before running the scripts there.

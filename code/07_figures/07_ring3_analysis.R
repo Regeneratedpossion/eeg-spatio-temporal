@@ -1,19 +1,19 @@
 source(here::here("code/00_config.R")); setwd(thesis_dir)   # reads and writes relative to the thesis folder
 # Ring-3 check at 250 ms: detection frequency and mean bias (posterior mean minus truth) per electrode.
 suppressPackageStartupMessages({library(dplyr); library(ggplot2)})
-truth <- read.csv("fig_data/truth_250ms_IF.csv")
+truth <- read.csv("fig_data/truth_250ms_s1s3.csv", colClasses = c(scenario = "character"))
 rd <- function(s) {
   f <- Sys.glob(sprintf("fig_data/topo_%s/seed_*/fixed_grid/topomap_3t.csv", s))
   x <- do.call(rbind, lapply(f, read.csv)); x <- x[abs(x$time - 0.25) < 1e-9, ]
   x$scenario <- s; x
 }
-d <- rbind(rd("I"), rd("F"))
+d <- rbind(rd("1"), rd("3"))
 d$detected <- d$model_p_sig > 10 / 11   # posterior odds above 10
 e <- d |> group_by(scenario, channel, xproj, yproj) |>
   summarise(mean_post = mean(model_mean_diff), det_rate = mean(detected), .groups = "drop") |>
   left_join(truth, by = c("scenario", "channel"))
 e$bias <- e$mean_post - e$effect
-e$scenario_lab <- factor(ifelse(e$scenario == "I", "Scenario 1 (weak)", "Scenario 3 (strong)"),
+e$scenario_lab <- factor(ifelse(e$scenario == "1", "Scenario 1 (weak)", "Scenario 3 (strong)"),
                          levels = c("Scenario 1 (weak)", "Scenario 3 (strong)"))
 write.csv(e, file.path(fig_dir(thesis_path("fig_data")), "ring3_250ms_summary.csv"), row.names = FALSE)
 

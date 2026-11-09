@@ -15,5 +15,5 @@ if (!exists("thesis_dir")) {
     d
   }
   # condition letter of each scenario: 1 = I, 2 = H, 3 = F, 4 = E
-  scenario_cond <- c("1" = "I", "2" = "H", "3" = "F", "4" = "E")
+  scenario_cond <- c("1" = "1", "2" = "2", "3" = "3", "4" = "4")
 }

@@ -10,7 +10,7 @@ dec <- scalp_decorations(hr)
 ord <- c("truth","BGAM","uncorrected","BH","BY","Holm","cluster_mass","TFCE")
 lab <- c(truth="Active set (truth)", BGAM="BGAM", uncorrected="Uncorrected", BH="BH", BY="BY", Holm="Holm", cluster_mass="Cluster mass", TFCE="TFCE")
 tms <- c(0.16, 0.25, 0.34)
-for (sc in c("I","F","H","E")) {
+for (sc in c("1", "3", "2", "4")) {
   acc <- list(); n <- 0
   for (d in sort(pgs(sprintf("single_node_cond%s_ds_cr_seeds001_100/seed_*", sc)))) for (f in c("bgam","conv")) {
     x <- readRDS(file.path(d, "evaluation", sprintf("masks_%s.rds", f)))
@@ -32,7 +32,7 @@ for (sc in c("I","F","H","E")) {
     facet_grid(method ~ time, switch = "y") +
     coord_equal(xlim = c(-hr * 1.12, hr * 1.12), ylim = c(-hr * 1.12, hr * 1.18), expand = FALSE) +
     scale_fill_viridis_c(limits = c(0, 1), name = "Detection\nfrequency") +
-    labs(title = sprintf("Scenario %d", match(sc, c("I","H","F","E")))) +
+    labs(title = sprintf("Scenario %d", match(sc, c("1", "2", "3", "4")))) +
     theme_void(base_size = 8) +
     theme(strip.text.x = element_text(face = "bold"), strip.text.y.left = element_text(angle = 0, hjust = 1, face = "bold"),
           plot.background = element_rect(fill = "white", color = NA), plot.title = element_text(size = 8))

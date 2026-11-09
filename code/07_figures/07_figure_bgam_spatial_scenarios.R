@@ -3,14 +3,14 @@ out_dir <- fig_dir(thesis_path("diagnostics")); truth_file <- thesis_path("fig_d
 setwd(project_dir)
 suppressMessages({library(dplyr); library(ggplot2); library(patchwork)})
 source("code/R/utils.R")
-sc <- c(I = 1, H = 2, F = 3, E = 4)
+sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 est <- bind_rows(lapply(names(sc), function(c) bind_rows(lapply(pgs(sprintf("results/single_node_cond%s_ds_cr_seeds001_100/seed_*/fixed_grid/topomap_3t.csv", c)), read.csv)) |> mutate(scenario = sc[[c]]))) |>
   filter(abs(time - 0.25) < 1e-9) |>
   group_by(scenario, channel, xproj, yproj) |> summarise(est = mean(model_mean_diff), .groups = "drop")
 d <- left_join(est, read.csv(truth_file)[, c("scenario", "channel", "effect")], by = c("scenario", "channel"))
 peak <- d |> group_by(scenario) |> summarise(pk = max(effect)); d <- left_join(d, peak, by = "scenario")
 d <- d |> mutate(Truth = effect / pk, Estimate = est / pk, Diff = (est - effect) / pk)
-active <- readRDS("data/single_node_condI_seeds001_100/gt_001.rds")$active_electrodes
+active <- readRDS("data/single_node_cond1_seeds001_100/gt_001.rds")$active_electrodes
 d$active <- d$channel %in% active
 sens <- distinct(d, channel, xproj, yproj)
 hr <- max(sqrt(sens$xproj^2 + sens$yproj^2)) * 1.05

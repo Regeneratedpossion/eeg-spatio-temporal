@@ -5,7 +5,7 @@ mae <- function(e) mean(abs(e[is.finite(e)])); nv <- function(e) sum(is.finite(e
 cell <- function(c, m, t, x) data.frame(scenario = c, method = m, thr = t, n = nrow(x), F1 = mean(x$F1), FPR = mean(x$FPR),
   on_MAE = mae(x$onset_error_ms), off_MAE = mae(x$offset_error_ms), N_valid = nv(x$onset_error_ms))
 out <- list()
-for (c in c("I", "F", "H", "E")) {
+for (c in c("1", "3", "2", "4")) {
   d <- file.path(res_dir, sprintf("single_node_cond%s_ds_cr_seeds001_100", c))
   b <- do.call(rbind, lapply(Sys.glob(file.path(d, "seed_*/evaluation/evaluation_sensitivity.csv")), rd))
   b <- b[b$rule == "global" & abs(b$baseline_end - 0.10) < 1e-9, ]

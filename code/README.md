@@ -18,11 +18,11 @@ small input files and the outputs of tables and figures (default: `results/` in 
 | 07 | `07_figures/07_figure_*.R`, `07_figures/07_data_*.R`, `07_figures/07_ring3_analysis.R` | figures of the thesis and their data |
 
 `slurm/` has one submit script per step, numbered like the code. Submit them from the project root,
-for example `sbatch --export=ALL,COND=E --job-name=ds_cr_condE_fit --output=logs/ds_cr_condE_fit_%A_%a.log slurm/02_fit_array.sh`.
+for example `sbatch --export=ALL,COND=4 --job-name=ds_cr_cond4_fit --output=logs/ds_cr_cond4_fit_%A_%a.log slurm/02_fit_array.sh`.
 Set `R_LIBS_USER` and `CMDSTAN_PATH` in your shell before submitting; the scripts no longer set them.
 
 `resources/passed_fits.txt` lists the 362 fits that passed the convergence criterion (condition, seed).
 The older code is on the branch `archive`. The full list of tables, figures, scripts and checks
 is in `inventory.csv`.
 
-The Slurm scripts of steps 01 to 05 all take the scenario from `COND` (I, H, F or E), e.g. `sbatch --export=ALL,COND=E slurm/05_extract_fixed_grid_array.sh`.
+The Slurm scripts of steps 01 to 05 all take the scenario from `COND` (1, 2, 3 or 4), e.g. `sbatch --export=ALL,COND=4 slurm/05_extract_fixed_grid_array.sh`.

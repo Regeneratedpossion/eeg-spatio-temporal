@@ -1,5 +1,5 @@
 man <- read.table("resources/passed_fits.txt", col.names = c("cond", "seed"))
-sc <- c(I = 1, H = 2, F = 3, E = 4)
+sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 out <- list()
 for (c in names(sc)) for (ev in c("evaluation", "evaluation_no_space")) {
   d <- sprintf("results/single_node_cond%s_ds_cr_seeds001_100", c)

@@ -2,7 +2,7 @@ source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"
 out_dir <- fig_dir(thesis_path("diagnostics")); csv_dir <- fig_dir(thesis_path("fig_data"))
 suppressMessages({library(dplyr); library(ggplot2); library(patchwork)})
 setwd(project_path("results"))
-sc <- c(I = 1, H = 2, F = 3, E = 4)
+sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 res <- list()
 for (s in names(sc)) for (d in sort(pgs(sprintf("single_node_cond%s_ds_cr_seeds001_100/seed_*", s)))) for (f in c("bgam", "conv")) {
   x <- readRDS(file.path(d, "evaluation", sprintf("masks_%s.rds", f)))

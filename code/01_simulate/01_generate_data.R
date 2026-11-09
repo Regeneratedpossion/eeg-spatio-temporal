@@ -1,7 +1,7 @@
 ###########################################################
 # 01_generate_data.R
 #
-# Functions that simulate one two-condition EEG dataset of the thesis (scenario cond_E, cond_F, cond_H or cond_I).
+# Functions that simulate one two-condition EEG dataset of the thesis (scenario cond_4, cond_3, cond_2 or cond_1).
 # Run code/01_simulate/01_generate_dataset.R to write the datasets.
 #
 # Main structure:
@@ -28,13 +28,13 @@ heterogeneity_scenarios <- function() {
     onsets <- seq(from = 140, to = 180, by = 2)
     list(
         # Scenario 1: weak effect, little variation between participants
-        cond_I = list(omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 0.5, ronset_ms = onsets),
+        cond_1 = list(omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 0.5, ronset_ms = onsets),
         # Scenario 2: weak effect, large variation
-        cond_H = list(omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 0.5, ronset_ms = onsets),
+        cond_2 = list(omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 0.5, ronset_ms = onsets),
         # Scenario 3: strong effect, little variation
-        cond_F = list(omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 1.5, ronset_ms = onsets),
+        cond_3 = list(omega_A = 0.260, omega_sigma = 0.00, bump_amplitude = 1.5, ronset_ms = onsets),
         # Scenario 4: strong effect, large variation
-        cond_E = list(omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 1.5, ronset_ms = onsets)
+        cond_4 = list(omega_A = 0.700, omega_sigma = 0.00, bump_amplitude = 1.5, ronset_ms = onsets)
     )
 }
 

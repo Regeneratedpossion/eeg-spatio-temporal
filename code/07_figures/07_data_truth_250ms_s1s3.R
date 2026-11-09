@@ -1,12 +1,12 @@
 # Recovered from a Claude Code session on 2026-10-09 (session 1840aaa0).
-# Original: a scratch script (truth.R). Usage: PROJECT_ROOT=<project> Rscript make_truth_250ms_IF.R
+# Original: a scratch script (truth.R). Usage: PROJECT_ROOT=<project> Rscript make_truth_250ms_s1s3.R
 suppressPackageStartupMessages(library(dplyr))
 root <- Sys.getenv("PROJECT_ROOT"); stopifnot(nzchar(root))   # the simulation project (on the cluster or the local copy)
 source(file.path(root, "code", "R", "superpopulation_truth.R"))
 template <- file.path(root, "resources", "brms_meeg", "code", "erp_template.R")
 adj <- readRDS(file.path(root, "resources", "adjacency", "adjacency_xproj_yproj_61ch.rds"))
 out <- list()
-for (c in c("I", "F")) {
+for (c in c("1", "3")) {
   gt <- readRDS(sprintf("%s/data/single_node_cond%s_seeds001_100/gt_001.rds", root, c))
   tr <- paired_radius_superpopulation_truth(gt, template)
   ch <- rownames(adj); act <- ch %in% gt$active_electrodes
@@ -18,5 +18,5 @@ for (c in c("I", "F")) {
   t250$scenario <- c
   out[[c]] <- t250
 }
-write.csv(do.call(rbind, out), "truth_250ms_IF.csv", row.names = FALSE)
+write.csv(do.call(rbind, out), "truth_250ms_s1s3.csv", row.names = FALSE)
 cat("ok\n")

@@ -1,11 +1,11 @@
-# Generates one dataset of the thesis: scenario COND (I, H, F or E), seed from SLURM_ARRAY_TASK_ID or argument 1.
-# Usage: COND=E Rscript code/01_simulate/01_generate_dataset.R 1
+# Generates one dataset of the thesis: scenario COND (1, 2, 3 or 4), seed from SLURM_ARRAY_TASK_ID or argument 1.
+# Usage: COND=4 Rscript code/01_simulate/01_generate_dataset.R 1
 # Writes data/single_node_cond<COND>_seeds001_100/sim_<seed>.rds and gt_<seed>.rds (DATA_OUT overrides the folder).
 suppressPackageStartupMessages(library(dplyr))
 source(here::here("code/01_simulate/01_generate_data.R"))
 
 cond <- Sys.getenv("COND")
-if (!cond %in% c("I", "H", "F", "E")) stop("COND must be I, H, F or E", call. = FALSE)
+if (!cond %in% c("1", "2", "3", "4")) stop("COND must be 1, 2, 3 or 4", call. = FALSE)
 seed <- as.integer(c(commandArgs(trailingOnly = TRUE), Sys.getenv("SLURM_ARRAY_TASK_ID"))[1])
 if (is.na(seed) || !seed %in% 1:100) stop("seed must be an integer from 1 to 100", call. = FALSE)
 

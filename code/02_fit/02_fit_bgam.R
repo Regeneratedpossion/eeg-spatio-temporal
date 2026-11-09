@@ -9,7 +9,7 @@ root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 source(file.path(root, "code", "R", "utils.R"))
 source(file.path(root, "code", "R", "fit_config.R"))
 
-config <- ds_cr_seed_config(root)   # the condition comes from the COND environment variable (E, F, H or I)
+config <- ds_cr_seed_config(root)   # the condition comes from the COND environment variable (1, 2, 3 or 4)
 seed <- validate_ds_cr_seed(Sys.getenv("SLURM_ARRAY_TASK_ID"), config)
 data_paths <- ds_cr_seed_data_paths(config, seed)
 fit_paths <- ds_cr_seed_fit_paths(config, seed)

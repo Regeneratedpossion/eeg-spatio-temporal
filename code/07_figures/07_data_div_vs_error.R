@@ -4,7 +4,7 @@ suppressMessages(library(dplyr))
 root <- Sys.getenv("PROJECT_ROOT"); stopifnot(nzchar(root))   # the simulation project (on the cluster or the local copy)
 args <- commandArgs(TRUE); passed_file <- args[1]; out_file <- args[2]
 passed <- read.table(passed_file, col.names = c("cond","seed"))
-sc <- c(I = 1, H = 2, F = 3, E = 4)
+sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 ex <- list(); dv <- list()
 for (cd in names(sc)) for (s in 1:100) {
   d <- sprintf("%s/results/single_node_cond%s_ds_cr_seeds001_100/seed_%03d", root, cd, s)

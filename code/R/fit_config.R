@@ -1,7 +1,7 @@
 suppressPackageStartupMessages(library(brms))
 
 ds_cr_seed_config <- function(project_root, cond = Sys.getenv("COND")) {
-    stopifnot("COND must be one of E, F, H, I" = cond %in% c("E", "F", "H", "I"))
+    stopifnot("COND must be one of 1, 2, 3, 4" = cond %in% c("4", "3", "2", "1"))
     project_root <- normalizePath(project_root)
     experiment_name <- sprintf("single_node_cond%s_ds_cr_seeds001_100", cond)
     list(

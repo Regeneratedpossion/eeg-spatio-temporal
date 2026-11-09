@@ -4,7 +4,7 @@ suppressPackageStartupMessages({library(ggplot2); library(dplyr); library(tidyr)
 
 data_dir <- project_path("results")
 out_dir <- fig_dir(thesis_path("diagnostics"))
-scen_dir <- c("1" = "I", "2" = "H", "3" = "F", "4" = "E")
+scen_dir <- c("1" = "1", "2" = "2", "3" = "3", "4" = "4")
 scen_lab <- c("1" = "'Scenario 1:'~A == '0.5'*','~omega[A] == '0.26'", "2" = "'Scenario 2:'~A == '0.5'*','~omega[A] == '0.70'",
               "3" = "'Scenario 3:'~A == '1.5'*','~omega[A] == '0.26'", "4" = "'Scenario 4:'~A == '1.5'*','~omega[A] == '0.70'")
 

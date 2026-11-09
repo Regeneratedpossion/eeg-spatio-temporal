@@ -5,9 +5,9 @@ suppressMessages({library(dplyr); library(ggplot2); library(patchwork)})
 mk <- function(c, scen) { ps <- .man$seed[.man$cond == c]
   ce <- do.call(rbind, lapply(ps, function(s) readRDS(sprintf("data/single_node_cond%s_seeds001_100/gt_%03d.rds", c, s))$continuous_effect[, c("channel", "time", "effect")]))
   ce <- aggregate(effect ~ channel + time, ce, mean); ce$scenario <- scen; ce }
-truth4 <- rbind(mk("I", 1), mk("H", 2), mk("F", 3), mk("E", 4))
+truth4 <- rbind(mk("1", 1), mk("2", 2), mk("3", 3), mk("4", 4))
 cat("check CZ 250ms:", truth4$effect[truth4$channel == "CZ" & abs(truth4$time - 0.25) < 1e-9 & truth4$scenario %in% c(1, 3)], "\n")
-sc <- c(I = 1, H = 2, F = 3, E = 4)
+sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 chs <- c("CZ", "C2", "PZ", "FP1")
 d <- bind_rows(lapply(names(sc), function(c) bind_rows(lapply(pgs(sprintf("results/single_node_cond%s_ds_cr_seeds001_100/seed_*/fixed_grid/six_channel.csv", c)), read.csv)) |> mutate(scenario = sc[[c]]))) |>
   filter(channel %in% chs) |>

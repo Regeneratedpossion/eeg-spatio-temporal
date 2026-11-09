@@ -7,7 +7,7 @@
 
 # One mask file per array task. Submit with the memory and time of the method:
 #   sbatch --job-name=masks_bgam_I --mem=10G --time=00:15:00 --array=1-100%100 \
-#     --export=ALL,COND=I,WHAT=bgam slurm/05_save_masks_array.sh
+#     --export=ALL,COND=1,WHAT=bgam slurm/05_save_masks_array.sh
 set -euo pipefail
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
 mkdir -p "$PROJECT_ROOT/logs"

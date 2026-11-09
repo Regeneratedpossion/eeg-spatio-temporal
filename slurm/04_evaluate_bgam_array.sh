@@ -10,7 +10,7 @@
 #SBATCH --output=logs/evaluate_bgam_%A_%a.log
 
 # Evaluate one fit per array task with code/04_evaluate/04_evaluate_bgam.R.
-# Usage: sbatch --export=ALL,COND=E slurm/04_evaluate_bgam_array.sh   (COND = I, H, F or E)
+# Usage: sbatch --export=ALL,COND=4 slurm/04_evaluate_bgam_array.sh   (COND = 1, 2, 3 or 4)
 
 set -euo pipefail
 
@@ -20,7 +20,7 @@ cd "$PROJECT_ROOT"
 module purge
 module load R/4.4.2-gcc141-base
 
-RESULTS_BATCH="single_node_cond${COND:?set COND to I, H, F or E}_ds_cr_seeds001_100"
+RESULTS_BATCH="single_node_cond${COND:?set COND to 1, 2, 3 or 4}_ds_cr_seeds001_100"
 SEED_DIR="results/${RESULTS_BATCH}/$(printf 'seed_%03d' "$SLURM_ARRAY_TASK_ID")"
 DATA_SUBDIR=$(Rscript --vanilla -e "cat(readRDS('${SEED_DIR}/config.rds')\$data_subdir)")
 SEED_TAG=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")

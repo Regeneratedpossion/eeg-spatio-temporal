@@ -3,7 +3,7 @@ res_dir <- here::here("results"); out_dir <- Sys.getenv("AGG_OUT", unset = here:
 man <- read.table(here::here("resources/passed_fits.txt"), col.names = c("cond", "seed"))
 rd <- function(f) tryCatch({x <- read.csv(f); if (!("post_offset" %in% names(x))) return(NULL); x[x$odds == 10, c("rule","baseline_end","F1","FPR","recall","post_offset")]}, error = function(e) NULL)
 out <- list()
-for (c in c("I","F","H","E")) {
+for (c in c("1", "3", "2", "4")) {
   d <- file.path(res_dir, sprintf("single_node_cond%s_ds_cr_seeds001_100", c))
   s <- sprintf("seed_%03d", man$seed[man$cond == c])
   b <- do.call(rbind, lapply(file.path(d, s, "evaluation/evaluation_sensitivity.csv"), rd))

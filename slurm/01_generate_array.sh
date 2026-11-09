@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: sbatch --export=ALL,COND=E --job-name=gen_condE --output=logs/gen_condE_%A_%a.log slurm/01_generate_array.sh
+# Usage: sbatch --export=ALL,COND=4 --job-name=gen_cond4 --output=logs/gen_cond4_%A_%a.log slurm/01_generate_array.sh
 #SBATCH --job-name=gen_cond
 #SBATCH --partition=ultralong
 #SBATCH --array=1-100

@@ -97,12 +97,6 @@ fig_c <- function(scens, file, height = 7.4) {
   d$method <- factor(d$method, levels = rev(methods))
   m_lab <- c(F1 = "'F1'", FPR = "'False positive rate'", MAE = "'Timing MAE (ms)'")
   d$metric <- factor(m_lab[d$metric], levels = m_lab)
-  r_lab <- c("1" = "A == '0.5'*','~omega[A] == '0.26'", "3" = "A == '0.5'*','~omega[A] == '0.70'",
-             "2" = "A == '1.5'*','~omega[A] == '0.26'", "4" = "A == '1.5'*','~omega[A] == '0.70'")
-  d$row <- factor(r_lab[as.character(d$scenario)], levels = r_lab[as.character(scens)])
-  allpts$method <- factor(allpts$method, levels = rev(methods))
-  allpts$metric <- factor(m_lab[allpts$metric], levels = m_lab)
-  allpts$row <- factor(r_lab[as.character(allpts$scenario)], levels = r_lab[as.character(scens)])
   r_lab <- c("1" = "atop('Scenario 1',A == '0.5'*','~omega[A] == '0.26')", "2" = "atop('Scenario 2',A == '0.5'*','~omega[A] == '0.70')",
              "3" = "atop('Scenario 3',A == '1.5'*','~omega[A] == '0.26')", "4" = "atop('Scenario 4',A == '1.5'*','~omega[A] == '0.70')")
   d$row <- factor(r_lab[as.character(d$scenario)], levels = r_lab[as.character(scens)])

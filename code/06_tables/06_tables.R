@@ -11,8 +11,7 @@ rd <- function(c, f, root = root0) bind_rows(lapply(sort(Sys.glob(sprintf("%s/si
 b <- bind_rows(lapply(names(sc), rd, f = "evaluation_main.csv"))
 g <- bind_rows(lapply(names(sc), rd, f = "evaluation_conventional.csv")) |> filter(main == TRUE)
 bg <- b |> filter(rule == "global", odds == 10) |> mutate(method = "BGAM")
-z <- bind_rows(lapply(names(sc), rd, f = "evaluation_sensitivity.csv", root = root0)) |> filter(rule == "zero", odds == 10)
-if (mode == "passed") { key <- paste(man$cond, man$seed); f <- function(d) d[paste(d$cond, d$seed) %in% key, ]; bg <- f(bg); g <- f(g); z <- f(z) }
+if (mode == "passed") { key <- paste(man$cond, man$seed); f <- function(d) d[paste(d$cond, d$seed) %in% key, ]; bg <- f(bg); g <- f(g) }
 cat("fits per scenario:", table(bg$scenario), "\n")
 all <- bind_rows(bg, g)
 M <- c("BGAM", "cluster_mass", "TFCE", "uncorrected", "BH", "BY", "Holm")
@@ -30,7 +29,6 @@ tim <- function(stat, best) {
   panel(t(v), 1, best)
 }
 st <- list(Bias = mean, MAE = function(e) mean(abs(e)), RMSE = function(e) sqrt(mean(e^2)), SD = sd)
-tt <- c("\\begin{tabular}{llcccccccc}", "    \\toprule", NULL)
 body <- c()
 for (nm in names(st)) body <- c(body, "    \\midrule", sprintf("    \\multicolumn{10}{l}{\\textit{%s. %s}} \\\\", LETTERS[match(nm, names(st))], nm), tim(st[[nm]], if (nm == "Bias") NA else "min"))
 writeLines(body, file.path(odir, sprintf("timing_%s.tex", mode)))

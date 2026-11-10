@@ -33,8 +33,8 @@ if (what == "bgam") {
   levs <- levels(fit$data$condition)
   nd1 <- transform(grid, condition = factor(levs[1], levels = levs))
   nd2 <- transform(grid, condition = factor(levs[2], levels = levs))
-  draws <- posterior_epred(fit, newdata = nd2, re_formula = NA) -
-    posterior_epred(fit, newdata = nd1, re_formula = NA)
+  draws <- brms::posterior_epred(fit, newdata = nd2, re_formula = NA) -
+    brms::posterior_epred(fit, newdata = nd1, re_formula = NA)
   rm(fit); est <- colMeans(draws)
   base <- grid$time >= 0 & grid$time <= s$main_baseline_end + 1e-9
   delta <- max(0, max(est[base]))

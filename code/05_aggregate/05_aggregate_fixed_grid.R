@@ -27,6 +27,7 @@ suppressPackageStartupMessages({
 options(bitmapType = "cairo")
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = here::here()), "code/R/utils.R"))
+source(file.path(project_root(), "code/R/settings.R"))
 source(file.path(project_root(), "code/R/plot_diagnostics.R"))
 source(file.path(project_root(), "code/R/superpopulation_truth.R"))
 
@@ -61,7 +62,7 @@ stopifnot(length(unique(topo_all$seed)) == length(seed_dirs))
 
 mean_sesoi <- mean(sesoi_all$global_sesoi)
 cat("Mean global SESOI across converged fits:", mean_sesoi, "\n")
-odds_threshold <- ODDS_THRESHOLD
+odds_threshold <- MAIN_ODDS
 probability_threshold <- odds_threshold / (1 + odds_threshold)
 
 # -----------------------------------------------------------

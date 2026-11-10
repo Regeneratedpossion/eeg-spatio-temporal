@@ -274,7 +274,7 @@ plot_posterior_probability <- function(probability_data, channels,
                     "P(cond2 - cond1 > %.3f uV | data); ",
                     "green = odds > %g (p > %.4f)"
                 ),
-                sesoi, ODDS_THRESHOLD, probability_threshold
+                sesoi, MAIN_ODDS, probability_threshold
             ),
             x = "Time (s)",
             y = "Posterior probability"
@@ -477,8 +477,8 @@ run_2sd_bgam_diagnostic_figures <- function() {
     posterior_summary <- summarise_difference_draws(
         draw_bundle$difference_draws,
         draw_bundle$grid %>% select(channel, time),
-        sesoi = ROPE_UV,
-        odds_threshold = ODDS_THRESHOLD
+        sesoi = PLOT_SESOI_UV,
+        odds_threshold = MAIN_ODDS
     )
     probability_threshold <- attr(
         posterior_summary, "probability_threshold"
@@ -521,8 +521,8 @@ run_2sd_bgam_diagnostic_figures <- function() {
             landmarks = landmarks,
             topomap_times = topomap_times,
             topomap_colour_limit = shared_limit,
-            sesoi = ROPE_UV,
-            odds_threshold = ODDS_THRESHOLD,
+            sesoi = PLOT_SESOI_UV,
+            odds_threshold = MAIN_ODDS,
             probability_threshold = probability_threshold,
             participant_difference = empirical$participant,
             empirical_grand = empirical$grand,
@@ -546,6 +546,7 @@ if (!interactive() && sys.nframe() == 0) {
     source(file.path(
         Sys.getenv("PROJECT_ROOT", unset = here::here()), "code", "R", "utils.R"
     ))
+    source(file.path(project_root(), "code/R/settings.R"))
     source(file.path(
         project_root(), "code/R/superpopulation_truth.R"
     ))

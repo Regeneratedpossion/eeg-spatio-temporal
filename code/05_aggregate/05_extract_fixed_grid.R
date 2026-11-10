@@ -44,6 +44,7 @@ if (is.na(seed_task)) {
 }
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = here::here()), "code/R/utils.R"))
+source(file.path(project_root(), "code/R/settings.R"))
 source(file.path(project_root(), "code/R/plot_diagnostics.R"))
 
 seed_str <- sprintf("%03d", seed_task)
@@ -109,7 +110,7 @@ posterior_summary6 <- summarise_difference_draws(
     draw_bundle$difference_draws,
     draw_bundle$grid %>% select(channel, time),
     sesoi = global_sesoi,
-    odds_threshold = ODDS_THRESHOLD
+    odds_threshold = MAIN_ODDS
 )
 empirical6 <- participant_difference_data(sim_model, channels6)
 

@@ -5,16 +5,17 @@ suppressPackageStartupMessages({
     library(igraph)
 })
 
-project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
+evaluation_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 
-source(file.path(project_root, "code", "R", "superpopulation_truth.R"))
+source(file.path(evaluation_root, "code", "R", "settings.R"))
+source(file.path(evaluation_root, "code", "R", "superpopulation_truth.R"))
 
 # Fixed evaluation settings from the thesis.
 evaluation_settings <- function() {
     list(
         true_onset = 0.160,
         true_offset = 0.340,
-        main_odds = 10,
+        main_odds = MAIN_ODDS,
         odds_grid = c(1, 3, 6, 10, 20, 50, 100),
         main_baseline_end = 0.10,
         topo_time = 0.25

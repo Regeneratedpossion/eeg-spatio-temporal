@@ -14,6 +14,7 @@
 ###########################################################
 
 source(file.path(Sys.getenv("PROJECT_ROOT", unset = here::here()), "code/R/utils.R"))
+source(file.path(project_root(), "code/R/superpopulation_truth.R"))
 
 library(dplyr)
 

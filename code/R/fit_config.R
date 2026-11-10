@@ -1,18 +1,37 @@
+# Configuration for the Bayesian GAM fitting pipeline.
+
 suppressPackageStartupMessages(library(brms))
 
+
+# 1. Experiment and model settings --------------------------------
+
 ds_cr_seed_config <- function(project_root, cond = Sys.getenv("COND")) {
-    stopifnot("COND must be one of 1, 2, 3, 4" = cond %in% c("4", "3", "2", "1"))
+
+    stopifnot(
+        "COND must be one of 1, 2, 3, 4" =
+            cond %in% c("1", "2", "3", "4")
+    )
+
     project_root <- normalizePath(project_root)
-    experiment_name <- sprintf("single_node_cond%s_ds_cr_seeds001_100", cond)
+
+    experiment_name <- sprintf(
+        "single_node_cond%s_ds_cr_seeds001_100", cond
+    )
+    results_dir <- file.path(
+        project_root, "results", experiment_name
+    )
+
     list(
         project_root = project_root,
         cond = cond,
         experiment_name = experiment_name,
-        experiment_dir = file.path(project_root, "results", experiment_name),
-        results_dir = file.path(project_root, "results", experiment_name),
+        experiment_dir = results_dir,
+        results_dir = results_dir,
         seeds = 1:100,
-        stage1_seeds = c(2L, 11L, 22L, 23L, 27L,
-                         45L, 50L, 75L, 96L, 97L),
+        stage1_seeds = c(
+            2L, 11L, 22L, 23L, 27L,
+            45L, 50L, 75L, 96L, 97L
+        ),
         scenario = paste0("cond_", cond),
         radius_rule = "half-max",
         n_ppt = 20L,
@@ -36,29 +55,61 @@ ds_cr_seed_config <- function(project_root, cond = Sys.getenv("COND")) {
     )
 }
 
+
+# 2. Seed validation ---------------------------------------------
+
 validate_ds_cr_seed <- function(seed, config) {
+
     value <- suppressWarnings(as.numeric(seed))
-    if (length(value) != 1L || !is.finite(value) ||
-        value != floor(value) || !(value %in% config$seeds)) {
+
+    if (
+        length(value) != 1L ||
+        !is.finite(value) ||
+        value != floor(value) ||
+        !(value %in% config$seeds)
+    ) {
         stop("seed must be one integer in 1:100", call. = FALSE)
     }
+
     as.integer(value)
 }
 
+
+# 3. Input data paths --------------------------------------------
+
 ds_cr_seed_data_paths <- function(config, seed) {
+
     seed <- validate_ds_cr_seed(seed, config)
-    data_subdir <- sprintf("single_node_cond%s_seeds001_100", config$cond)
-    data_dir <- file.path(config$project_root, "data", data_subdir)
+
+    data_subdir <- sprintf(
+        "single_node_cond%s_seeds001_100", config$cond
+    )
+    data_dir <- file.path(
+        config$project_root, "data", data_subdir
+    )
+
     list(
         data_subdir = data_subdir,
-        sim_file = file.path(data_dir, sprintf("sim_%03d.rds", seed)),
-        truth_file = file.path(data_dir, sprintf("gt_%03d.rds", seed))
+        sim_file = file.path(
+            data_dir, sprintf("sim_%03d.rds", seed)
+        ),
+        truth_file = file.path(
+            data_dir, sprintf("gt_%03d.rds", seed)
+        )
     )
 }
 
+
+# 4. Model output paths ------------------------------------------
+
 ds_cr_seed_fit_paths <- function(config, seed) {
+
     seed <- validate_ds_cr_seed(seed, config)
-    seed_dir <- file.path(config$results_dir, sprintf("seed_%03d", seed))
+
+    seed_dir <- file.path(
+        config$results_dir, sprintf("seed_%03d", seed)
+    )
+
     list(
         seed_dir = seed_dir,
         fit_file = file.path(seed_dir, "fit.rds"),
@@ -72,14 +123,23 @@ ds_cr_seed_fit_paths <- function(config, seed) {
     )
 }
 
+
+# 5. Bayesian GAM formula ----------------------------------------
+
 ds_cr_seed_formula <- function() {
+
     brms::bf(
         eeg_mean | se(eeg_sem, sigma = TRUE) ~
-            condition + (1 + condition | participant) +
+            condition +
+            (1 + condition | participant) +
             t2(
-                xproj, yproj, time, by = condition,
-                bs = c("ds", "cr"), k = c(16, 12), d = c(2, 1),
-                m = list(c(1, 0.5), c(2, 2)), full = FALSE
+                xproj, yproj, time,
+                by = condition,
+                bs = c("ds", "cr"),
+                k = c(16, 12),
+                d = c(2, 1),
+                m = list(c(1, 0.5), c(2, 2)),
+                full = FALSE
             )
     )
 }

@@ -58,7 +58,8 @@ mne_cell_pvalues <- function(arr, adj, s, tfce) {
 
 evaluate_conventional <- function(sim_file, gt_file, out_dir,
                                   s = evaluation_settings(),
-                                  cs = conventional_settings()) {
+                                  cs = conventional_settings(),
+                                  spatial_adjacency = TRUE) {
     dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
     sim <- readRDS(sim_file)
     gt <- readRDS(gt_file)
@@ -76,14 +77,18 @@ evaluate_conventional <- function(sim_file, gt_file, out_dir,
     topo <- which(abs(times - s$topo_time) < 1e-9)
 
     arr <- difference_array(sim, times, channels)
+
+    # Cluster mass and TFCE use this adjacency; FALSE keeps only the time neighbours.
+    mne_adj <- if (spatial_adjacency) adj else adj * 0
+
     cell_p <- apply(arr, c(2, 3), function(x) t.test(x)$p.value)
     p_list <- list(
         uncorrected = cell_p,
         BH = matrix(p.adjust(cell_p, "BH"), nrow(cell_p)),
         BY = matrix(p.adjust(cell_p, "BY"), nrow(cell_p)),
         Holm = matrix(p.adjust(cell_p, "holm"), nrow(cell_p)),
-        cluster_mass = mne_cell_pvalues(arr, adj, cs, tfce = FALSE),
-        TFCE = mne_cell_pvalues(arr, adj, cs, tfce = TRUE)
+        cluster_mass = mne_cell_pvalues(arr, mne_adj, cs, tfce = FALSE),
+        TFCE = mne_cell_pvalues(arr, mne_adj, cs, tfce = TRUE)
     )
 
     rows <- list()

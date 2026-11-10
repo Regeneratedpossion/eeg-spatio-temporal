@@ -68,10 +68,11 @@ evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
                                    paste(truth_df$channel, truth_df$time))]
     stopifnot(!anyNA(truth))
     in_window <- grid$time >= s$true_onset - 1e-9 & grid$time <= s$true_offset + 1e-9
+    active_channels <- channels %in% gt$active_electrodes
     active_ch <- grid$channel %in% gt$active_electrodes
     in_A <- active_ch & in_window
     null_window <- !active_ch & in_window
-    ring_chan <- electrode_rings(adj, channels, channels %in% gt$active_electrodes)
+    ring_chan <- electrode_rings(adj, channels, active_channels)
     ring_grid <- ring_chan[match(grid$channel, channels)]
     to_matrix <- function(x) matrix(x, nrow = length(times), ncol = length(channels))
 
@@ -88,10 +89,18 @@ evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
     rule_grid <- unique(sesoi[, c("rule", "baseline_end")])
     topo <- abs(grid$time - s$topo_time) < 1e-9
     rows <- list()
+    elec_det <- NULL
     for (r in seq_len(nrow(rule_grid))) {
         rr <- rule_grid[r, ]
-        sel <- sesoi$rule == rr$rule & (is.na(rr$baseline_end) & is.na(sesoi$baseline_end) |
-                                        sesoi$baseline_end %in% rr$baseline_end)
+        same_rule <- sesoi$rule == rr$rule
+
+        same_baseline <- if (is.na(rr$baseline_end)) {
+            is.na(sesoi$baseline_end)
+        } else {
+            sesoi$baseline_end == rr$baseline_end
+        }
+
+        sel <- same_rule & same_baseline
         delta <- sesoi$delta[sel][match(grid$channel, sesoi$channel[sel])]
         p <- colMeans(sweep(draws, 2, delta, ">"))
         odds <- pmax(p, 1 / nrow(draws)) / pmax(1 - p, 1 / nrow(draws))
@@ -119,6 +128,7 @@ evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
         }
     }
     # Proportion of detected cells in the active window, per electrode (main rule).
+    stopifnot(!is.null(elec_det))
     by_elec <- tapply(elec_det[in_window], grid$channel[in_window], mean)
     write.csv(data.frame(channel = names(by_elec), rate = as.numeric(by_elec)),
               file.path(out_dir, "detection_by_electrode.csv"), row.names = FALSE)

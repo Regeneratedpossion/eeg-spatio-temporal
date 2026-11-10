@@ -54,7 +54,7 @@ pA <- ggplot(sensors, aes(xproj, yproj)) +
   coord_equal() + labs(title = expression(bold("A  Spatial weight ") * w[c])) +
   th + theme(axis.text = element_blank(), axis.title = element_blank(), panel.grid = element_blank())
 
-wf <- do.call(rbind, lapply(params$ronset, function(o) data.frame(time = Xf, tau = o, f = temporal_signal_at_onset(params, o))))
+wf <- do.call(rbind, lapply(params$ronset, function(o) data.frame(time = Xf, tau = o, f = temporal_signal_at_onset(o))))
 pB <- ggplot(wf, aes(time, f)) + geom_line(aes(group = tau), colour = "grey50", linewidth = 0.12) +
   stat_summary(fun = mean, geom = "line", colour = "#2166AC", linewidth = 0.8) + win +
   labs(title = expression(bold("B  Waveform ") * f(t * ";" ~ tau[p])), x = "Time (ms)", y = "f") + th

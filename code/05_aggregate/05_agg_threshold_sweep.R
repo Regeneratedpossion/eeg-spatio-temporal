@@ -1,18 +1,137 @@
-# Run from the project root. Reads results/single_node_cond*/seed_*/evaluation; writes to results/fig_data (AGG_OUT overrides).
-res_dir <- here::here("results"); out_dir <- Sys.getenv("AGG_OUT", unset = here::here("results", "fig_data")); dir.create(file.path(out_dir, "tables"), showWarnings = FALSE, recursive = TRUE)
-rd <- function(f) tryCatch({x <- read.csv(f); x[, intersect(names(x), c("rule","baseline_end","odds","method","alpha","F1","FPR","onset_error_ms","offset_error_ms"))]}, error = function(e) NULL)
-mae <- function(e) mean(abs(e[is.finite(e)])); nv <- function(e) sum(is.finite(e))
-cell <- function(c, m, t, x) data.frame(scenario = c, method = m, thr = t, n = nrow(x), F1 = mean(x$F1), FPR = mean(x$FPR),
-  on_MAE = mae(x$onset_error_ms), off_MAE = mae(x$offset_error_ms), N_valid = nv(x$onset_error_ms))
-out <- list()
-for (c in c("1", "3", "2", "4")) {
-  d <- file.path(res_dir, sprintf("single_node_cond%s_ds_cr_seeds001_100", c))
-  b <- do.call(rbind, lapply(Sys.glob(file.path(d, "seed_*/evaluation/evaluation_sensitivity.csv")), rd))
-  b <- b[b$rule == "global" & abs(b$baseline_end - 0.10) < 1e-9, ]
-  for (o in sort(unique(b$odds))) out[[length(out) + 1]] <- cell(c, "BGAM", o, b[b$odds == o, ])
-  g <- do.call(rbind, lapply(Sys.glob(file.path(d, "seed_*/evaluation/evaluation_conventional.csv")), rd))
-  for (m in unique(g$method)) for (a in sort(unique(g$alpha))) out[[length(out) + 1]] <- cell(c, m, a, g[g$method == m & g$alpha == a, ])
+# Summarise performance across statistical thresholds.
+# Run from the project root. Reads results/single_node_cond*/seed_*/evaluation.
+# Writes to results/fig_data (AGG_OUT overrides).
+
+res_dir <- here::here("results")
+out_dir <- Sys.getenv(
+    "AGG_OUT",
+    unset = here::here("results", "fig_data")
+)
+
+dir.create(
+    file.path(out_dir, "tables"),
+    showWarnings = FALSE,
+    recursive = TRUE
+)
+
+
+# 1. Helper functions ----------------------------------------
+
+read_results <- function(file) {
+    tryCatch({
+        x <- read.csv(file)
+
+        columns <- c(
+            "rule", "baseline_end", "odds",
+            "method", "alpha", "F1", "FPR",
+            "onset_error_ms", "offset_error_ms"
+        )
+
+        x[, intersect(names(x), columns)]
+    }, error = function(e) NULL)
 }
-r <- do.call(rbind, out)
-write.csv(r, file.path(out_dir, "threshold_sweep_20261009.csv"), row.names = FALSE)
-cat(nrow(r), "rows; seeds per cell:", range(r$n), "\n")
+
+mae <- function(errors) {
+    mean(abs(errors[is.finite(errors)]))
+}
+
+n_valid <- function(errors) {
+    sum(is.finite(errors))
+}
+
+summarise_threshold <- function(scenario, method, threshold, data) {
+    data.frame(
+        scenario = scenario,
+        method = method,
+        thr = threshold,
+        n = nrow(data),
+        F1 = mean(data$F1),
+        FPR = mean(data$FPR),
+        on_MAE = mae(data$onset_error_ms),
+        off_MAE = mae(data$offset_error_ms),
+        N_valid = n_valid(data$onset_error_ms)
+    )
+}
+
+
+# 2. Summarise each scenario ---------------------------------
+
+out <- list()
+
+for (scenario in c("1", "3", "2", "4")) {
+
+    scenario_dir <- file.path(
+        res_dir,
+        sprintf(
+            "single_node_cond%s_ds_cr_seeds001_100",
+            scenario
+        )
+    )
+
+    # BGAM: posterior odds thresholds.
+    bgam_files <- Sys.glob(file.path(
+        scenario_dir,
+        "seed_*/evaluation/evaluation_sensitivity.csv"
+    ))
+
+    bgam <- do.call(
+        rbind,
+        lapply(bgam_files, read_results)
+    )
+
+    bgam <- bgam[
+        bgam$rule == "global" &
+            abs(bgam$baseline_end - 0.10) < 1e-9,
+    ]
+
+    for (odds in sort(unique(bgam$odds))) {
+        selected <- bgam[bgam$odds == odds, ]
+
+        out[[length(out) + 1]] <- summarise_threshold(
+            scenario, "BGAM", odds, selected
+        )
+    }
+
+    # Conventional methods: alpha thresholds.
+    conventional_files <- Sys.glob(file.path(
+        scenario_dir,
+        "seed_*/evaluation/evaluation_conventional.csv"
+    ))
+
+    conventional <- do.call(
+        rbind,
+        lapply(conventional_files, read_results)
+    )
+
+    for (method in unique(conventional$method)) {
+        for (alpha in sort(unique(conventional$alpha))) {
+
+            selected <- conventional[
+                conventional$method == method &
+                    conventional$alpha == alpha,
+            ]
+
+            out[[length(out) + 1]] <- summarise_threshold(
+                scenario, method, alpha, selected
+            )
+        }
+    }
+}
+
+
+# 3. Save the summary ----------------------------------------
+
+result <- do.call(rbind, out)
+
+write.csv(
+    result,
+    file.path(out_dir, "threshold_sweep_20261009.csv"),
+    row.names = FALSE
+)
+
+cat(
+    nrow(result),
+    "rows; seeds per cell:",
+    range(result$n),
+    "\n"
+)

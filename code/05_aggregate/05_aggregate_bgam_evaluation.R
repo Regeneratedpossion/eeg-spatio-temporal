@@ -73,11 +73,17 @@ aggregate_bgam_evaluation <- function(results_dir) {
         f <- file.path(results_dir, s, "evaluation", "evaluation_main.csv")
         cv <- file.path(results_dir, s, "convergence.csv")
         ns <- file.path(results_dir, s, "nuts_summary.csv")
-        if (!all(file.exists(c(f, cv, ns)))) return(NULL)
+        if (!all(file.exists(c(f, cv, ns)))) {
+            message("Skipping incomplete seed: ", s)
+            return(NULL)
+        }
         cbind(seed = as.integer(sub("seed_", "", s)), read.csv(f),
               read.csv(cv)[, c("max_rhat", "min_ess_bulk", "min_ess_tail")],
               read.csv(ns)[, c("divergences", "treedepth_hits")])
     }))
+    if (is.null(per_seed)) {
+        stop("No complete seed evaluations found", call. = FALSE)
+    }
     per_seed$converged <- converged(per_seed)
     write.csv(per_seed, file.path(results_dir, "evaluation_per_seed.csv"), row.names = FALSE)
 

@@ -13,10 +13,17 @@
 #   6. make_dataset()
 ###########################################################
 
-source(file.path(Sys.getenv("PROJECT_ROOT", unset = here::here()), "code/R/utils.R"))
-source(file.path(project_root(), "code/R/superpopulation_truth.R"))
+source(file.path(
+    Sys.getenv("PROJECT_ROOT", unset = here::here()),
+    "code/R/utils.R"
+))
 
-library(dplyr)
+source(file.path(
+    project_root(),
+    "code/R/superpopulation_truth.R"
+))
+
+suppressPackageStartupMessages(library(dplyr))
 
 # Archived helper code for noise and ERP template.
 BRMS_MEEG <- brms_meeg_path()
@@ -118,8 +125,10 @@ load_electrode_layout <- function() {
 load_noise_and_erp_assets <- function() {
     source(file.path(BRMS_MEEG, "eeg_noise.R"))
     source(file.path(BRMS_MEEG, "erp_template.R"))
-    meanpower <<- unlist(read.table(file.path(BRMS_MEEG, "meanpower.txt")))
-    invisible(meanpower)
+
+    invisible(unlist(
+        read.table(file.path(BRMS_MEEG, "meanpower.txt"))
+    ))
 }
 
 # -------------------------------------------------------
@@ -184,7 +193,7 @@ compute_noise_covariance <- function(sensors, params) {
 # 4. Generate one dataset
 # -------------------------------------------------------
 
-temporal_signal_at_onset <- function(params, onset_ms) {
+temporal_signal_at_onset <- function(onset_ms) {
     onset_index <- which(Xf == onset_ms)
 
     c(
@@ -194,14 +203,9 @@ temporal_signal_at_onset <- function(params, onset_ms) {
     )
 }
 
-build_temporal_signal <- function(params, onset_ms = NULL) {
-    participant_onset <- if (is.null(onset_ms)) {
-        sample(x = params$ronset, size = 1)
-    } else {
-        onset_ms
-    }
-    signal <- temporal_signal_at_onset(params, participant_onset)
-    attr(signal, "onset_ms") <- participant_onset
+build_temporal_signal <- function(onset_ms) {
+    signal <- temporal_signal_at_onset(onset_ms)
+    attr(signal, "onset_ms") <- onset_ms
     signal
 }
 
@@ -249,43 +253,21 @@ build_trial_base_rows <- function(participant_id, trial, sensors,
 generate_dataset_base <- function(params, sensors, L) {
     n_elec <- nrow(sensors)
     trial_data <- list()
-    participant_onsets_ms <- numeric(params$n_ppt)
-    participant_parameters <- if (params$scenario == "legacy") {
-        data.frame(
-            participant = paste0(
-                "participant_", sprintf("%02d", seq_len(params$n_ppt))
-            ),
-            onset_ms = NA_real_,
-            amplitude = params$bump_amplitude,
-            noise_scale = 1,
-            stringsAsFactors = FALSE
-        )
-    } else {
-        draw_participant_parameters(params)
-    }
+
+    participant_parameters <- draw_participant_parameters(params)
 
     for (P in seq_len(params$n_ppt)) {
         participant <- participant_parameters[P, ]
         participant_id <- participant$participant
-        # The legacy branch samples here, preserving the historical RNG order.
-        temporal_signal <- if (params$scenario == "legacy") {
-            build_temporal_signal(params)
-        } else {
-            build_temporal_signal(params, participant$onset_ms)
-        }
-        participant_onsets_ms[P] <- attr(temporal_signal, "onset_ms")
-        participant_parameters$onset_ms[P] <- participant_onsets_ms[P]
+
+        temporal_signal <- build_temporal_signal(participant$onset_ms)
 
         for (trial in seq_len(params$n_trials)) {
-            if (params$scenario == "legacy") {
-                noise_c1 <- generate_condition_noise(n_elec, params, L)
-                noise_c2 <- generate_condition_noise(n_elec, params, L)
-            } else {
-                noise_c1 <- participant$noise_scale *
-                    generate_condition_noise(n_elec, params, L)
-                noise_c2 <- participant$noise_scale *
-                    generate_condition_noise(n_elec, params, L)
-            }
+            noise_c1 <- participant$noise_scale *
+                generate_condition_noise(n_elec, params, L)
+
+            noise_c2 <- participant$noise_scale *
+                generate_condition_noise(n_elec, params, L)
 
             trial_data[[length(trial_data) + 1]] <- build_trial_base_rows(
                 participant_id = participant_id,
@@ -304,6 +286,7 @@ generate_dataset_base <- function(params, sensors, L) {
             time = time / 1000,
             condition = factor(condition, levels = c("cond1", "cond2"))
         )
+
     base_data <- downsample_base_dataset(base_data, params)
 
     list(
@@ -370,6 +353,9 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
         )
 
     participant_onsets_ms <- participant_parameters$onset_ms
+    active_electrodes <- sensors %>%
+        filter(spatial_weight > 0) %>%
+        pull(channel)
     list(
         true_onset = params$true_onset,
         true_offset = params$true_offset,
@@ -395,18 +381,14 @@ build_ground_truth <- function(params, sensors, participant_parameters) {
         ),
         continuous_effect = continuous_ground_truth,
         active_cells = expand.grid(
-            channel = sensors %>%
-                filter(spatial_weight > 0) %>%
-                pull(channel),
+            channel = active_electrodes,
             time = temporal_active,
             KEEP.OUT.ATTRS = FALSE,
             stringsAsFactors = FALSE
         ),
         participant_parameters = participant_parameters,
         all_channels = sensors$channel,
-        active_electrodes = sensors %>%
-            filter(spatial_weight > 0) %>%
-            pull(channel)
+        active_electrodes = active_electrodes
     )
 }
 
@@ -440,4 +422,4 @@ make_dataset <- function(seed, scenario, n_ppt = 20L) {
 }
 
 # Load noise and ERP template before generating data.
-load_noise_and_erp_assets()
+meanpower <- load_noise_and_erp_assets()

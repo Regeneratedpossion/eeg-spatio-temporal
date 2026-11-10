@@ -1,77 +1,46 @@
-# Bayesian GAM for spatio-temporal EEG inference
+# Spatio-temporal EEG modelling with Bayesian GAMs
 
-Code of the master thesis. It simulates EEG data with a known effect, fits a Bayesian generalised additive model (BGAM) with brms and cmdstanr, and compares it with cluster-based permutation tests and TFCE.
+Code for a master's thesis at TU Dortmund University. The study compares a Bayesian generalised additive model (BGAM) with six conventional methods for detecting **when and where** simulated EEG effects occur.
 
-## What the thesis does in one paragraph
+## Study
 
-Four scenarios (A = amplitude, ω_A = between-participant variability of the amplitude) are simulated on a 61-channel layout:
+We simulate 100 datasets in each of four scenarios, with 20 participants and 61 electrodes per dataset.
 
-| Scenario | Name in code | A | ω_A |
-|---|---|---:|---:|
-| 1 | `cond_1` | 0.5 | 0.26 |
-| 2 | `cond_2` | 0.5 | 0.70 |
-| 3 | `cond_3` | 1.5 | 0.26 |
-| 4 | `cond_4` | 1.5 | 0.70 |
+| Scenario | Effect amplitude (µV) | Between-participant heterogeneity |
+|---|---:|---:|
+| 1 | 0.5 | 0.26 |
+| 2 | 0.5 | 0.70 |
+| 3 | 1.5 | 0.26 |
+| 4 | 1.5 | 0.70 |
 
-Each scenario has 100 simulated datasets (seeds 1–100). The BGAM is fitted to every dataset, and 362 of the 400 fits pass the convergence criterion (`resources/passed_fits.txt`). Onset, offset and spatial extent of the effect are then compared with the conventional methods.
+Of 400 BGAM fits, **362 meet the convergence criteria**. The analysis compares detection accuracy, timing error, false positives and effect recovery.
 
-## Structure
+## Repository structure
 
 ```text
-eeg-spatio-temporal/
-├── code/
-│   ├── 00_config.R          paths and scenario map, loaded by every script
-│   ├── 01_simulate/         simulate the datasets
-│   ├── 02_fit/              fit the Bayesian model (one seed per job)
-│   ├── 03_conventional/     cluster test, TFCE and other conventional methods
-│   ├── 04_evaluate/         turn each fit into detection masks and measures
-│   ├── 05_aggregate/        collect the results of all seeds
-│   ├── 06_tables/           tables of the thesis
-│   ├── 07_figures/          figures of the thesis and their data
-│   └── R/                   helper functions
-├── slurm/                   cluster job scripts, same numbers as code/
-├── resources/               small input files (electrodes, adjacency, passed fits, brms template)
-├── inventory.csv            which script makes which table or figure
-└── README.md
+code/           Simulation, fitting, evaluation, tables and figures (steps 01–07)
+code/R/         Shared R functions
+slurm/          Jobs for the LIDO cluster
+resources/      Electrode information, adjacency and passed-fit list
+data/           Selected ground-truth data
+results/        Selected results needed for figures and tables
+inventory.csv   Which scripts produce each thesis figure or table
 ```
 
-Old code, notes and results from earlier versions of the project are not on this branch. They are on the branch `archive`.
+## Reproduce tables and figures
 
-## Where the parameters are
+Run commands from the repository root. Using the stored results does **not** require fitting all BGAMs again.
 
-| Parameters | File and function |
-|---|---|
-| Simulation (participants, trials, noise, onsets, the four scenarios) | `code/01_simulate/01_generate_data.R`: `define_simulation_parameters()`, `heterogeneity_scenarios()` |
-| BGAM (basis, k, chains, iterations, priors, contrast coding) | `code/R/fit_config.R`: `ds_cr_seed_config()` |
-| Evaluation (SESOI baseline, posterior odds, active window, thresholds) | `code/R/evaluation_functions.R`: `evaluation_settings()` |
-| Conventional methods (permutations, seed, alpha, TFCE) | `code/03_conventional/03_evaluate_conventional.R`: `conventional_settings()` |
-| Convergence rule (R-hat < 1.01, ESS > 400) | `code/05_aggregate/05_make_passed_fits.R` |
+```bash
+Rscript code/06_tables/06_tables.R passed
+```
 
-## Order of the scripts
+The figure scripts are in `code/07_figures/`. See `inventory.csv` for their inputs and outputs. Full simulation and model fitting use `code/01_simulate/` through `code/05_aggregate/` and the scripts in `slurm/`.
 
-| Step | Script | Where it runs |
-|---|---|---|
-| 00 | `00_config.R` (paths and scenario map) | loaded by the other scripts |
-| 01 | `01_simulate/01_generate_dataset.R` simulates one dataset (`COND` = 1, 2, 3 or 4, seed 1–100) | cluster or local |
-| 02 | `02_fit/02_fit_bgam.R` fits the BGAM of one seed (`COND` = 1, 2, 3 or 4) | cluster, about 20 h per fit |
-| 03 | `03_conventional/03_evaluate_conventional*.R` runs the conventional tests | cluster |
-| 04 | `04_evaluate/04_evaluate_bgam.R` turns each fit into detection masks and measures | cluster |
-| 05 | `05_aggregate/05_*.R` collects the per-seed results | cluster |
-| 06 | `06_tables/06_tables.R` makes the result tables | local |
-| 07 | `07_figures/07_figure_*.R` makes the figures | local |
+See [Reproducibility notes](docs/REPRODUCIBILITY.md) and [Code instructions](code/README.md).
 
-Run every script from the repository root. Details, environment variables and the Slurm call are in [code/README.md](code/README.md).
+## Software and related work
 
-## To reproduce only the tables and figures
+The original analysis used **R 4.4.2**, `brms` 2.23.0, CmdStan 2.38.0 and **MNE-Python 0.23.4**.
 
-The small per-seed results that steps 06 and 07 need are in `results/` and `data/*/gt_*.rds`, so a clone can make the tables and figures without fitting anything: `Rscript code/06_tables/06_tables.R passed`, then the scripts in `code/07_figures/`. Fits, simulated EEG data and logs are not stored. All figure scripts write to `results/diagnostics/` under the file names that the thesis uses; no file has to be renamed or copied. The table scripts write `.tex` fragments to `results/fig_data/tables/`; the rows are pasted into the thesis by hand.
-
-## Software
-
-R 4.4.2, brms 2.23.0, cmdstanr 0.8.0 with CmdStan 2.38.0, mgcv 1.9-4, posterior 1.7.0. The conventional tests use MNE-Python 0.23.4 through reticulate.
-
-## Known issues
-
-1. **Folder for tables and figures.** `THESIS_DIR` defaults to `results/` in the repository (see `code/00_config.R`). Tables go to `results/fig_data/tables/`, figure data to `results/fig_data/`, figures to `results/diagnostics/` and `results/figures_out/`.
-2. **Summaries between steps 05 and 06.** `06_tables.R` reads `sesoi_rule_passed.csv` and `sesoi_rule_20261009.csv` from `results/fig_data/tables/`. They are made by `05_agg_sesoi_passed.R` and `05_agg_sesoi_all.R`, which now write to that folder (`AGG_OUT` overrides it). `05_agg_ring_fpr.R` and `05_agg_threshold_sweep.R` write to `results/fig_data/`. Run all four from the project root after the per-seed evaluations exist; they reproduce the stored files up to rounding in the last digit.
-3. **Scenario names on the cluster.** The scenarios are numbered 1 to 4 in this repository. Folders created on LiDO before the renaming use the letters I, H, F and E (1 = I, 2 = H, 3 = F, 4 = E). Rename them before running the scripts there.
+This work builds on [Nalborczyk and Bürkner's M/EEG research](https://github.com/lnalborczyk/brms_meeg). Their [neurogam](https://github.com/lnalborczyk/neurogam) package provides related tools.

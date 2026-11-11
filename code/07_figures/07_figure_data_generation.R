@@ -1,3 +1,4 @@
+# Thesis Figure 2.2 (fig:data_generation).
 # Figure: how the simulated data are generated (Section 2.2). Uses the real generator of the simulation.
 suppressPackageStartupMessages({library(ggplot2); library(dplyr); library(patchwork)})
 source(here::here("code/00_config.R"))   # run from the project root

@@ -1,3 +1,4 @@
+# Thesis Figure 2.3 (fig:electrode_adjacency).
 source(here::here("code/00_config.R")); setwd(thesis_dir)   # reads and writes relative to the thesis folder
 # Draws the 61-electrode adjacency graph used for spatial adjacency.
 suppressPackageStartupMessages(library(ggplot2))

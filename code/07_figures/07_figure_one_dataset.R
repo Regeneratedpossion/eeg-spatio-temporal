@@ -1,3 +1,4 @@
+# Thesis Figure E.1 (fig:one_dataset).
 source(here::here("code/00_config.R")); setwd(thesis_dir)   # reads and writes relative to the thesis folder
 # Figure: BGAM analysis of ONE simulated dataset (scenario 3, seed 36)
 library(ggplot2); library(dplyr); library(tidyr); library(patchwork)

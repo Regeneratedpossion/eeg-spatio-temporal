@@ -1,3 +1,4 @@
+# Thesis Figures C.1 to C.4 (fig:detection_topo_1..4); 07_figure_detection_topo_crop.py crops them.
 # Run from the project root. Reads the masks written by code/extra/04_save_masks.R (results/<batch>/seed_*/evaluation).
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))
 out_dir <- fig_dir(here::here("results/heatmaps"))

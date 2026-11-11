@@ -1,3 +1,4 @@
+# Thesis Figure 3.1 (fig:bgam_fit).
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))   # run from the project root
 out_dir <- fig_dir(thesis_path("diagnostics")); truth_file <- thesis_path("fig_data/truth_250.csv")
 setwd(project_dir)

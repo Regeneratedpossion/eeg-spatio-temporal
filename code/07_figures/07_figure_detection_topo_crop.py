@@ -1,3 +1,4 @@
+# Thesis Figures C.1 to C.4 (fig:detection_topo_1..4); run after 07_figure_detection_topo.R.
 # Crops the topo_{1,2,3,4}.png files written by code/07_figures/07_figure_detection_topo.R
 # and saves them as detection_topo_scenario{1,2,3,4}.png (scenario numbers 1 to 4).
 # The crop removes 245 px on the left and 246 px on the right (1653 -> 1162 px wide).

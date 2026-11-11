@@ -1,3 +1,4 @@
+# Thesis Figure 3.3 (fig:bgam_prob).
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))   # run from the project root
 out_dir <- fig_dir(thesis_path("diagnostics"))
 setwd(project_dir)

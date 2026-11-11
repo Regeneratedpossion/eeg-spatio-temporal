@@ -21,7 +21,7 @@ These checks do not replace running the code with all original fitted models.
 - Compare the updated BGAM evaluation and mask outputs with real `fit.rds` files on LIDO.
 - Check missing-value handling in the no-space analysis used for **Table F.1**.
 - Verify electrode-level FPR outputs where the required files are available.
-- Check older ground-truth metadata for the reported offset difference (**0.342 s versus 0.340 s**).
+- Checked: older ground-truth files store `true_offset` = 0.342 s, the code uses 0.340 s. The evaluation reads 0.340 s from `evaluation_settings()`, and the 0.01 s time grid has no point between the two values, so the results do not change.
 - The older `sesoi_all.tex` differs from regenerated values for scenarios 2 and 3; the thesis uses the verified `passed` tables.
 
 Do not edit numerical results by hand. Use `inventory.csv` to trace each result to its source code and data.

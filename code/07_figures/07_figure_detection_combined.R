@@ -1,4 +1,5 @@
-# Figure 6: detected electrodes over time (A, B) and detection rate by distance from CZ (C), converged fits only.
+# Thesis Figure 3.4 (fig:detection_counts).
+# Detected electrodes over time (A, B) and detection rate by distance from CZ (C), converged fits only.
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))   # run from the project root
 suppressPackageStartupMessages({library(ggplot2); library(dplyr); library(patchwork)})
 thesis <- thesis_dir; out_dir <- fig_dir(thesis_path("diagnostics")); csv_dir <- fig_dir(thesis_path("fig_data"))

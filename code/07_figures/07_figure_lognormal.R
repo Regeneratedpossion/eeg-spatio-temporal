@@ -1,3 +1,4 @@
+# Thesis Figure B.1 (fig:lognormal).
 source(here::here("code/00_config.R")); setwd(thesis_dir)   # reads and writes relative to the thesis folder
 # Why the participant amplitude A_p is log-normal rather than normal.
 library(ggplot2); library(dplyr)

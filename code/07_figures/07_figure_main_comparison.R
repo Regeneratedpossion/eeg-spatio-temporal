@@ -1,3 +1,4 @@
+# Thesis Figure 3.5 (fig:tradeoff) and Figures C.5, C.6 (fig:main_comparison, fig:main_comparison_appendix).
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))   # run from the project root
 # Builds the main comparison figure and the trade-off figure from the per-seed evaluation CSVs.
 suppressPackageStartupMessages({library(ggplot2); library(dplyr); library(tidyr)})

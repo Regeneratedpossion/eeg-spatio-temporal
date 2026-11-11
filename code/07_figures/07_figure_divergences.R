@@ -1,3 +1,4 @@
+# Thesis Figure D.1 (fig:divergences).
 source(here::here("code/00_config.R")); setwd(thesis_dir)   # reads and writes relative to the thesis folder
 library(ggplot2); library(dplyr); library(tidyr)
 set.seed(1)   # jitter

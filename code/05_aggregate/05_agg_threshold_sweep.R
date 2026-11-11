@@ -2,17 +2,10 @@
 # Run from the project root. Reads results/single_node_cond*/seed_*/evaluation.
 # Writes to results/fig_data (AGG_OUT overrides).
 
-res_dir <- here::here("results")
-out_dir <- Sys.getenv(
-    "AGG_OUT",
-    unset = here::here("results", "fig_data")
-)
+source(here::here("code/R/aggregate_utils.R"))
 
-dir.create(
-    file.path(out_dir, "tables"),
-    showWarnings = FALSE,
-    recursive = TRUE
-)
+res_dir <- here::here("results")
+out_dir <- aggregate_out_dir()
 
 
 # 1. Helper functions ----------------------------------------
@@ -60,13 +53,7 @@ out <- list()
 
 for (scenario in c("1", "3", "2", "4")) {
 
-    scenario_dir <- file.path(
-        res_dir,
-        sprintf(
-            "single_node_cond%s_ds_cr_seeds001_100",
-            scenario
-        )
-    )
+    scenario_dir <- scenario_results_dir(res_dir, scenario)
 
     # BGAM: posterior odds thresholds.
     bgam_files <- Sys.glob(file.path(

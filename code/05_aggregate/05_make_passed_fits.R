@@ -1,9 +1,10 @@
 # Writes resources/passed_fits.txt: the fits that pass the convergence criterion of Section 2.2.5.
 # A fit passes if, over all cells of g, max R-hat < 1.01 and min bulk ESS and min tail ESS > 400.
 # Reads results/single_node_cond*_ds_cr_seeds001_100/seed_*/evaluation/evaluation_main.csv. Run from the project root.
+source(here::here("code/R/aggregate_utils.R"))
 root <- here::here()
 rows <- do.call(rbind, lapply(c("1", "2", "3", "4"), function(cond) {
-  files <- Sys.glob(file.path(root, "results", sprintf("single_node_cond%s_ds_cr_seeds001_100", cond), "seed_*", "evaluation", "evaluation_main.csv"))
+  files <- Sys.glob(file.path(scenario_results_dir(file.path(root, "results"), cond), "seed_*", "evaluation", "evaluation_main.csv"))
   do.call(rbind, lapply(files, function(f) {
     x <- read.csv(f)[1, c("max_rhat_g", "min_ess_bulk_g", "min_ess_tail_g")]
     data.frame(cond = cond, seed = as.integer(sub(".*seed_([0-9]+).*", "\\1", f)), x)

@@ -9,24 +9,12 @@ mode <- commandArgs(TRUE)[1]
 if (is.na(mode)) mode <- "all"
 stopifnot(mode %in% c("all", "passed"))
 
+source(here::here("code/R/aggregate_utils.R"))
+
 res_dir <- here::here("results")
-out_dir <- Sys.getenv(
-    "AGG_OUT",
-    unset = here::here("results", "fig_data")
-)
+out_dir <- aggregate_out_dir()
 
-dir.create(
-    file.path(out_dir, "tables"),
-    showWarnings = FALSE,
-    recursive = TRUE
-)
-
-if (mode == "passed") {
-    man <- read.table(
-        here::here("resources/passed_fits.txt"),
-        col.names = c("cond", "seed")
-    )
-}
+if (mode == "passed") man <- read_passed_fits()
 
 
 # 1. Read the sensitivity results of one file ----------------
@@ -50,13 +38,7 @@ out <- list()
 
 for (scenario in c("1", "3", "2", "4")) {
 
-    scenario_dir <- file.path(
-        res_dir,
-        sprintf(
-            "single_node_cond%s_ds_cr_seeds001_100",
-            scenario
-        )
-    )
+    scenario_dir <- scenario_results_dir(res_dir, scenario)
 
     if (mode == "passed") {
         files <- file.path(

@@ -1,7 +1,8 @@
-man <- read.table("resources/passed_fits.txt", col.names = c("cond", "seed"))
+source(here::here("code/R/aggregate_utils.R"))
+man <- read_passed_fits()
 sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 for (c in names(sc)) {
-  d <- sprintf("results/single_node_cond%s_ds_cr_seeds001_100", c); s <- man$seed[man$cond == c]
+  d <- scenario_results_dir(here::here("results"), c); s <- man$seed[man$cond == c]
   g <- function(ev, m, v) sapply(s, function(k) { y <- read.csv(sprintf("%s/seed_%03d/%s/evaluation_conventional.csv", d, k, ev)); y[y$main & y$method == m, v] })
   for (v in c("F1", "onset_error_ms")) for (ev in c("evaluation", "evaluation_no_space")) {
     x <- g(ev, "TFCE", v) - g(ev, "cluster_mass", v); ok <- !is.na(x)

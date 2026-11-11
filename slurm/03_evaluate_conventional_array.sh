@@ -22,7 +22,7 @@ source "$PROJECT_ROOT/slurm/env.sh"
 
 RESULTS_BATCH="scenario${COND:?set COND to 1, 2, 3 or 4}"
 SEED_DIR="results/${RESULTS_BATCH}/$(printf 'seed_%03d' "$SLURM_ARRAY_TASK_ID")"
-DATA_SUBDIR=$(Rscript --vanilla -e "cat(readRDS('${SEED_DIR}/config.rds')\$data_subdir)")
+DATA_SUBDIR="scenario${COND}"
 SEED_TAG=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")
 
 Rscript --vanilla code/03_conventional/03_evaluate_conventional.R \

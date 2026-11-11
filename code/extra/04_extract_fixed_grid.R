@@ -58,8 +58,7 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 cat("=== seed", seed_task, "===\n")
 
-config <- readRDS(file.path(result_dir, "config.rds"))
-data_subdir <- config$data_subdir
+data_subdir <- fixed_grid_batch()   # the data folder has the same name as the results folder
 
 sim_data <- readRDS(data_path(data_subdir, paste0("sim_", seed_str, ".rds")))
 ground_truth <- readRDS(data_path(data_subdir, paste0("gt_", seed_str, ".rds")))

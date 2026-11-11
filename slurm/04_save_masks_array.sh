@@ -12,6 +12,5 @@ set -euo pipefail
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
 mkdir -p "$PROJECT_ROOT/logs"
 cd "$PROJECT_ROOT"
-module purge
-module load R/4.4.2-gcc141-base
+source "$PROJECT_ROOT/slurm/env.sh"
 Rscript --vanilla code/extra/04_save_masks.R "$COND" "$SLURM_ARRAY_TASK_ID" "$WHAT"

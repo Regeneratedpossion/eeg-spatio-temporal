@@ -8,6 +8,6 @@
 # One passed fit per array task; the list is results/passed_fits.txt (condition, seed).
 set -euo pipefail
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
-cd "$PROJECT_ROOT"; module purge; module load R/4.4.2-gcc141-base
+cd "$PROJECT_ROOT"; source slurm/env.sh
 read -r COND SEED < <(sed -n "${SLURM_ARRAY_TASK_ID}p" results/passed_fits.txt)
 Rscript --vanilla code/extra/04_per_chain_coverage.R "$COND" "$SEED"

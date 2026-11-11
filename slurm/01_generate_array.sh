@@ -17,8 +17,7 @@ export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the pro
 export TMPDIR="${SLURM_TMPDIR:-/tmp}/gen_${COND}_${SLURM_ARRAY_TASK_ID}_${SLURM_JOB_ID}"
 mkdir -p "$TMPDIR" "$PROJECT_ROOT/logs"
 
-module purge
-module load R/4.4.2-gcc141-base
+source "$PROJECT_ROOT/slurm/env.sh"
 cd "$PROJECT_ROOT"
 
 Rscript --vanilla code/01_simulate/01_generate_dataset.R

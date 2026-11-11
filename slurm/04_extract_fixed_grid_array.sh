@@ -23,7 +23,6 @@ export TEMP="$TMPDIR"
 mkdir -p "$PROJECT_ROOT/logs" "$TMPDIR"
 cd "$PROJECT_ROOT"
 
-module purge
-module load R/4.4.2-gcc141-base
+source "$PROJECT_ROOT/slurm/env.sh"
 
 Rscript --vanilla code/extra/04_extract_fixed_grid.R "${SLURM_ARRAY_TASK_ID}"

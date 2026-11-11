@@ -22,6 +22,8 @@ suppressPackageStartupMessages({
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 
 source(file.path(project_root, "code", "R", "evaluation_functions.R"))
+# Input, grid and output helpers.
+source(file.path(project_root, "code", "R", "bgam_eval_utils.R"))
 
 # ---------------------------------------------------------------
 # Main
@@ -30,35 +32,30 @@ source(file.path(project_root, "code", "R", "evaluation_functions.R"))
 evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
                               s = evaluation_settings()) {
     dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-    fit <- readRDS(fit_file)
-    gt <- readRDS(gt_file)
-    sim <- readRDS(sim_file)
-
-    sensors <- unique(sim[, c("channel", "xproj", "yproj")])
-    sensors <- sensors[order(sensors$channel), ]
-    channels <- sensors$channel
-    times <- sort(unique(fit$data$time))
-    adj <- readRDS(file.path(project_root, "resources", "adjacency",
-                             "adjacency_xproj_yproj_61ch.rds"))
-    adj <- adj[match(channels, rownames(adj)), match(channels, rownames(adj))]
+    inputs <- load_bgam_eval_inputs(
+        fit_file, sim_file, gt_file, project_root
+    )
+    fit <- inputs$fit
+    gt <- inputs$gt
+    sensors <- inputs$sensors
+    channels <- inputs$channels
+    times <- inputs$times
+    adj <- inputs$adj
 
     # Posterior draws of the condition difference on the time x channel grid.
-    grid <- expand.grid(time = times, channel = channels,
-                        KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE)
-    grid <- merge(grid, sensors, by = "channel", sort = FALSE)
-    grid <- grid[order(match(grid$channel, channels), grid$time), ]
-    grid$eeg_sem <- 1
-    levs <- levels(fit$data$condition)
-    nd1 <- transform(grid, condition = factor(levs[1], levels = levs))
-    nd2 <- transform(grid, condition = factor(levs[2], levels = levs))
+    pred_grid <- prepare_bgam_prediction_grid(
+        fit, sensors, channels, times
+    )
+    grid <- pred_grid$grid
+    nd1 <- pred_grid$nd1
+    nd2 <- pred_grid$nd2
     draws <- posterior_epred(fit, newdata = nd2, re_formula = NA) -
         posterior_epred(fit, newdata = nd1, re_formula = NA)
     est <- colMeans(draws)
 
     # Convergence of the evaluated quantity g at every cell (Section 2.2.5).
     conv_g <- effect_convergence(draws, posterior::nchains(fit))
-    write.csv(cbind(grid[, c("channel", "time")], conv_g),
-              file.path(out_dir, "convergence_effect.csv"), row.names = FALSE)
+    conv_effect <- cbind(grid[, c("channel", "time")], conv_g)
 
     # Truth: theoretical population field and the binary active set.
     template <- file.path(project_root, "resources", "brms_meeg", "code",
@@ -84,7 +81,6 @@ evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
         data.frame(rule = "global", baseline_end = s$main_baseline_end,
                    channel = channels, delta = max(0, max(est[base])))
     )
-    write.csv(sesoi, file.path(out_dir, "sesoi.csv"), row.names = FALSE)
 
     rule_grid <- unique(sesoi[, c("rule", "baseline_end")])
     topo <- abs(grid$time - s$topo_time) < 1e-9
@@ -130,14 +126,11 @@ evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
     # Proportion of detected cells in the active window, per electrode (main rule).
     stopifnot(!is.null(elec_det))
     by_elec <- tapply(elec_det[in_window], grid$channel[in_window], mean)
-    write.csv(data.frame(channel = names(by_elec), rate = as.numeric(by_elec)),
-              file.path(out_dir, "detection_by_electrode.csv"), row.names = FALSE)
     sens <- do.call(rbind, rows)
     # FPR: inactive electrodes x active window (Section 2.2.4); FPR_cells: whole grid.
     sens$FPR_cells <- sens$FPR
     sens$FPR <- sens$FPR_window
     sens$FPR_window <- NULL
-    write.csv(sens, file.path(out_dir, "evaluation_sensitivity.csv"), row.names = FALSE)
 
     # Continuous metrics do not depend on the decision rule.
     cont <- continuous_metrics(est, truth, !in_A)
@@ -157,7 +150,10 @@ evaluate_bgam_fit <- function(fit_file, sim_file, gt_file, out_dir,
         draws, rep(main$sesoi_global, ncol(draws)), s$main_odds,
         posterior::nchains(fit)
     )
-    write.csv(main, file.path(out_dir, "evaluation_main.csv"), row.names = FALSE)
+
+    save_bgam_eval_outputs(
+        out_dir, conv_effect, sesoi, by_elec, sens, main
+    )
     invisible(main)
 }
 

@@ -30,7 +30,7 @@ These write small input files for the figures to `results/fig_data/`.
 | Script | Output | Used by |
 |---|---|---|
 | `07_data_truth_250.R` | `truth_250.csv` | `07_figure_bgam_fit_spatial.R`, `07_figure_bgam_fit_temporal.R`, `07_figure_bgam_spatial_scenarios.R` |
-| `07_data_truth_250ms_s1s3.R` | `truth_250ms_s1s3.csv` | `07_ring3_analysis.R` |
+| `07_data_truth_250ms_s1s3.R` | `truth_250ms_s1s3.csv` | `07_data_ring3.R` |
 | `07_data_div_vs_error.R` | `div_vs_error.csv` | `07_figure_divergences.R` |
 
-`07_ring3_analysis.R` writes `results/fig_data/ring3_250ms_summary.csv` and `bias_map_250ms.pdf`.
+`07_data_ring3.R` writes `results/fig_data/ring3_250ms_summary.csv` and `bias_map_250ms.pdf`.

@@ -20,8 +20,7 @@ export TMPDIR="${SLURM_TMPDIR:-/tmp}/ds_cr_seed_${SLURM_ARRAY_TASK_ID}_${SLURM_J
 unset STAN_NUM_THREADS
 mkdir -p "$TMPDIR" "$PROJECT_ROOT/logs"
 
-module purge
-module load R/4.4.2-gcc141-base
+source "$PROJECT_ROOT/slurm/env.sh"
 cd "$PROJECT_ROOT"
 
 echo "job_id=$SLURM_JOB_ID seed=$SLURM_ARRAY_TASK_ID basis=ds_cr cond=$COND started=$(date --iso-8601=seconds)"

@@ -2,8 +2,8 @@
 # 05_aggregate_fixed_grid.R
 #
 # Aggregates the 100 per-seed fixed_grid CSVs produced by
-# 05_extract_fixed_grid.R into three diagnostic plots for
-# the single_node_cond<COND>_ds_cr_seeds001_100 batch:
+# 04_extract_fixed_grid.R into three diagnostic plots for
+# the scenario<COND> batch:
 #
 #   1. bgam_fit_aggregate.png     - 6-channel fit curve
 #        (mean across converged fits' posterior means, with a band
@@ -37,8 +37,8 @@ plot_label <- Sys.getenv("FIXED_GRID_LABEL", "cr basis")
 out_dir <- file.path(base_dir, "figures_aggregate_passed")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-cond_id <- sub(".*single_node_cond([0-9])_.*", "\\1", base_dir)
-man <- read.table(file.path(project_root(), "resources/passed_fits.txt"), col.names = c("cond", "seed"))
+cond_id <- sub(".*scenario([0-9]).*", "\\1", base_dir)
+man <- read.table(file.path(project_root(), "results/passed_fits.txt"), col.names = c("cond", "seed"))
 seed_dirs <- sprintf("seed_%03d", sort(man$seed[man$cond == cond_id]))
 channels6 <- c("CZ", "FCZ", "CPZ", "C2", "PZ", "FP1")
 

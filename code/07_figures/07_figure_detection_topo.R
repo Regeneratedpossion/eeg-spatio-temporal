@@ -1,4 +1,4 @@
-# Run from the project root. Reads the masks written by code/extra/05_aggregate/05_save_masks.R (results/<batch>/seed_*/evaluation).
+# Run from the project root. Reads the masks written by code/extra/04_save_masks.R (results/<batch>/seed_*/evaluation).
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))
 out_dir <- fig_dir(here::here("results/heatmaps"))
 setwd(here::here("results"))
@@ -12,7 +12,7 @@ lab <- c(truth="Active set (truth)", BGAM="BGAM", uncorrected="Uncorrected", BH=
 tms <- c(0.16, 0.25, 0.34)
 for (sc in c("1", "3", "2", "4")) {
   acc <- list(); n <- 0
-  for (d in sort(pgs(sprintf("single_node_cond%s_ds_cr_seeds001_100/seed_*", sc)))) for (f in c("bgam","conv")) {
+  for (d in sort(pgs(sprintf("scenario%s/seed_*", sc)))) for (f in c("bgam","conv")) {
     x <- readRDS(file.path(d, "evaluation", sprintf("masks_%s.rds", f)))
     for (m in names(x$masks)) acc[[m]] <- if (is.null(acc[[m]])) x$masks[[m]] * 1 else acc[[m]] + x$masks[[m]]
     if (f == "bgam") { tr <- x$truth; times <- x$times; chs <- x$channels; n <- n + 1 }

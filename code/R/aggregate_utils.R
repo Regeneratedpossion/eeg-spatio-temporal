@@ -6,14 +6,14 @@
 scenario_results_dir <- function(res_dir, scenario) {
     file.path(
         res_dir,
-        sprintf("single_node_cond%s_ds_cr_seeds001_100", scenario)
+        sprintf("scenario%s", scenario)
     )
 }
 
 # Fits that pass the convergence criterion (condition, seed).
 read_passed_fits <- function() {
     read.table(
-        here::here("resources/passed_fits.txt"),
+        here::here("results/passed_fits.txt"),
         col.names = c("cond", "seed")
     )
 }
@@ -26,7 +26,7 @@ aggregate_out_dir <- function() {
     )
 
     dir.create(
-        file.path(out_dir, "tables"),
+        file.path(dirname(out_dir), "tables"),
         showWarnings = FALSE,
         recursive = TRUE
     )

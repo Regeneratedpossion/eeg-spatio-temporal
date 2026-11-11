@@ -2,11 +2,11 @@
 suppressMessages(library(dplyr))
 mode <- commandArgs(TRUE)[1]; if (is.na(mode)) mode <- "passed"
 source(here::here("code/00_config.R"))   # run from the project root: Rscript code/06_tables/06_tables.R passed
-tdir <- thesis_path("fig_data/tables"); odir <- fig_dir(tdir)
+tdir <- thesis_path("tables"); odir <- fig_dir(tdir)
 root0 <- project_path("results")
 sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
-man <- read.table(here::here("resources/passed_fits.txt"), col.names = c("cond", "seed"))
-rd <- function(c, f, root = root0) bind_rows(lapply(sort(Sys.glob(sprintf("%s/single_node_cond%s_ds_cr_seeds001_100/seed_*/evaluation/%s", root, c, f))), function(p) {
+man <- read.table(here::here("results/passed_fits.txt"), col.names = c("cond", "seed"))
+rd <- function(c, f, root = root0) bind_rows(lapply(sort(Sys.glob(sprintf("%s/scenario%s/seed_*/evaluation/%s", root, c, f))), function(p) {
   x <- read.csv(p); x$seed <- as.integer(sub("seed_", "", basename(dirname(dirname(p))))); x$scenario <- sc[[c]]; x$cond <- c; x }))
 b <- bind_rows(lapply(names(sc), rd, f = "evaluation_main.csv"))
 g <- bind_rows(lapply(names(sc), rd, f = "evaluation_conventional.csv")) |> filter(main == TRUE)
@@ -43,7 +43,7 @@ body <- c("    \\midrule", "    \\multicolumn{6}{l}{\\textit{A. $F_1$}} \\\\", o
 writeLines(body, file.path(odir, sprintf("overlap_%s.tex", mode)))
 t3 <- sapply(c("map_cor", "recovery", "leakage"), function(k) sapply(ord, function(s) mean(bg[[k]][bg$scenario == s])))
 writeLines(c(paste("    Map correlation &", paste(fmt(t3[, 1], 3), collapse = " & "), "\\\\"), paste("    Recovery &", paste(fmt(t3[, 2], 3), collapse = " & "), "\\\\"), paste("    Leakage &", paste(fmt(t3[, 3], 3), collapse = " & "), "\\\\")), file.path(odir, sprintf("bgam_%s.tex", mode)))
-sesoi <- c(); sr <- read.csv(file.path(tdir, if (mode == "passed") "sesoi_rule_passed.csv" else "sesoi_rule_20261009.csv")); sr$s <- match(sr$scenario, c("1", "2", "3", "4"))
+sesoi <- c(); sr <- read.csv(file.path(tdir, if (mode == "passed") "sesoi_rule_passed.csv" else "sesoi_rule_all.csv")); sr$s <- match(sr$scenario, c("1", "2", "3", "4"))
 for (s in 1:4) for (r in c("zero", "global")) { d <- sr[sr$s == s & sr$rule == r, ]
   sesoi <- c(sesoi, sprintf("    %d & %s & %s & %s & %s & %s \\\\", s, if (r == "zero") "$\\delta = 0$" else "SESOI", fmt(d$FPR, 3), fmt(d$post_offset, 3), fmt(d$recall, 3), fmt(d$F1, 3))) }
 writeLines(sesoi, file.path(odir, sprintf("sesoi_%s.tex", mode)))

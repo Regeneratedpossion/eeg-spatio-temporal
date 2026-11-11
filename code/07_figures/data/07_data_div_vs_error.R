@@ -1,4 +1,3 @@
-# Recovered from a Claude Code session on 2026-10-27 (session c5349b00).
 # Original: a scratch script (chk.R). Usage: PROJECT_ROOT=<project> Rscript make_div_vs_error.R passed_fits.txt div_vs_error.csv
 suppressMessages(library(dplyr))
 root <- Sys.getenv("PROJECT_ROOT"); stopifnot(nzchar(root))   # the simulation project (on the cluster or the local copy)
@@ -7,7 +6,7 @@ passed <- read.table(passed_file, col.names = c("cond","seed"))
 sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 ex <- list(); dv <- list()
 for (cd in names(sc)) for (s in 1:100) {
-  d <- sprintf("%s/results/single_node_cond%s_ds_cr_seeds001_100/seed_%03d", root, cd, s)
+  d <- sprintf("%s/results/scenario%s/seed_%03d", root, cd, s)
   isp <- any(passed$cond == cd & passed$seed == s)
   if (!file.exists(file.path(d, "convergence.csv"))) next
   if (!isp) {
@@ -15,7 +14,7 @@ for (cd in names(sc)) for (s in 1:100) {
     cv <- read.csv(file.path(d, "convergence.csv"))
     if (!file.exists(f)) { ex[[length(ex)+1]] <- data.frame(cond=cd, seed=s, have=FALSE, max_rhat=cv$max_rhat, min_tail=cv$min_ess_tail); next }
     x <- read.csv(f)
-    gt <- readRDS(sprintf("%s/data/single_node_cond%s_seeds001_100/gt_%03d.rds", root, cd, s))
+    gt <- readRDS(sprintf("%s/data/scenario%s/gt_%03d.rds", root, cd, s))
     act <- x$channel %in% gt$active_electrodes; win <- x$time >= 0.16-1e-9 & x$time <= 0.34+1e-9
     bad <- x$ess_tail < 400
     ex[[length(ex)+1]] <- data.frame(cond=cd, seed=s, have=TRUE, max_rhat=max(x$rhat), min_tail=min(x$ess_tail), n_bad=sum(bad), nbad_rhat=sum(x$rhat>1.01),

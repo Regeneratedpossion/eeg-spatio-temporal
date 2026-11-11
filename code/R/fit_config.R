@@ -15,7 +15,7 @@ ds_cr_seed_config <- function(project_root, cond = Sys.getenv("COND")) {
     project_root <- normalizePath(project_root)
 
     experiment_name <- sprintf(
-        "single_node_cond%s_ds_cr_seeds001_100", cond
+        "scenario%s", cond
     )
     results_dir <- file.path(
         project_root, "results", experiment_name
@@ -82,7 +82,7 @@ ds_cr_seed_data_paths <- function(config, seed) {
     seed <- validate_ds_cr_seed(seed, config)
 
     data_subdir <- sprintf(
-        "single_node_cond%s_seeds001_100", config$cond
+        "scenario%s", config$cond
     )
     data_dir <- file.path(
         config$project_root, "data", data_subdir

@@ -1,5 +1,5 @@
 # Saves the main-setting detection masks of one seed: BGAM (odds 10) or the conventional methods (alpha 0.05).
-# Usage: Rscript code/extra/05_aggregate/05_save_masks.R <condition> <seed> <bgam|conv>
+# Usage: Rscript code/extra/04_save_masks.R <condition> <seed> <bgam|conv>
 suppressPackageStartupMessages(library(dplyr))
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 source(file.path(project_root, "code", "03_conventional", "03_evaluate_conventional.R"))
@@ -7,9 +7,9 @@ source(file.path(project_root, "code", "03_conventional", "03_evaluate_conventio
 a <- commandArgs(trailingOnly = TRUE)
 cond <- a[[1]]; seed <- as.integer(a[[2]]); what <- a[[3]]
 tag <- sprintf("%03d", seed)
-seed_dir <- file.path(project_root, "results", sprintf("single_node_cond%s_ds_cr_seeds001_100", cond),
+seed_dir <- file.path(project_root, "results", sprintf("scenario%s", cond),
                       sprintf("seed_%s", tag))
-data_dir <- file.path(project_root, "data", sprintf("single_node_cond%s_seeds001_100", cond))
+data_dir <- file.path(project_root, "data", sprintf("scenario%s", cond))
 out_file <- file.path(seed_dir, "evaluation", sprintf("masks_%s.rds", what))
 if (file.exists(out_file)) quit(save = "no")
 

@@ -18,10 +18,9 @@ set -euo pipefail
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
 cd "$PROJECT_ROOT"
 
-module purge
-module load R/4.4.2-gcc141-base
+source "$PROJECT_ROOT/slurm/env.sh"
 
-RESULTS_BATCH="single_node_cond${COND:?set COND to 1, 2, 3 or 4}_ds_cr_seeds001_100"
+RESULTS_BATCH="scenario${COND:?set COND to 1, 2, 3 or 4}"
 SEED_DIR="results/${RESULTS_BATCH}/$(printf 'seed_%03d' "$SLURM_ARRAY_TASK_ID")"
 DATA_SUBDIR=$(Rscript --vanilla -e "cat(readRDS('${SEED_DIR}/config.rds')\$data_subdir)")
 SEED_TAG=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")

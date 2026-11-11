@@ -13,15 +13,12 @@ The repository includes selected evaluation results needed for thesis tables and
 - The passed-fit list matches the evaluated datasets: **362 of 400 fits**.
 - `06_tables.R` produces identical outputs before and after cleanup in both `all` and `passed` modes.
 - Small-data tests found no change in the cleaned simulation, conventional-evaluation and BGAM-evaluation calculations.
+- On LIDO, scenario 1 with seed 1 and its real `fit.rds`: the cleaned BGAM evaluation, conventional evaluation, detection masks, per-chain coverage and fixed-grid scripts give the same outputs as the stored cluster results.
+- The no-space summary (**Table F.1**) and the electrode-level FPR summary, recomputed from the stored results on LIDO, equal the stored files. The no-space inputs have no missing values.
+- Older ground-truth files store `true_offset` = 0.342 s, the code uses 0.340 s. The evaluation reads 0.340 s from `evaluation_settings()`, and the 0.01 s time grid has no point between the two values, so the results do not change.
+- The older `sesoi_all.tex` had scenarios 2 and 3 swapped. It is regenerated; all other tables are identical to the regenerated ones.
+- All scripts in `code/07_figures/` run on the stored results.
 
-These checks do not replace running the code with all original fitted models.
-
-## Still to verify
-
-- Compare the updated BGAM evaluation and mask outputs with real `fit.rds` files on LIDO.
-- Check missing-value handling in the no-space analysis used for **Table F.1**.
-- Verify electrode-level FPR outputs where the required files are available.
-- Checked: older ground-truth files store `true_offset` = 0.342 s, the code uses 0.340 s. The evaluation reads 0.340 s from `evaluation_settings()`, and the 0.01 s time grid has no point between the two values, so the results do not change.
-- The older `sesoi_all.tex` differs from regenerated values for scenarios 2 and 3; the thesis uses the verified `passed` tables.
+These checks do not replace running the code with all original fitted models. The BGAM, conventional and mask comparisons cover scenario 1, seed 1 only.
 
 Do not edit numerical results by hand. Use `inventory.csv` to trace each result to its source code and data.

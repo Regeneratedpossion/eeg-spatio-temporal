@@ -12,7 +12,7 @@ small input files and the outputs of tables and figures (default: `results/` in 
 | 02 | `02_fit/02_fit_bgam.R` (+ `R/fit_config.R`) | fits the BGAM of one seed; condition from `COND`, seed from `SLURM_ARRAY_TASK_ID` |
 | 03 | `03_conventional/03_evaluate_conventional.R`, `03_conventional/03_evaluate_conventional_no_space.R` | uncorrected, BH, BY, Holm, cluster mass, TFCE |
 | 04 | `04_evaluate/04_evaluate_bgam.R` | detection masks and measures of the BGAM (also holds the shared truth and metric functions) |
-| 05 | `05_aggregate/05_*.R` | per-seed outputs and aggregation (fixed grid, masks, per-chain onsets, thresholds, SESOI, rings, no-space control) |
+| 05 | `extra/05_aggregate/05_*.R` | per-seed outputs and aggregation (fixed grid, masks, per-chain onsets, thresholds, SESOI, rings, no-space control); kept in `extra/` so that `05_aggregate/` shows only the main scripts |
 | 05 | `05_aggregate/05_make_passed_fits.R` | writes `resources/passed_fits.txt` from the per-seed `evaluation_main.csv` (R-hat < 1.01, ESS > 400) |
 | 06 | `06_tables/06_tables.R` | result tables of Chapter 3 |
 | 07 | `07_figures/07_figure_*.R`, `07_figures/07_data_*.R`, `07_figures/07_ring3_analysis.R` | figures of the thesis and their data |

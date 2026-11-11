@@ -1,5 +1,5 @@
 # Saves the main-setting detection masks of one seed: BGAM (odds 10) or the conventional methods (alpha 0.05).
-# Usage: Rscript code/05_aggregate/05_save_masks.R <condition> <seed> <bgam|conv>
+# Usage: Rscript code/extra/05_aggregate/05_save_masks.R <condition> <seed> <bgam|conv>
 suppressPackageStartupMessages(library(dplyr))
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 source(file.path(project_root, "code", "03_conventional", "03_evaluate_conventional.R"))

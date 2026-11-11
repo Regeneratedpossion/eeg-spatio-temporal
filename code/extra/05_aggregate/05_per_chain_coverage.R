@@ -1,5 +1,5 @@
 # Per fit: onset/offset of each chain (main rule) and the 95% interval of g at every cell.
-# Usage: Rscript code/05_aggregate/05_per_chain_coverage.R <condition> <seed>
+# Usage: Rscript code/extra/05_aggregate/05_per_chain_coverage.R <condition> <seed>
 suppressPackageStartupMessages(library(brms))
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 source(file.path(project_root, "code", "04_evaluate", "04_evaluate_bgam.R"))

@@ -18,7 +18,7 @@
 #     across-seed average).
 #
 # Usage:
-#   Rscript code/05_aggregate/05_extract_fixed_grid.R <seed_int>
+#   Rscript code/extra/05_aggregate/05_extract_fixed_grid.R <seed_int>
 #
 # Heavy step is posterior_epred() on the fit; this script does
 # NOT keep the full posterior_map / draws in the output, only

@@ -1,4 +1,4 @@
-# Run from the project root. Reads the masks written by code/05_aggregate/05_save_masks.R (results/<batch>/seed_*/evaluation).
+# Run from the project root. Reads the masks written by code/extra/05_aggregate/05_save_masks.R (results/<batch>/seed_*/evaluation).
 source(here::here("code/00_config.R")); source(here::here("code/R/passed_fits.R"))
 out_dir <- fig_dir(here::here("results/heatmaps"))
 setwd(here::here("results"))

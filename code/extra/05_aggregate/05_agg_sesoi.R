@@ -1,5 +1,5 @@
 # Compare the two SESOI rules (delta = 0 and the global baseline rule).
-# Usage: Rscript code/05_aggregate/05_agg_sesoi.R [all|passed]
+# Usage: Rscript code/extra/05_aggregate/05_agg_sesoi.R [all|passed]
 # all (default): every fit. passed: only the fits in resources/passed_fits.txt.
 # Run from the project root. Reads results/single_node_cond*/seed_*/evaluation.
 # Writes results/fig_data/tables/sesoi_rule_20261009.csv (all) or

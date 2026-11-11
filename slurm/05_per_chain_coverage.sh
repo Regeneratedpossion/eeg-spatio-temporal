@@ -10,4 +10,4 @@ set -euo pipefail
 export PROJECT_ROOT="${PROJECT_ROOT:-$SLURM_SUBMIT_DIR}"   # submit from the project root
 cd "$PROJECT_ROOT"; module purge; module load R/4.4.2-gcc141-base
 read -r COND SEED < <(sed -n "${SLURM_ARRAY_TASK_ID}p" resources/passed_fits.txt)
-Rscript --vanilla code/05_aggregate/05_per_chain_coverage.R "$COND" "$SEED"
+Rscript --vanilla code/extra/05_aggregate/05_per_chain_coverage.R "$COND" "$SEED"

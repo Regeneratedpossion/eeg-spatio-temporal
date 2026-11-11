@@ -11,6 +11,7 @@
 
 # Evaluate one fit per array task with code/04_evaluate/04_evaluate_bgam.R.
 # Usage: sbatch --export=ALL,COND=4 slurm/04_evaluate_bgam_array.sh   (COND = 1, 2, 3 or 4)
+# Optional: EVAL_OUT_DIR writes the output there instead of into the seed folder (for tests).
 
 set -euo pipefail
 
@@ -21,11 +22,11 @@ source "$PROJECT_ROOT/slurm/env.sh"
 
 RESULTS_BATCH="scenario${COND:?set COND to 1, 2, 3 or 4}"
 SEED_DIR="results/${RESULTS_BATCH}/$(printf 'seed_%03d' "$SLURM_ARRAY_TASK_ID")"
-DATA_SUBDIR=$(Rscript --vanilla -e "cat(readRDS('${SEED_DIR}/config.rds')\$data_subdir)")
+DATA_SUBDIR="scenario${COND}"
 SEED_TAG=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")
 
 Rscript --vanilla code/04_evaluate/04_evaluate_bgam.R \
     "${SEED_DIR}/fit.rds" \
     "data/${DATA_SUBDIR}/sim_${SEED_TAG}.rds" \
     "data/${DATA_SUBDIR}/gt_${SEED_TAG}.rds" \
-    "${SEED_DIR}/evaluation"
+    "${EVAL_OUT_DIR:-${SEED_DIR}/evaluation}"

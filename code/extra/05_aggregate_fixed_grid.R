@@ -68,9 +68,8 @@ probability_threshold <- odds_threshold / (1 + odds_threshold)
 # -----------------------------------------------------------
 # Ground truth / population truth (seed-invariant, use seed 1)
 # -----------------------------------------------------------
-config1 <- readRDS(file.path(base_dir, "seed_001", "config.rds"))
 ground_truth <- readRDS(
-    data_path(config1$data_subdir, "gt_001.rds")
+    data_path(fixed_grid_batch(), "gt_001.rds")   # the data folder has the same name as the results folder
 )
 population_truth <- paired_radius_superpopulation_truth(
     ground_truth,

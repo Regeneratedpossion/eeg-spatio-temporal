@@ -8,15 +8,17 @@
 
 # Generated data, fits, figures, logs, and caches
 data/*
-!data/single_node_cond?_seeds001_100/
-data/single_node_cond?_seeds001_100/*
-!data/single_node_cond?_seeds001_100/gt_*.rds
+!data/scenario?/
+data/scenario?/*
+!data/scenario?/gt_*.rds
 results/*
 !results/fig_data/
-!results/single_node_cond?_ds_cr_seeds001_100/
-results/single_node_cond?_ds_cr_seeds001_100/seed_*/*
-!results/single_node_cond?_ds_cr_seeds001_100/seed_*/evaluation/
-!results/single_node_cond?_ds_cr_seeds001_100/seed_*/fixed_grid/
+!results/tables/
+!results/passed_fits.txt
+!results/scenario?/
+results/scenario?/seed_*/*
+!results/scenario?/seed_*/evaluation/
+!results/scenario?/seed_*/fixed_grid/
 __pycache__/
 *.pyc
 figures/
@@ -53,5 +55,5 @@ tmp_remote_diagnostics/
 !resources/**/*.rds
 
 # Small inputs of the tables and figures that are kept in git
-!data/single_node_cond?_seeds001_100/gt_*.rds
-!results/single_node_cond?_ds_cr_seeds001_100/seed_*/evaluation/*.rds
+!data/scenario?/gt_*.rds
+!results/scenario?/seed_*/evaluation/*.rds

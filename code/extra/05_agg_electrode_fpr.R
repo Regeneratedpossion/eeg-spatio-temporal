@@ -1,4 +1,4 @@
-# Run from the project root. Reads results/single_node_cond*/seed_*/evaluation; writes to results/fig_data (AGG_OUT overrides).
+# Run from the project root. Reads results/scenario*/seed_*/evaluation; writes to results/fig_data (AGG_OUT overrides).
 source(here::here("code/R/aggregate_utils.R"))
 res_dir <- here::here("results")
 out_dir <- aggregate_out_dir()
@@ -11,4 +11,4 @@ for (c in c("1", "3", "2", "4")) {
   a <- aggregate(rate ~ method + channel, x, mean); a$n <- as.integer(aggregate(rate ~ method + channel, x, length)$rate); a$scenario <- c
   out[[c]] <- a
 }
-r <- do.call(rbind, out); write.csv(r, file.path(out_dir, "electrode_fpr_20261009.csv"), row.names = FALSE); cat("rows", nrow(r), "n range", range(r$n), "\n")
+r <- do.call(rbind, out); write.csv(r, file.path(out_dir, "electrode_fpr.csv"), row.names = FALSE); cat("rows", nrow(r), "n range", range(r$n), "\n")

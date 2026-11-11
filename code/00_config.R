@@ -14,6 +14,6 @@ if (!exists("thesis_dir")) {
     dir.create(d, showWarnings = FALSE, recursive = TRUE)
     d
   }
-  # condition letter of each scenario: 1 = I, 2 = H, 3 = F, 4 = E
+  # folder number of each scenario
   scenario_cond <- c("1" = "1", "2" = "2", "3" = "3", "4" = "4")
 }

@@ -29,7 +29,7 @@ Rscript code/06_tables/06_tables.R passed
 
 **Step 01, simulate**
 
-- `01_generate_dataset.R` simulates one dataset. It writes `sim_NNN.rds` (the EEG data) and `gt_NNN.rds` (the true effect) to `data/single_node_cond*_seeds001_100/`.
+- `01_generate_dataset.R` simulates one dataset. It writes `sim_NNN.rds` (the EEG data) and `gt_NNN.rds` (the true effect) to `data/scenario*/`.
 - `01_generate_data.R` holds the generator functions.
 - `01_make_adjacency_61ch.py` and `01_adjacency_csv_to_rds.R` rebuild the electrode adjacency file in `resources/adjacency/`. You only need them if the electrode layout changes.
 
@@ -49,7 +49,7 @@ Rscript code/06_tables/06_tables.R passed
 **Step 05, aggregate**
 
 - `05_aggregate_bgam_evaluation.R` summarises the evaluations of all seeds of one scenario.
-- `05_make_passed_fits.R` writes `resources/passed_fits.txt`. This file lists the 362 fits that pass the convergence rule (R-hat < 1.01, ESS > 400).
+- `05_make_passed_fits.R` writes `results/passed_fits.txt`. This file lists the 362 fits that pass the convergence rule (R-hat < 1.01, ESS > 400).
 
 **Step 06, tables**
 
@@ -58,18 +58,18 @@ Rscript code/06_tables/06_tables.R passed
 **Step 07, figures**
 
 - `07_figure_*.R` make the figures.
-- `07_data_*.R` and `07_ring3_analysis.R` make the data that some figures need.
+- `07_figures/data/07_data_*.R` make the data that some figures need.
 - `07_figures/README.md` lists which script makes which figure.
 
 ## Supporting scripts
 
-`extra/05_aggregate/` holds scripts for additional outputs. The main results do not need them. Some figures and tables do.
+`extra/` holds scripts for additional outputs. The main results do not need them. Some figures and tables do.
 
 | Script | What it does |
 |---|---|
-| `05_extract_fixed_grid.R` | For one seed: saves the fitted values on a fixed grid. |
-| `05_save_masks.R` | For one seed: saves the detection masks. |
-| `05_per_chain_coverage.R` | For one fit: saves the onset and offset of each chain. |
+| `04_extract_fixed_grid.R` | For one seed: saves the fitted values on a fixed grid. |
+| `04_save_masks.R` | For one seed: saves the detection masks. |
+| `04_per_chain_coverage.R` | For one fit: saves the onset and offset of each chain. |
 | `05_aggregate_fixed_grid.R` | Collects the fixed grids of all seeds. |
 | `05_agg_sesoi.R` | Compares the two SESOI rules. |
 | `05_agg_threshold_sweep.R` | Summarises the performance across thresholds. |

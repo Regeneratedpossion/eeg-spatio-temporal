@@ -1,7 +1,7 @@
 # Generate one EEG dataset for scenario COND (1, 2, 3 or 4).
 # Usage: COND=4 Rscript code/01_simulate/01_generate_dataset.R 1
 # Seed comes from argument 1 or SLURM_ARRAY_TASK_ID.
-# Writes data/single_node_cond<COND>_seeds001_100/sim_<seed>.rds and gt_<seed>.rds.
+# Writes data/scenario<COND>/sim_<seed>.rds and gt_<seed>.rds.
 # DATA_OUT overrides the default output directory.
 
 source(here::here("code/01_simulate/01_generate_data.R"))
@@ -36,7 +36,7 @@ seed <- as.integer(seed)
 out_dir <- Sys.getenv(
     "DATA_OUT",
     unset = data_path(
-        sprintf("single_node_cond%s_seeds001_100", cond)
+        sprintf("scenario%s", cond)
     )
 )
 

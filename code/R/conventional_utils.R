@@ -1,5 +1,5 @@
 # Helpers of the conventional methods (used by 03_evaluate_conventional.R
-# and 05_save_masks.R).
+# and 04_save_masks.R).
 
 suppressPackageStartupMessages({
     library(dplyr)

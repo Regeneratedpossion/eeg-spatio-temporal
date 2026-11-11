@@ -1,5 +1,5 @@
 # Summarise performance across statistical thresholds.
-# Run from the project root. Reads results/single_node_cond*/seed_*/evaluation.
+# Run from the project root. Reads results/scenario*/seed_*/evaluation.
 # Writes to results/fig_data (AGG_OUT overrides).
 
 source(here::here("code/R/aggregate_utils.R"))
@@ -112,7 +112,7 @@ result <- do.call(rbind, out)
 
 write.csv(
     result,
-    file.path(out_dir, "threshold_sweep_20261009.csv"),
+    file.path(out_dir, "threshold_sweep.csv"),
     row.names = FALSE
 )
 

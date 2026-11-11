@@ -1,8 +1,8 @@
 # Compare the two SESOI rules (delta = 0 and the global baseline rule).
-# Usage: Rscript code/extra/05_aggregate/05_agg_sesoi.R [all|passed]
-# all (default): every fit. passed: only the fits in resources/passed_fits.txt.
-# Run from the project root. Reads results/single_node_cond*/seed_*/evaluation.
-# Writes results/fig_data/tables/sesoi_rule_20261009.csv (all) or
+# Usage: Rscript code/extra/05_agg_sesoi.R [all|passed]
+# all (default): every fit. passed: only the fits in results/passed_fits.txt.
+# Run from the project root. Reads results/scenario*/seed_*/evaluation.
+# Writes results/tables/sesoi_rule_all.csv (all) or
 # sesoi_rule_passed.csv (passed); AGG_OUT overrides the output folder.
 
 mode <- commandArgs(TRUE)[1]
@@ -82,9 +82,9 @@ result <- do.call(rbind, out)
 write.csv(
     result,
     file.path(
-        out_dir, "tables",
+        dirname(out_dir), "tables",
         if (mode == "passed") "sesoi_rule_passed.csv"
-        else "sesoi_rule_20261009.csv"
+        else "sesoi_rule_all.csv"
     ),
     row.names = FALSE
 )

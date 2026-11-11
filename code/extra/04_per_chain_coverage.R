@@ -1,13 +1,13 @@
 # Per fit: onset/offset of each chain (main rule) and the 95% interval of g at every cell.
-# Usage: Rscript code/extra/05_aggregate/05_per_chain_coverage.R <condition> <seed>
+# Usage: Rscript code/extra/04_per_chain_coverage.R <condition> <seed>
 suppressPackageStartupMessages(library(brms))
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 source(file.path(project_root, "code", "04_evaluate", "04_evaluate_bgam.R"))
 
 a <- commandArgs(trailingOnly = TRUE)
 cond <- a[[1]]; seed <- as.integer(a[[2]]); tag <- sprintf("%03d", seed)
-seed_dir <- file.path(project_root, "results", sprintf("single_node_cond%s_ds_cr_seeds001_100", cond), sprintf("seed_%s", tag))
-data_dir <- file.path(project_root, "data", sprintf("single_node_cond%s_seeds001_100", cond))
+seed_dir <- file.path(project_root, "results", sprintf("scenario%s", cond), sprintf("seed_%s", tag))
+data_dir <- file.path(project_root, "data", sprintf("scenario%s", cond))
 out_dir <- file.path(seed_dir, "evaluation")
 f_chain <- file.path(out_dir, "per_chain_onset.csv"); f_cov <- file.path(out_dir, "coverage_cells.csv")
 if (file.exists(f_chain) && file.exists(f_cov)) quit(save = "no")

@@ -21,7 +21,7 @@ Of 400 BGAM fits, **362 meet the convergence criteria**. The analysis compares d
 code/           Simulation, fitting, evaluation, tables and figures (steps 01–07)
 code/R/         Shared R functions
 slurm/          Jobs for the LIDO cluster
-resources/      Electrode information, adjacency and passed-fit list
+resources/      Electrode information, adjacency and the brms template
 data/           Selected ground-truth data
 results/        Selected results needed for figures and tables
 inventory.csv   Which scripts produce each thesis figure or table

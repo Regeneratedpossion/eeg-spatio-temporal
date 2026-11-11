@@ -6,7 +6,7 @@ set -uo pipefail
 
 MAX_ATTEMPTS=5
 SEED_PADDED=$(printf '%03d' "$SLURM_ARRAY_TASK_ID")
-SEED_DIR="${PROJECT_ROOT}/results/single_node_cond${COND}_ds_cr_seeds001_100/seed_${SEED_PADDED}"
+SEED_DIR="${PROJECT_ROOT}/results/scenario${COND}/seed_${SEED_PADDED}"
 
 for attempt in $(seq 1 $MAX_ATTEMPTS); do
     echo "attempt ${attempt}/${MAX_ATTEMPTS} for seed ${SLURM_ARRAY_TASK_ID} at $(date --iso-8601=seconds)"

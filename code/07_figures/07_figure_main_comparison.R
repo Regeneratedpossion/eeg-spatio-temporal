@@ -19,7 +19,7 @@ keep <- c("rule", "baseline_end", "odds", "method", "alpha", "F1", "FPR", "onset
 read_one <- function(f) {x <- read.csv(f); x[, intersect(names(x), keep)]}
 
 load_scenario <- function(s) {
-  d <- file.path(data_dir, sprintf("single_node_cond%s_ds_cr_seeds001_100", scen_dir[[s]]))
+  d <- file.path(data_dir, sprintf("scenario%s", scen_dir[[s]]))
   b <- do.call(rbind, lapply(pgs(file.path(d, "seed_*/evaluation/evaluation_sensitivity.csv")), read_one))
   b <- b[b$rule == "global" & abs(b$baseline_end - 0.10) < 1e-9, ]
   b$method <- "BGAM"; b$thr <- b$odds
@@ -150,7 +150,7 @@ cat("done\n")
 ring_cols <- c("FPR_ring1", "FPR_ring2", "FPR_ring3")
 read_ring <- function(f, keep_extra) {x <- read.csv(f); x[, intersect(names(x), c(keep_extra, ring_cols))]}
 ring_data <- do.call(rbind, lapply(names(scen_dir), function(s) {
-  d <- file.path(data_dir, sprintf("single_node_cond%s_ds_cr_seeds001_100", scen_dir[[s]]))
+  d <- file.path(data_dir, sprintf("scenario%s", scen_dir[[s]]))
   b <- do.call(rbind, lapply(pgs(file.path(d, "seed_*/evaluation/evaluation_sensitivity.csv")),
                              read_ring, keep_extra = c("rule", "baseline_end", "odds")))
   b <- b[b$rule == "global" & abs(b$baseline_end - 0.10) < 1e-9 & b$odds == 10, ]

@@ -4,7 +4,7 @@ setwd(project_dir)
 suppressMessages({library(dplyr); library(ggplot2); library(patchwork)})
 sc <- c("1" = 1, "2" = 2, "3" = 3, "4" = 4)
 chs <- c("CZ", "C2", "PZ", "FP1")
-d <- bind_rows(lapply(names(sc), function(c) bind_rows(lapply(pgs(sprintf("results/single_node_cond%s_ds_cr_seeds001_100/seed_*/fixed_grid/six_channel.csv", c)), read.csv)) |> mutate(scenario = sc[[c]]))) |>
+d <- bind_rows(lapply(names(sc), function(c) bind_rows(lapply(pgs(sprintf("results/scenario%s/seed_*/fixed_grid/six_channel.csv", c)), read.csv)) |> mutate(scenario = sc[[c]]))) |>
   filter(channel %in% chs) |>
   mutate(A = ifelse(scenario %in% c(1, 2), 0.5, 1.5), omega = ifelse(scenario %in% c(1, 3), "0.26", "0.70"))
 s <- d |> group_by(A, channel, time) |> summarise(m = median(model_p_sig), lo = quantile(model_p_sig, 0.1), hi = quantile(model_p_sig, 0.9), .groups = "drop")

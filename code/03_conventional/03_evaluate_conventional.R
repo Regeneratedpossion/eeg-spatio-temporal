@@ -18,42 +18,12 @@ suppressPackageStartupMessages({
 project_root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = here::here()))
 # Shared truth, extraction rule and metric functions.
 source(file.path(project_root, "code", "R", "evaluation_functions.R"))
+# Data preparation and the MNE wrapper for cluster mass and TFCE.
+source(file.path(project_root, "code", "R", "conventional_utils.R"))
 
 conventional_settings <- function() {
     list(alphas = c(0.05, 0.01, 0.005, 0.001), main_alpha = 0.05,
          n_perm = 1024L, perm_seed = 42L, tfce_start = 0.0, tfce_step = 0.2)
-}
-
-# Participant-level condition differences as arr[participant, time, channel].
-difference_array <- function(sim, times, channels) {
-    cell <- sim %>%
-        group_by(participant, channel, time, condition) %>%
-        summarise(eeg_mean = mean(eeg), .groups = "drop")
-    wide <- tidyr::pivot_wider(cell, names_from = condition, values_from = eeg_mean)
-    ppts <- sort(unique(wide$participant))
-    arr <- array(NA_real_, dim = c(length(ppts), length(times), length(channels)))
-    arr[cbind(match(wide$participant, ppts),
-              match(round(wide$time, 6), round(times, 6)),
-              match(wide$channel, channels))] <- wide$cond2 - wide$cond1
-    stopifnot(!anyNA(arr))
-    arr
-}
-
-# Cluster-mass or TFCE p-values per cell from MNE.
-mne_cell_pvalues <- function(arr, adj, s, tfce) {
-    mne <- import("mne")
-    sp <- import("scipy.sparse")
-    args <- list(arr, adjacency = sp$csr_matrix(matrix(as.double(adj), nrow = nrow(adj))),
-                 n_permutations = s$n_perm, n_jobs = 1L, seed = s$perm_seed,
-                 out_type = "mask")
-    if (tfce) args$threshold <- dict(start = s$tfce_start, step = s$tfce_step)
-    out <- do.call(mne$stats$spatio_temporal_cluster_1samp_test, args)
-    pmat <- matrix(1, dim(arr)[2], dim(arr)[3])
-    for (k in seq_along(out[[2]])) {
-        idx <- which(as.matrix(out[[2]][[k]]), arr.ind = TRUE)
-        pmat[idx] <- pmin(pmat[idx], out[[3]][k])
-    }
-    pmat
 }
 
 evaluate_conventional <- function(sim_file, gt_file, out_dir,

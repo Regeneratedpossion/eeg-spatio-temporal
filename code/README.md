@@ -22,6 +22,7 @@ Rscript code/06_tables/06_tables.R passed
 | 05 | `05_aggregate/` | Collects the results of all datasets. | cluster |
 | 06 | `06_tables/` | Makes the tables of the thesis. | local |
 | 07 | `07_figures/` | Makes the figures of the thesis. | local |
+| 08 | `08_ppc/` | Checks the BGAM fits: posterior predictive checks and a residual diagnostic. | cluster, then local |
 
 `R/` holds helper functions. The numbered scripts load them. You do not run them directly.
 
@@ -60,6 +61,13 @@ Rscript code/06_tables/06_tables.R passed
 - `07_figure_*.R` make the figures.
 - `07_figures/data/07_data_*.R` make the data that some figures need.
 - `07_figures/README.md` lists which script makes which figure.
+
+**Step 08, model checks**
+
+- `ppc_one_dataset.R` runs the posterior predictive checks for one passed fit. It uses 200 posterior draws and writes to `results/ppc_checks/scenario<N>_seed_<NNN>/`.
+- `check_residual_source.R` compares the residuals of one passed fit with the true noise and the true signal. It writes to `results/ppc_checks/residual_source/`.
+- `ppc_aggregate_all.R` collects both checks over the 362 passed fits and lists the 38 fits that did not pass.
+- The cluster scripts are `slurm/08_ppc_array.sh` (8G per task) and `slurm/08_resid_source_array.sh` (5G per task). Task n takes line n of `results/passed_fits.txt`.
 
 ## Supporting scripts
 

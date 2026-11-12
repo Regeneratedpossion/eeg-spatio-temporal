@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 # PPC on one existing converged BGAM fit.
+# The waveform is the condition-2 mean over 20 participants and the 9 active electrodes, not per electrode.
+# Peak amplitude and latency are the maximum of this waveform between 160 and 340 ms.
 # Usage: Rscript code/08_ppc/ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200]
 
 suppressPackageStartupMessages({library(brms); library(posterior)})

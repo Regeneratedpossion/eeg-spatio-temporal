@@ -1,7 +1,8 @@
 #!/usr/bin/env Rscript
 # PPC on one existing converged BGAM fit.
-# The waveform is the condition-2 mean over 20 participants and the 9 active electrodes, not per electrode.
-# Peak amplitude and latency are the maximum of this waveform between 160 and 340 ms.
+# The waveform is the mean over 20 participants and the 9 active electrodes, not per electrode.
+# ppc_summary.csv uses condition 2 only. ppc_summary_diff.csv uses the difference wave (condition 2 minus condition 1).
+# Peak amplitude and latency are the maximum of the waveform between 160 and 340 ms.
 # Usage: Rscript code/08_ppc/ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200]
 
 suppressPackageStartupMessages({library(brms); library(posterior)})
@@ -87,7 +88,6 @@ write.csv(wave, file.path(out_dir, "wave_cond2_active.csv"), row.names = FALSE)
 
 # ---- 5. Waveform summary statistics ----
 win <- times >= 0.160 - 1e-9 & times <= 0.340 + 1e-9
-late <- times >= 0.270 - 1e-9 & times <= 0.340 + 1e-9
 rep_wave <- sapply(times, function(tt) rowMeans(yrep[, sel2 & abs(nd$time - tt) < 1e-9, drop = FALSE]))
 if (nrow(rep_wave) != B || ncol(rep_wave) != 51) stop("Bad wave shape")
 
@@ -102,7 +102,33 @@ rep_peak_ix <- apply(rep_wave[, win, drop = FALSE], 1, which.max)
 stat_table[[1]] <- add_stat("peak_amplitude_uV", wave$obs[peak_ix], apply(rep_wave[, win, drop = FALSE], 1, max))
 stat_table[[2]] <- add_stat("peak_latency_ms", 1000 * times[peak_ix], 1000 * times[which(win)[rep_peak_ix]])
 stat_table[[3]] <- add_stat("mean_160_340_uV", mean(wave$obs[win]), rowMeans(rep_wave[, win, drop = FALSE]))
-stat_table[[4]] <- add_stat("mean_270_340_uV", mean(wave$obs[late]), rowMeans(rep_wave[, late, drop = FALSE]))
+
+# ---- 5b. PPC 1 on the difference wave: condition 2 minus condition 1 ----
+# Pair each condition-2 row with the condition-1 row of the same participant, electrode and time point.
+row_key <- paste(nd$participant, nd$channel, nd$time, sep = "|")
+i2 <- which(as.character(nd$condition) == "cond2")
+i1 <- match(row_key[i2], row_key[as.character(nd$condition) == "cond1"])
+i1 <- which(as.character(nd$condition) == "cond1")[i1]
+if (anyNA(i1)) stop("Could not pair condition-2 rows with condition-1 rows")
+obs_diff <- nd$eeg_mean[i2] - nd$eeg_mean[i1]
+rep_diff <- yrep[, i2, drop = FALSE] - yrep[, i1, drop = FALSE]
+time_diff <- nd$time[i2]
+wave_d <- do.call(rbind, lapply(times, function(tt) {
+  ix <- which(abs(time_diff - tt) < 1e-9)
+  if (length(ix) != 20L * 9L) stop("Expected 180 pairs per time point")
+  reps <- rowMeans(rep_diff[, ix, drop = FALSE])
+  data.frame(time = tt, obs = mean(obs_diff[ix]), rep_mean = mean(reps),
+             rep_q05 = unname(quantile(reps, 0.05)), rep_q50 = median(reps), rep_q95 = unname(quantile(reps, 0.95)))
+}))
+write.csv(wave_d, file.path(out_dir, "wave_diff_active.csv"), row.names = FALSE)
+rep_wave_d <- sapply(times, function(tt) rowMeans(rep_diff[, abs(time_diff - tt) < 1e-9, drop = FALSE]))
+peak_ix_d <- which(win)[which.max(wave_d$obs[win])]
+rep_peak_ix_d <- apply(rep_wave_d[, win, drop = FALSE], 1, which.max)
+stat_diff <- list(
+  add_stat("peak_amplitude_uV", wave_d$obs[peak_ix_d], apply(rep_wave_d[, win, drop = FALSE], 1, max)),
+  add_stat("peak_latency_ms", 1000 * times[peak_ix_d], 1000 * times[which(win)[rep_peak_ix_d]]),
+  add_stat("mean_160_340_uV", mean(wave_d$obs[win]), rowMeans(rep_wave_d[, win, drop = FALSE])))
+write.csv(do.call(rbind, stat_diff), file.path(out_dir, "ppc_summary_diff.csv"), row.names = FALSE)
 
 # ---- 6. PPC 2: residual SD and autocorrelation ----
 resid_summary <- function(e, indices) {

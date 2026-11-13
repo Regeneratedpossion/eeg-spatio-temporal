@@ -4,11 +4,11 @@
 #SBATCH --array=1-362
 #SBATCH --time=00:30:00
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
+#SBATCH --mem=6G
 #SBATCH --output=logs/ppc_%A_%a.log
 
 # Posterior predictive checks of one passed fit per array task (code/08_ppc/ppc_one_dataset.R).
-# Task n takes line n of results/passed_fits.txt (scenario and seed). Needs 8G; 5G is too little.
+# Task n takes line n of results/passed_fits.txt (scenario and seed). Peak use is about 5 GB, so 6G is requested; 5G is too little.
 # Usage: sbatch slurm/08_ppc_array.sh   (submit from the project root)
 
 set -euo pipefail

@@ -15,6 +15,9 @@ results/*
 !results/fig_data/
 !results/tables/
 !results/passed_fits.txt
+!results/ppc_checks/
+results/ppc_checks/scenario*_seed_*/
+results/ppc_checks/residual_source/
 !results/scenario?/
 results/scenario?/seed_*/*
 !results/scenario?/seed_*/evaluation/

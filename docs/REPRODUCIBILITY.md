@@ -14,11 +14,30 @@ The repository includes selected evaluation results needed for thesis tables and
 - `06_tables.R` produces identical outputs before and after cleanup in both `all` and `passed` modes.
 - Small-data tests found no change in the cleaned simulation, conventional-evaluation and BGAM-evaluation calculations.
 - On LIDO, scenario 1 with seed 1 and its real `fit.rds`: the cleaned BGAM evaluation, conventional evaluation, detection masks, per-chain coverage and fixed-grid scripts give the same outputs as the stored cluster results.
+- On LIDO, the BGAM evaluation was run again on one fit of each scenario (scenario 1 seed 1, scenario 2 seed 2, scenario 3 seed 1, scenario 4 seed 1). `evaluation_main.csv` is identical to the stored file in all four. The job script `slurm/04_evaluate_bgam_array.sh` gives the same file for scenario 1, seed 1.
 - The no-space summary (**Table F.1**) and the electrode-level FPR summary, recomputed from the stored results on LIDO, equal the stored files. The no-space inputs have no missing values.
 - Older ground-truth files store `true_offset` = 0.342 s, the code uses 0.340 s. The evaluation reads 0.340 s from `evaluation_settings()`, and the 0.01 s time grid has no point between the two values, so the results do not change.
 - The older `sesoi_all.tex` had scenarios 2 and 3 swapped. It is regenerated; all other tables are identical to the regenerated ones.
 - All scripts in `code/07_figures/` run on the stored results.
 
-These checks do not replace running the code with all original fitted models. The BGAM, conventional and mask comparisons cover scenario 1, seed 1 only.
+These checks do not replace running the code with all original fitted models. The conventional, mask, per-chain coverage and fixed-grid comparisons cover scenario 1, seed 1 only. The BGAM evaluation comparison covers one fit per scenario.
+
+## Model checks
+
+`code/08_ppc/` checks the BGAM fits with posterior predictive checks and a residual diagnostic. Both run on the 362 passed fits (80, 86, 97 and 99 fits in scenarios 1 to 4). The 38 fits that did not pass the convergence rule are not checked. They are listed in `results/ppc_checks/not_passed_fits.csv` with the scenario, the seed and the failed criterion.
+
+- The checks read the saved `fit.rds`. They do not refit the model. They need the cluster: `slurm/08_ppc_array.sh` and `slurm/08_resid_source_array.sh`.
+- The posterior predictive checks use `posterior_predict()` with 200 posterior draws and the participant effects of the observed participants. The residual diagnostic uses `posterior_epred()` only.
+- **Waveform of the PPC statistics:** the waveform is the mean over the 20 participants and the 9 electrodes with a true effect (180 observations per time point), not computed per electrode. `ppc_summary.csv` uses condition 2 only. `ppc_summary_diff.csv` uses the difference wave (condition 2 minus condition 1), which is the one reported in the thesis. Peak amplitude is the maximum of the waveform between 160 and 340 ms, and peak latency is the time of the maximum. The window mean covers 160–340 ms. The replicated waveform of each draw is built in the same way from `posterior_predict()`. An observed value is outside the interval if it is below the 5% or above the 95% quantile of the 200 replicated values.
+- **Residual statistics:** SD, lag-1 and lag-2 autocorrelation are computed within each participant × condition × electrode series of 51 time points, and then averaged over the series. Conditions 1 and 2 are reported separately. The observed residual is `eeg_mean − mu`, the replicated residual is `yrep − mu`, both for the same draw.
+- The tables in `results/ppc_checks/` give the median over datasets. The numbers in brackets are the 5% and 95% quantiles over datasets.
+- Four datasets (one per scenario) were run again with the final scripts. The output is identical to the first run.
+- **Figure 3.6:** run `code/08_ppc/ppc_diff_draws.R <scenario> <seed> <out_dir>` on the cluster for scenario 1 seed 1 and scenario 3 seed 36. It saves the 200 replicated difference waves, using the same draws as `ppc_one_dataset.R`. Then run `Rscript code/08_ppc/fig_ppc.R <draw dir> <output dir>`.
+- **Coverage of the effect estimate:** `code/extra/04_coverage_z.R` (array job `slurm/04_coverage_z_array.sh`) saves, for each passed fit, the posterior mean, SD and 90% interval of the population-level effect g at every cell, with the true g. `code/extra/05_agg_coverage.R` summarises coverage and the z-score by scenario and region (active, adjacent, distant electrodes in 160–340 ms, and outside the window). The first step needs the cluster. It is not part of the thesis results.
+- The checks describe the residual structure of the fits. They do not show that the posterior odds are calibrated.
+
+## Known differences
+
+- Table F.1 (no-space control): two cells differ by 0.001 from the values recomputed from the stored results. Scenario 1, T: −0.01246 recomputed, −0.013 in the table. Scenario 4, T: −0.00649 recomputed, −0.007 in the table. The recomputed values equal the stored file. The table in the thesis is not changed by this repository.
 
 Do not edit numerical results by hand. Use `inventory.csv` to trace each result to its source code and data.

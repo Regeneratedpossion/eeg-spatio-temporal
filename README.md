@@ -15,9 +15,9 @@ We simulate 100 datasets in each of four scenarios, with 20 participants and 61 
 
 Of 400 BGAM fits, **362 meet the convergence criteria**. The analysis compares detection accuracy, timing error, false positives and effect recovery.
 
-<img src="docs/figures/detection_topo.png" alt="Detection results" width="420">
+<img src="docs/figures/simulated_topomaps.png" alt="Topographic maps of one simulated dataset" width="100%">
 
-Detection frequency on the scalp in scenario 4 (strong effect, high heterogeneity). The top row is the true active set. The other rows are the BGAM and the six conventional methods.
+Topographic maps of one simulated dataset (20 participants, 61 electrodes). Condition 1 contains noise only. Condition 2 adds the effect at the central electrodes between about 160 and 340 ms.
 
 ## Repository structure
 

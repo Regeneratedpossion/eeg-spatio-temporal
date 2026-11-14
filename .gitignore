@@ -25,6 +25,7 @@ results/scenario?/seed_*/*
 __pycache__/
 *.pyc
 figures/
+!docs/figures/
 logs/
 cmdstan_cache/
 pred_vs_raw_compare/
@@ -35,6 +36,7 @@ external_brms_meeg/
 slides/*.pdf
 *.pdf
 *.png
+!docs/figures/*.png
 *.rds
 *.RData
 *.zip

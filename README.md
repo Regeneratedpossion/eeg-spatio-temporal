@@ -15,6 +15,10 @@ We simulate 100 datasets in each of four scenarios, with 20 participants and 61 
 
 Of 400 BGAM fits, **362 meet the convergence criteria**. The analysis compares detection accuracy, timing error, false positives and effect recovery.
 
+<img src="docs/figures/detection_topo.png" alt="Detection results" width="420">
+
+Detection frequency on the scalp in scenario 4 (strong effect, high heterogeneity). The top row is the true active set. The other rows are the BGAM and the six conventional methods.
+
 ## Repository structure
 
 ```text

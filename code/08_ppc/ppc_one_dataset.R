@@ -2,17 +2,15 @@
 # Model checks of one existing converged BGAM fit: posterior predictive checks and the residual-source diagnostic.
 # The waveform is the difference wave (condition 2 minus condition 1), mean over 20 participants and the 9 active electrodes.
 # Peak amplitude and latency are the maximum of the waveform between 160 and 340 ms.
-# Usage: Rscript code/08_ppc/ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200] [save_draws]
-# With save_draws, the replicated difference waves of all draws are also saved (input of code/08_ppc/fig_ppc.R).
+# Usage: Rscript code/08_ppc/ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200]
 
 suppressPackageStartupMessages({library(brms); library(posterior)})
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 2L) stop("Usage: Rscript ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200] [save_draws]")
+if (length(args) < 2L) stop("Usage: Rscript ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200]")
 cond <- as.integer(args[[1]])
 seed <- as.integer(args[[2]])
 B <- if (length(args) >= 3L) as.integer(args[[3]]) else 200L
-save_draws <- length(args) >= 4L && args[[4]] == "save_draws"
 stopifnot(cond %in% 1:4, seed %in% 1:100, is.finite(B), B >= 20)
 
 root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = getwd()), mustWork = TRUE)
@@ -109,11 +107,6 @@ stat_table <- list(
   add_stat("peak_amplitude_uV", wave_d$obs[peak_ix_d], apply(rep_wave_d[, win, drop = FALSE], 1, max)),
   add_stat("peak_latency_ms", 1000 * times[peak_ix_d], 1000 * times[which(win)[rep_peak_ix_d]]),
   add_stat("mean_160_340_uV", mean(wave_d$obs[win]), rowMeans(rep_wave_d[, win, drop = FALSE])))
-if (save_draws) {
-  write.csv(data.frame(time = times, obs = wave_d$obs), file.path(out_dir, "diff_obs.csv"), row.names = FALSE)
-  write.csv(data.frame(draw = rep(seq_len(B), times = length(times)), time = rep(times, each = B), value = as.vector(rep_wave_d)),
-            file.path(out_dir, "diff_rep.csv"), row.names = FALSE)
-}
 
 # ---- 5. PPC 2: residual SD and autocorrelation ----
 resid_summary <- function(e, indices) {

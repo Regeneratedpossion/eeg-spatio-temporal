@@ -1,30 +1,18 @@
-# Thesis Figure 3.6 (fig:ppc): posterior predictive check of the difference waveform.
-# Scenario 1 seed 1 and scenario 3 seed 36. Needs diff_obs.csv and diff_rep.csv, made by ppc_one_dataset.R with the save_draws argument.
+# Thesis Figure 3.6 (fig:ppc): observed value and 90% posterior predictive interval of every converged dataset.
+# Uses window mean and peak amplitude of the difference wave. Datasets are ordered by the observed value.
 # Usage: Rscript code/08_ppc/fig_ppc.R <results/ppc_checks dir> <output dir>
-suppressPackageStartupMessages({library(ggplot2); library(patchwork)})
+suppressPackageStartupMessages(library(ggplot2))
 args <- commandArgs(trailingOnly = TRUE)
-S <- args[[1]]; out <- args[[2]]
-win <- c(160, 340)
-load_w <- function(tag) {
-  o <- read.csv(file.path(S, tag, "diff_obs.csv")); r <- read.csv(file.path(S, tag, "diff_rep.csv"))
-  o$time <- o$time * 1000; r$time <- r$time * 1000; list(obs = o, rep = r)
-}
-panel_wave <- function(w, title) ggplot() +
-  annotate("rect", xmin = win[1], xmax = win[2], ymin = -Inf, ymax = Inf, fill = "grey85", alpha = 0.5) +
-  geom_line(data = w$rep, aes(time, value, group = draw), colour = "#7F77DD", alpha = 0.08, linewidth = 0.3) +
-  geom_line(data = w$obs, aes(time, obs), colour = "black", linewidth = 0.9) +
-  labs(title = title, x = "Time (ms)", y = expression("Difference ("*mu*"V)")) + theme_classic()
-panel_stat <- function(w) {
-  in_w <- w$rep$time >= win[1] & w$rep$time <= win[2]
-  t_rep <- tapply(w$rep$value[in_w], w$rep$draw[in_w], mean)
-  t_obs <- mean(w$obs$obs[w$obs$time >= win[1] & w$obs$time <= win[2]])
-  ggplot(data.frame(t = as.numeric(t_rep)), aes(t)) +
-    geom_histogram(bins = 30, fill = "#7F77DD", colour = "white", alpha = 0.7) +
-    geom_vline(xintercept = quantile(t_rep, c(0.05, 0.95)), linetype = "dashed", colour = "grey40", linewidth = 0.5) +
-    geom_vline(xintercept = t_obs, colour = "black", linewidth = 0.9) +
-    labs(x = expression(T[mean]~"("*mu*"V)"), y = "Count") + theme_classic()
-}
-w1 <- load_w("scenario1_seed_001"); w3 <- load_w("scenario3_seed_036")
-fig <- (panel_wave(w1, "Weak effect") | panel_wave(w3, "Strong effect")) / (panel_stat(w1) | panel_stat(w3)) + plot_annotation(tag_levels = "A")
-ggsave(file.path(out, "fig_ppc.pdf"), fig, width = 8, height = 6)
-ggsave(file.path(out, "fig_ppc.png"), fig, width = 8, height = 6, dpi = 110)
+x <- read.csv(file.path(args[[1]], "ppc_all_datasets.csv"))
+x <- x[x$statistic %in% c("mean_160_340_uV", "peak_amplitude_uV"), ]
+x$statistic <- factor(x$statistic, c("mean_160_340_uV", "peak_amplitude_uV"), c("Window mean (µV)", "Peak amplitude (µV)"))
+x$scenario <- factor(x$scenario, 1:4, paste("Scenario", 1:4))
+x$order <- ave(x$observed, x$statistic, x$scenario, FUN = function(v) rank(v, ties.method = "first"))
+fig <- ggplot(x, aes(order)) +
+  geom_linerange(aes(ymin = rep_q05, ymax = rep_q95), colour = "#7F77DD", alpha = 0.6, linewidth = 0.4) +
+  geom_point(aes(y = observed), size = 0.5) +
+  facet_grid(statistic ~ scenario, scales = "free", switch = "y") +
+  labs(x = "Dataset (ordered by the observed value)", y = NULL) +
+  theme_classic() + theme(strip.background = element_blank(), strip.placement = "outside")
+ggsave(file.path(args[[2]], "fig_ppc.pdf"), fig, width = 8, height = 4.5)
+ggsave(file.path(args[[2]], "fig_ppc.png"), fig, width = 8, height = 4.5, dpi = 110)

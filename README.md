@@ -29,6 +29,14 @@ We simulate EEG data with a known effect in space and time, fit a Bayesian GAM, 
 
 ## Results
 
+<img src="docs/figures/main_comparison_scenarios_1_2.png" alt="Main comparison, scenarios 1 and 2" width="380"> <img src="docs/figures/main_comparison_scenarios_3_4.png" alt="Main comparison, scenarios 3 and 4" width="380">
+
+*Main comparison of the BGAM and six conventional methods: onset and offset error (RMSE), F1 and false-positive rate. Left: weak effect (scenarios 1 and 2). Right: strong effect (scenarios 3 and 4). Points are means over the converged fits, bars are ±1.96 Monte Carlo standard errors. With a weak effect, the BGAM has the lowest timing error and the highest F1. With a strong effect, the cluster-based methods reach a higher F1 and a lower false-positive rate than the BGAM.*
+
+<img src="docs/figures/detection_over_time_and_space.png" alt="Detections over time and space" width="720">
+
+*A: Number of detected active electrodes over time (nine are active). B: Number of detected inactive electrodes (52 in total). C: Detection rate of each electrode against its distance from CZ. The BGAM (orange) detects the effect early and fully, but its false positives follow the effect in time and lie just outside the active radius.*
+
 <img src="docs/figures/bgam_fit_temporal.png" alt="BGAM fit over time" width="520">
 
 *A: The mean BGAM estimate over the simulated datasets (line, with the 2.5–97.5% range as band) follows the true effect (dashed) at the active electrodes CZ and C2. At the inactive electrode PZ, the estimate is slightly above zero. B: Onset and offset of the estimate at CZ.*

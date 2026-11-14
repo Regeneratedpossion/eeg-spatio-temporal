@@ -1,17 +1,18 @@
 #!/usr/bin/env Rscript
-# PPC on one existing converged BGAM fit.
-# The waveform is the mean over 20 participants and the 9 active electrodes, not per electrode.
-# ppc_summary.csv uses condition 2 only. ppc_summary_diff.csv uses the difference wave (condition 2 minus condition 1).
+# Model checks of one existing converged BGAM fit: posterior predictive checks and the residual-source diagnostic.
+# The waveform is the difference wave (condition 2 minus condition 1), mean over 20 participants and the 9 active electrodes.
 # Peak amplitude and latency are the maximum of the waveform between 160 and 340 ms.
-# Usage: Rscript code/08_ppc/ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200]
+# Usage: Rscript code/08_ppc/ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200] [save_draws]
+# With save_draws, the replicated difference waves of all draws are also saved (input of code/08_ppc/fig_ppc.R).
 
 suppressPackageStartupMessages({library(brms); library(posterior)})
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 2L) stop("Usage: Rscript ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200]")
+if (length(args) < 2L) stop("Usage: Rscript ppc_one_dataset.R <scenario:1-4> <seed:1-100> [n_draws=200] [save_draws]")
 cond <- as.integer(args[[1]])
 seed <- as.integer(args[[2]])
 B <- if (length(args) >= 3L) as.integer(args[[3]]) else 200L
+save_draws <- length(args) >= 4L && args[[4]] == "save_draws"
 stopifnot(cond %in% 1:4, seed %in% 1:100, is.finite(B), B >= 20)
 
 root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = getwd()), mustWork = TRUE)
@@ -71,39 +72,19 @@ yrep <- brms::posterior_predict(fit, newdata = nd, re_formula = NULL, draw_ids =
 stopifnot(identical(dim(mu), dim(yrep)), nrow(mu) == B, ncol(mu) == nrow(nd),
           all(is.finite(mu)), all(is.finite(yrep)))
 
-# ---- 4. PPC 1: condition 2 average waveform ----
+# ---- 4. PPC 1: waveform summary statistics ----
 sel2 <- as.character(nd$condition) == "cond2"
 times <- sort(unique(nd$time[sel2]))
 if (length(times) != 51) stop("Expected exactly 51 timepoints")
-
-wave <- do.call(rbind, lapply(times, function(tt) {
-  ix <- which(sel2 & abs(nd$time - tt) < 1e-9)
-  if (length(ix) != 20L * 9L) stop("Expected 180 observations per condition-2 timepoint")
-  reps <- rowMeans(yrep[, ix, drop = FALSE])
-  data.frame(time = tt, obs = mean(nd$eeg_mean[ix]), rep_mean = mean(reps),
-             rep_q05 = unname(quantile(reps, 0.05)), rep_q50 = median(reps),
-             rep_q95 = unname(quantile(reps, 0.95)))
-}))
-write.csv(wave, file.path(out_dir, "wave_cond2_active.csv"), row.names = FALSE)
-
-# ---- 5. Waveform summary statistics ----
 win <- times >= 0.160 - 1e-9 & times <= 0.340 + 1e-9
-rep_wave <- sapply(times, function(tt) rowMeans(yrep[, sel2 & abs(nd$time - tt) < 1e-9, drop = FALSE]))
-if (nrow(rep_wave) != B || ncol(rep_wave) != 51) stop("Bad wave shape")
 
-stat_table <- list()
 add_stat <- function(n, observed, replicated) {
   q05 <- unname(quantile(replicated, 0.05)); q95 <- unname(quantile(replicated, 0.95))
   data.frame(statistic = n, observed = observed, rep_median = median(replicated),
              rep_q05 = q05, rep_q95 = q95, below_90 = observed < q05, above_90 = observed > q95)
 }
-peak_ix <- which(win)[which.max(wave$obs[win])]
-rep_peak_ix <- apply(rep_wave[, win, drop = FALSE], 1, which.max)
-stat_table[[1]] <- add_stat("peak_amplitude_uV", wave$obs[peak_ix], apply(rep_wave[, win, drop = FALSE], 1, max))
-stat_table[[2]] <- add_stat("peak_latency_ms", 1000 * times[peak_ix], 1000 * times[which(win)[rep_peak_ix]])
-stat_table[[3]] <- add_stat("mean_160_340_uV", mean(wave$obs[win]), rowMeans(rep_wave[, win, drop = FALSE]))
 
-# ---- 5b. PPC 1 on the difference wave: condition 2 minus condition 1 ----
+# Difference wave: condition 2 minus condition 1.
 # Pair each condition-2 row with the condition-1 row of the same participant, electrode and time point.
 row_key <- paste(nd$participant, nd$channel, nd$time, sep = "|")
 i2 <- which(as.character(nd$condition) == "cond2")
@@ -124,13 +105,17 @@ write.csv(wave_d, file.path(out_dir, "wave_diff_active.csv"), row.names = FALSE)
 rep_wave_d <- sapply(times, function(tt) rowMeans(rep_diff[, abs(time_diff - tt) < 1e-9, drop = FALSE]))
 peak_ix_d <- which(win)[which.max(wave_d$obs[win])]
 rep_peak_ix_d <- apply(rep_wave_d[, win, drop = FALSE], 1, which.max)
-stat_diff <- list(
+stat_table <- list(
   add_stat("peak_amplitude_uV", wave_d$obs[peak_ix_d], apply(rep_wave_d[, win, drop = FALSE], 1, max)),
   add_stat("peak_latency_ms", 1000 * times[peak_ix_d], 1000 * times[which(win)[rep_peak_ix_d]]),
   add_stat("mean_160_340_uV", mean(wave_d$obs[win]), rowMeans(rep_wave_d[, win, drop = FALSE])))
-write.csv(do.call(rbind, stat_diff), file.path(out_dir, "ppc_summary_diff.csv"), row.names = FALSE)
+if (save_draws) {
+  write.csv(data.frame(time = times, obs = wave_d$obs), file.path(out_dir, "diff_obs.csv"), row.names = FALSE)
+  write.csv(data.frame(draw = rep(seq_len(B), times = length(times)), time = rep(times, each = B), value = as.vector(rep_wave_d)),
+            file.path(out_dir, "diff_rep.csv"), row.names = FALSE)
+}
 
-# ---- 6. PPC 2: residual SD and autocorrelation ----
+# ---- 5. PPC 2: residual SD and autocorrelation ----
 resid_summary <- function(e, indices) {
   ss <- lapply(indices, function(ix) {
     v <- e[ix]
@@ -160,7 +145,7 @@ for (j in seq_len(B)) {
 noise <- do.call(rbind, noise_rows)
 write.csv(noise, file.path(out_dir, "noise_ppc.csv"), row.names = FALSE)
 
-# ---- 7. Summary ----
+# ---- 6. Summary ----
 for (condname in conditions) {
   for (st in c("sd", "lag1", "lag2")) {
     vals_obs <- noise[noise$condition == condname & noise$type == "observed", st]
@@ -175,20 +160,107 @@ writeLines(c(paste0("scenario=", cond), paste0("seed=", seed), paste0("draws=", 
              paste0("posterior_draw_ids=", paste(ids, collapse = ",")), paste0("fit=", fit_path)),
            file.path(out_dir, "run_info.txt"))
 
-# ---- 8. Figure (pdf: compute nodes have no X11 display for png) ----
-pdf(file.path(out_dir, "wave_cond2_active.pdf"), width = 9.5, height = 6)
-plot(wave$time * 1000, wave$obs, type = "n", ylim = range(wave[, c("obs", "rep_q05", "rep_q95")]),
-     xlab = "Time (ms)", ylab = "Mean EEG (uV)",
-     main = sprintf("PPC: Condition 2, active electrodes | scenario %s seed %d", cond, seed))
-polygon(c(wave$time, rev(wave$time)) * 1000, c(wave$rep_q05, rev(wave$rep_q95)),
-        border = NA, col = adjustcolor("steelblue", alpha.f = 0.25))
-lines(wave$time * 1000, wave$rep_mean, col = "steelblue", lwd = 2)
-lines(wave$time * 1000, wave$obs, col = "darkorange", lwd = 2)
-abline(v = c(160, 340), lty = 3)
-legend("topright", legend = c("Observed", "Posterior replication mean", "90% replication interval"),
-       col = c("darkorange", "steelblue", adjustcolor("steelblue", alpha.f = 0.25)),
-       lwd = c(2, 2, 8), bty = "n")
-dev.off()
+# ---- 7. Residual source: observed residuals against the true noise (simulation only) ----
+# This part uses its own draws (seed 20261110 + 1000 * scenario + seed) and its own row order.
+rm(mu, yrep); invisible(gc())
+residual_source <- function(fit, gt, sim, root, cond, seed, B) {
+  # 1. Exact ERP template used by the DGP
+  template <- new.env(parent = globalenv())
+  sys.source(file.path(root, "resources/brms_meeg/code/erp_template.R"), envir = template)
+
+  signal_at_onset <- function(onset_ms) {
+    k <- match(onset_ms, template$Xf)
+    if (is.na(k)) stop("Invalid participant onset")
+    c(rep(0, k - 2L), template$erp, rep(0, template$Nf - k - length(template$erp) + 2L))
+  }
+
+  # 2. Recover electrode labels omitted from brms data
+  nd <- fit$data
+  sensors <- unique(sim[c("channel", "xproj", "yproj")])
+  key <- function(x, y) sprintf("%.8f|%.8f", x, y)
+  stopifnot(!anyDuplicated(key(sensors$xproj, sensors$yproj)))
+  nd$channel <- sensors$channel[match(key(nd$xproj, nd$yproj), key(sensors$xproj, sensors$yproj))]
+  stopifnot(!anyNA(nd$channel))
+
+  nd <- nd[nd$channel %in% gt$active_electrodes, , drop = FALSE]
+  nd <- nd[order(nd$condition, nd$participant, nd$channel, nd$time), , drop = FALSE]
+  stopifnot(nrow(nd) == 20L * 2L * 9L * 51L)
+
+  # 3. Participant-specific true mean: amplitude x spatial weight x temporal signal (cond2 only)
+  pp <- gt$participant_parameters
+  pidx <- match(as.character(nd$participant), pp$participant)
+  stopifnot(!anyNA(pidx))
+  spatial <- unique(gt$continuous_effect[c("channel", "spatial_weight")])
+  stopifnot(!anyDuplicated(spatial$channel))
+  widx <- match(nd$channel, spatial$channel)
+  stopifnot(!anyNA(widx))
+
+  onsets <- unique(pp$onset_ms)
+  signals <- setNames(lapply(onsets, signal_at_onset), as.character(onsets))
+  time_idx <- match(as.integer(round(nd$time * 1000)), template$Xf)
+  stopifnot(!anyNA(time_idx))
+  signal_value <- vapply(seq_len(nrow(nd)), function(i)
+    signals[[as.character(pp$onset_ms[pidx[i]])]][time_idx[i]], numeric(1))
+
+  true_mean <- ifelse(as.character(nd$condition) == "cond2",
+                      pp$amplitude[pidx] * spatial$spatial_weight[widx] * signal_value, 0)
+
+  # 4. True noise residual
+  y <- nd$eeg_mean
+  e_gt <- y - true_mean
+
+  # 5. BGAM predictions with participant effects
+  set.seed(20261110 + 1000L * cond + seed)
+  n_draws <- posterior::ndraws(fit)
+  stopifnot(B <= n_draws)
+  ids <- sample.int(n_draws, B)
+  mu <- brms::posterior_epred(fit, newdata = nd, re_formula = NULL, draw_ids = ids)
+  stopifnot(is.matrix(mu), nrow(mu) == B, ncol(mu) == nrow(nd))
+
+  # 6. Same series and lag statistic for both residuals
+  series_id <- interaction(nd$participant, nd$condition, nd$channel, drop = TRUE)
+  groups <- split(seq_len(nrow(nd)), series_id)
+  lag_mean <- function(e, index_list, lag) {
+    mean(vapply(index_list, function(ii) {
+      x <- e[ii]; n <- length(x)
+      cor(x[seq_len(n - lag)], x[(lag + 1L):n])
+    }, numeric(1)), na.rm = TRUE)
+  }
+
+  output <- list()
+  for (condition_name in c("cond1", "cond2")) {
+    indices <- which(as.character(nd$condition) == condition_name)
+    local_groups <- lapply(groups, function(ii) intersect(ii, indices))
+    local_groups <- Filter(function(ii) length(ii) == 51L, local_groups)
+    stopifnot(length(local_groups) == 20L * 9L)
+
+    gt_lag1 <- lag_mean(e_gt, local_groups, 1L)
+    gt_lag2 <- lag_mean(e_gt, local_groups, 2L)
+    bg_lag1 <- bg_lag2 <- numeric(B)
+    for (j in seq_len(B)) {
+      e_bg <- y - mu[j, ]
+      bg_lag1[j] <- lag_mean(e_bg, local_groups, 1L)
+      bg_lag2[j] <- lag_mean(e_bg, local_groups, 2L)
+    }
+    bg_mean <- colMeans(mu)
+
+    output[[condition_name]] <- data.frame(
+      scenario = cond, seed = seed, condition = condition_name,
+      gt_noise_lag1 = gt_lag1, bgam_lag1 = median(bg_lag1),
+      gt_noise_lag2 = gt_lag2, bgam_lag2 = median(bg_lag2),
+      lag1_difference = median(bg_lag1) - gt_lag1,
+      lag2_difference = median(bg_lag2) - gt_lag2,
+      mean_rmse = sqrt(mean((bg_mean[indices] - true_mean[indices])^2)))
+  }
+  result <- do.call(rbind, output)
+
+  result
+}
+result <- residual_source(fit, gt, sim, root, cond, seed, B)
+rs_dir <- file.path(dirname(out_dir), "residual_source")
+dir.create(rs_dir, recursive = TRUE, showWarnings = FALSE)
+write.csv(result, file.path(rs_dir, sprintf("scenario%d_seed_%03d.csv", cond, seed)), row.names = FALSE)
 
 message("Saved PPC files in: ", out_dir)
 print(summary, row.names = FALSE)
+print(result)

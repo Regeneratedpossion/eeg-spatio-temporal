@@ -1,5 +1,5 @@
 # Collects the PPC and residual-source results of all passed fits and lists the fits that did not pass.
-# Run from the project root after all array tasks of slurm/08_ppc_array.sh and slurm/08_resid_source_array.sh are done.
+# Run from the project root after all array tasks of slurm/08_ppc_array.sh are done.
 root <- normalizePath(Sys.getenv("PROJECT_ROOT", unset = getwd()))
 d <- Sys.getenv("PPC_OUT_ROOT", unset = file.path(root, "results", "ppc_checks"))
 sel <- read.table(file.path(root, "results", "passed_fits.txt"), col.names = c("scenario", "seed"))

@@ -64,10 +64,10 @@ Rscript code/06_tables/06_tables.R passed
 
 **Step 08, model checks**
 
-- `ppc_one_dataset.R` runs the posterior predictive checks for one passed fit. It uses 200 posterior draws and writes to `results/ppc_checks/scenario<N>_seed_<NNN>/`.
-- `check_residual_source.R` compares the residuals of one passed fit with the true noise and the true signal. It writes to `results/ppc_checks/residual_source/`.
-- `ppc_aggregate_all.R` collects both checks over the 362 passed fits and lists the 38 fits that did not pass.
-- The cluster scripts are `slurm/08_ppc_array.sh` (8G per task) and `slurm/08_resid_source_array.sh` (5G per task). Task n takes line n of `results/passed_fits.txt`.
+- `ppc_one_dataset.R` runs the posterior predictive checks and the residual-source diagnostic for one passed fit. The diagnostic compares the residuals with the true noise and the true signal. The script uses 200 posterior draws. It writes the PPC files to `results/ppc_checks/scenario<N>_seed_<NNN>/` and the diagnostic to `results/ppc_checks/residual_source/`. With the extra argument `save_draws` it also saves the replicated difference waves.
+- `ppc_aggregate_all.R` collects the results over the 362 passed fits and lists the 38 fits that did not pass.
+- `fig_ppc.R` makes Thesis Figure 3.6 from the saved difference waves of scenario 1 seed 1 and scenario 3 seed 36.
+- The cluster script is `slurm/08_ppc_array.sh` (8G per task). Task n takes line n of `results/passed_fits.txt`.
 
 ## Supporting scripts
 

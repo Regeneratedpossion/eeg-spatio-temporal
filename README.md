@@ -15,9 +15,9 @@ We simulate 100 datasets in each of four scenarios, with 20 participants and 61 
 
 Of 400 BGAM fits, **362 meet the convergence criteria**. The analysis compares detection accuracy, timing error, false positives and effect recovery.
 
-<img src="docs/figures/simulated_topomaps.png" alt="Topographic maps of one simulated dataset" width="100%">
+<img src="docs/figures/bgam_spatial_estimate.png" alt="True effect, BGAM estimate and their difference on the scalp" width="560">
 
-Topographic maps of one simulated dataset (20 participants, 61 electrodes). Condition 1 contains noise only. Condition 2 adds the effect at the central electrodes between about 160 and 340 ms.
+Effect at 250 ms on the scalp in the four scenarios (rows), averaged over the converged fits. Left: the true effect. Middle: the BGAM estimate. Right: estimate minus truth. Values are fractions of the true peak at CZ. The circled electrodes are the active ones.
 
 ## Repository structure
 

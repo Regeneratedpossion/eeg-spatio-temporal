@@ -15,9 +15,29 @@ We simulate 100 datasets in each of four scenarios, with 20 participants and 61 
 
 Of 400 BGAM fits, **362 meet the convergence criteria**. The analysis compares detection accuracy, timing error, false positives and effect recovery.
 
-<img src="docs/figures/bgam_spatial_estimate.png" alt="True effect, BGAM estimate and their difference on the scalp" width="560">
+## Method
 
-Effect at 250 ms on the scalp in the four scenarios (rows), averaged over the converged fits. Left: the true effect. Middle: the BGAM estimate. Right: estimate minus truth. Values are fractions of the true peak at CZ. The circled electrodes are the active ones.
+<img src="docs/figures/study_overview.png" alt="Study overview" width="640">
+
+*Overview of the simulation study. Simulated trials are averaged and analysed by the BGAM and by six conventional methods. All detections are compared with the known truth.*
+
+We simulate EEG data with a known effect in space and time, fit a Bayesian GAM, and compare it with six conventional detection methods.
+
+<img src="docs/figures/data_generation.png" alt="Data generation" width="720">
+
+*How the simulated signal is built: the spatial weight of each electrode, the waveform, the amplitude of each participant, and the resulting data of one participant.*
+
+## Results
+
+<img src="docs/figures/bgam_fit_temporal.png" alt="BGAM fit over time" width="520">
+
+*A: The mean BGAM estimate over the simulated datasets (line, with the 2.5–97.5% range as band) follows the true effect (dashed) at the active electrodes CZ and C2. At the inactive electrode PZ, the estimate is slightly above zero. B: Onset and offset of the estimate at CZ.*
+
+<img src="docs/figures/detection_topo.png" alt="Detection maps" width="420">
+
+*How often each method detects an effect at each electrode, at 160, 250 and 340 ms (scenario 1, weak effect). The top row is the true active set.*
+
+The data and result figures are made with `ggplot2` and `patchwork`; see `code/07_figures/`. The study overview is a TikZ drawing; its source is `docs/figures/study_overview.tex`.
 
 ## Repository structure
 

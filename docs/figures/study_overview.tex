@@ -1,0 +1,87 @@
+\documentclass[border=6pt]{standalone}
+\usepackage[T1]{fontenc}\usepackage{lmodern}\usepackage{amsmath,amssymb}
+\usepackage{tikz}\usetikzlibrary{shapes.geometric, shapes.symbols, arrows.meta, positioning, calc}
+\begin{document}
+\definecolor{inC}{RGB}{230,145,56}   % inputs (orange)
+\definecolor{outC}{RGB}{70,120,190}  % outputs (blue)
+\definecolor{bgamC}{RGB}{120,170,70} % BGAM branch (green)
+\begin{tikzpicture}[
+  font=\footnotesize\sffamily,
+  node distance=7mm,
+  proc/.style={rectangle, draw, thin, fill=white, align=center, text width=34mm,
+               minimum height=9mm, inner sep=3pt},
+  dat/.style={trapezium, trapezium left angle=75, trapezium right angle=105,
+              trapezium stretches body, draw, thin, fill=white, align=center,
+              text width=30mm, minimum height=9mm, inner sep=3pt},
+  outd/.style={dat, draw=outC, line width=1pt},
+  par/.style={signal, signal to=east, signal from=west, draw=gray!70, fill=gray!8,
+              font=\scriptsize\itshape, inner sep=2pt, minimum height=5mm},
+  arr/.style={-{Stealth[length=2mm]}, semithick},
+]
+\newcommand{\cube}[4]{% name, position, colour, text
+  \node[rectangle, draw=#3, line width=1pt, fill=white, align=center,
+        text width=30mm, minimum height=11mm] (#1) at #2 {#4};
+  \draw[#3, line width=1pt, fill=#3!12]
+    (#1.north west) -- ++(2.5mm,2.5mm) -- ($(#1.north east)+(2.5mm,2.5mm)$)
+    -- (#1.north east) -- cycle;
+  \draw[#3, line width=1pt, fill=#3!25]
+    (#1.north east) -- ++(2.5mm,2.5mm) -- ($(#1.south east)+(2.5mm,2.5mm)$)
+    -- (#1.south east) -- cycle;
+}
+\cube{gen}{(0,0)}{inC}{\textbf{Simulated trials}\\signal $+$ noise}
+\node[par, left=6mm of gen] (p1) {$A,\ \omega_A$};
+\draw[arr, gray!70] (p1) -- (gen);
+\begin{scope}[shift={($(gen.east)+(7mm,-4mm)$)}, x=1.6mm, y=7mm]
+  \draw[gray!60] (0,0) -- (10,0);
+  \draw[inC, thick, domain=0:10, samples=40] plot (\x, {exp(-(\x-5)^2/2.5)});
+  \node[font=\tiny, gray] at (5,-0.35) {time};
+\end{scope}
+\node[proc, below=of gen] (avg) {Downsample to 100 Hz,\\average over trials};
+\node[dat,  below=of avg, text width=36mm] (means) {Participant averages\\61 electrodes $\times$ 51 times};
+\begin{scope}[shift={($(means.east)+(4mm,-4mm)$)}]
+  \foreach \i in {0,...,9} \foreach \j in {0,...,5} {
+    \pgfmathsetmacro{\v}{100*exp(-((\i-4.5)^2)/5 - ((\j-2.5)^2)/3)}
+    \fill[inC!\v!white] (\i*0.8mm,\j*1.3mm) rectangle ++(0.8mm,1.3mm);}
+  \draw[gray!60] (0,0) rectangle (8mm,7.8mm);
+  \node[font=\tiny, gray, below] at (4mm,0) {time};
+  \node[font=\tiny, gray, rotate=90, above] at (0,3.9mm) {electrode};
+\end{scope}
+\node[proc, draw=bgamC, line width=1pt, below=13mm of means, xshift=-27mm] (bgam)
+     {\textbf{Spatio-temporal BGAM}\\$s(x,y)\otimes s(\mathrm{time})$};
+\node[dat, below=of bgam] (post) {Posterior of the\\condition effect};
+\node[outd, text width=22mm, anchor=south west] (ppcn) at ($(post.west)+(-34mm,8mm)$) {\textbf{Posterior predictive checks:} replicated vs.\ observed data};
+\node[proc, below=of post] (rule) {Posterior odds\\for an effect $>\delta$};
+\node[par, left=6mm of rule, yshift=2mm] (p2) {odds $=10$};
+\draw[arr, gray!70] (p2.east) -- (p2.east -| rule.west);
+\node[par, below=1mm of p2, align=center, text width=17mm, anchor=north east, xshift=8mm] (p3) {SESOI $\delta$\\(from the baseline)};
+\draw[arr, gray!70] (p3.east) -- ++(2mm,0) |- (rule.190);
+\node[proc, below=13mm of means, xshift=27mm] (ttest) {\textbf{Cell-wise $t$-tests}};
+\node[dat, below=of ttest] (tmap) {$t$-map};
+\node[proc, below=of tmap] (corr) {Uncorrected, BH, BY, Holm,\\cluster mass or TFCE};
+\node[par, signal to=west, signal from=east, right=6mm of corr] (p4) {$\alpha=0.05$};
+\draw[arr, gray!70] (p4) -- (corr);
+\node[outd, below=of rule]  (detB) {Detected cells\\(BGAM)};
+\node[outd, below=of corr]  (detC) {Detected cells\\(six methods)};
+\node[proc, below=15mm of $(detB.south)!0.5!(detC.south)$, text width=48mm] (eval)
+     {\textbf{Compare with the known truth}\\onset/offset error, F1, false positive rate};
+\node[outd, left=8mm of eval, text width=24mm] (fit) {BGAM fit:\\recovery, map corr.,\\leakage};
+\cube{truth}{($(eval.east)+(24mm,0)$)}{inC}{\textbf{Ground truth}\\active set,\\continuous effect $\bar g_{c,t}$}
+\draw[arr, densely dashed] (gen.east) ++(2.5mm,0) -- ++(56mm,0) |- (truth.north);
+\draw[arr] (gen) -- (avg);
+\draw[arr] (avg) -- (means);
+\draw[arr] (means.south) -- ++(0,-5mm) -| (bgam.north);
+\draw[arr] (means.south) -- ++(0,-5mm) -| (ttest.north);
+\draw[arr] (bgam) -- (post);
+\draw[arr] (post) -- (rule);
+\draw[arr] ($(post.west)+(-30mm,0)$) -- (ppcn.south -| {$(post.west)+(-30mm,0)$});
+\draw[arr] (rule) -- (detB);
+\draw[arr] (ttest) -- (tmap);
+\draw[arr] (tmap) -- (corr);
+\draw[arr] (corr) -- (detC);
+\draw[arr] (detB.south) -- ++(0,-5mm) -| ([xshift=-12mm]eval.north);
+\draw[arr] (detC.south) -- ++(0,-5mm) -| ([xshift=12mm]eval.north);
+\draw[arr] (truth.west) -- (eval.east);
+\draw[arr] (post.west) -- ++(-30mm,0) |- (fit.west);
+\draw[arr] (truth.south) -- ++(0,-14mm) -| (fit.south);
+\end{tikzpicture}}
+\end{document}

@@ -67,6 +67,7 @@ Rscript code/06_tables/06_tables.R passed
 - `ppc_one_dataset.R` runs the posterior predictive checks and the residual-source diagnostic for one passed fit. The diagnostic compares the residuals with the true noise and the true signal. The script uses 200 posterior draws. It writes the PPC files to `results/ppc_checks/scenario<N>_seed_<NNN>/` and the diagnostic to `results/ppc_checks/residual_source/`.
 - `ppc_aggregate_all.R` collects the results over the 362 passed fits and lists the 38 fits that did not pass.
 - `fig_ppc.R` makes Thesis Figure 3.6 from `ppc_all_datasets.csv`.
+- `fig_ppc_sd.R` makes Thesis Figure G.1 (residual SD of condition 2) from the same file.
 - The cluster script is `slurm/08_ppc_array.sh` (8G per task). Task n takes line n of `results/passed_fits.txt`.
 
 ## Supporting scripts

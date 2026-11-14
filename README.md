@@ -41,6 +41,10 @@ We simulate EEG data with a known effect in space and time, fit a Bayesian GAM, 
 
 *A: The mean BGAM estimate over the simulated datasets (line, with the 2.5–97.5% range as band) follows the true effect (dashed) at the active electrodes CZ and C2. At the inactive electrode PZ, the estimate is slightly above zero. B: Onset and offset of the estimate at CZ.*
 
+<img src="docs/figures/bgam_spatial_estimate.png" alt="True effect, BGAM estimate and their difference on the scalp" width="560">
+
+*Effect at 250 ms on the scalp in the four scenarios (rows), averaged over the converged fits. Left: the true effect. Middle: the BGAM estimate. Right: estimate minus truth, as a fraction of the true peak at CZ. The circled electrodes are the active ones. The estimate spreads beyond the active electrodes in four directions (red lobes on the right) and is slightly too low at the centre in the weak-effect scenarios (blue).*
+
 <img src="docs/figures/detection_topo.png" alt="Detection maps" width="420">
 
 *How often each method detects an effect at each electrode, at 160, 250 and 340 ms (scenario 1, weak effect). The top row is the true active set.*
